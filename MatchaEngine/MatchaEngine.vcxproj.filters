@@ -43,12 +43,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\Vendor\Bin\sdl\SDL2.lib">
+    <Library Include="..\Vendor\Binaries\sdl\SDL2.lib">
       <Filter>Resource Files</Filter>
     </Library>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Vendor\Bin\sdl\SDL2.dll">
+    <None Include="..\Vendor\Binaries\sdl\SDL2.dll">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

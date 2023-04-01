@@ -203,7 +203,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\Vendor\Bin\sdl\SDL2.lib">
+    <Library Include="..\Vendor\Binaries\sdl\SDL2.lib">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
@@ -211,7 +211,7 @@
     </Library>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Vendor\Bin\sdl\SDL2.dll">
+    <None Include="..\Vendor\Binaries\sdl\SDL2.dll">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
