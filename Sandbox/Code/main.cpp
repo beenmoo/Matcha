@@ -1,4 +1,4 @@
-#include "Core/Editor.h"
+#include "Sandbox.h"
 
 #include <Core/EntryPoint.h>
 
@@ -10,6 +10,6 @@ namespace Matcha
 		spec.mTitle = "Hazelnut";
 		spec.mCommandLineArgs = args;
 
-		return new Editor(spec);
+		return new Sandbox(spec);
 	}
 }
