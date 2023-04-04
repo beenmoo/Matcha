@@ -15,6 +15,7 @@ namespace Matcha
 			Self
 		};
 
+	public:
 		Transform();
 
 		void Translate(const Vector3& translation);
@@ -37,7 +38,7 @@ namespace Matcha
 
 		void SetScale(const Vector3& scale);
 		void SetScale(float x, float y, float z);
-		Vector3 GetScale() const;
+		const Vector3& GetScale() const;
 
 		Vector3 GetForward() const;
 		Vector3 GetRight() const;

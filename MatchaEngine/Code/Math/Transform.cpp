@@ -5,9 +5,9 @@
 namespace Matcha
 {
     Transform::Transform() :
-        mPosition(0.0f, 0.0f, 0.0f),
-        mRotation(Vector3(0.0f, 0.0f, 0.0f)),
-        mScale(1.0f, 1.0f, 1.0f)
+        mPosition(0.0f),
+        mRotation(Vector3(0.0f)),
+        mScale(1.0f)
     {}
 
     void Transform::Translate(const Vector3& translation)
@@ -116,7 +116,7 @@ namespace Matcha
         SetScale({ x, y, z });
     }
 
-    Vector3 Transform::GetScale() const
+    const Vector3& Transform::GetScale() const
     {
         return mScale;
     }
