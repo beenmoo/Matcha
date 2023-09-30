@@ -40,7 +40,9 @@ namespace Matcha
         SDL_Window* GetNativeWindow();
         const SDL_Window* GetNativeWindow() const;
 
+#ifdef MT_DEBUG
         void LogContext();
+#endif
 
     private:
         Application* mApplication;

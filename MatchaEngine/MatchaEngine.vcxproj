@@ -186,6 +186,13 @@
     <ClInclude Include="Code\Core\Time.h" />
     <ClInclude Include="Code\Core\Window.h" />
     <ClInclude Include="Code\Core\Context.h" />
+    <ClInclude Include="Code\Graphics\FrameBuffer.h" />
+    <ClInclude Include="Code\Graphics\IndexBuffer.h" />
+    <ClInclude Include="Code\Graphics\Renderer.h" />
+    <ClInclude Include="Code\Graphics\Shader.h" />
+    <ClInclude Include="Code\Graphics\Texture.h" />
+    <ClInclude Include="Code\Graphics\VertexArray.h" />
+    <ClInclude Include="Code\Graphics\VertexBuffer.h" />
     <ClInclude Include="Code\Matcha.h">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</DeploymentContent>
@@ -197,6 +204,7 @@
     <ClInclude Include="Code\Math\Transform.h" />
     <ClInclude Include="Code\Math\Vector.h" />
     <ClInclude Include="Code\pch.h" />
+    <ClInclude Include="Code\Utils\ShaderUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Vendor\Code\glad\glad.c">
@@ -221,6 +229,13 @@
     <ClCompile Include="Code\Core\Time.cpp" />
     <ClCompile Include="Code\Core\Window.cpp" />
     <ClCompile Include="Code\Core\Context.cpp" />
+    <ClCompile Include="Code\Graphics\FrameBuffer.cpp" />
+    <ClCompile Include="Code\Graphics\IndexBuffer.cpp" />
+    <ClCompile Include="Code\Graphics\Renderer.cpp" />
+    <ClCompile Include="Code\Graphics\Shader.cpp" />
+    <ClCompile Include="Code\Graphics\Texture.cpp" />
+    <ClCompile Include="Code\Graphics\VertexArray.cpp" />
+    <ClCompile Include="Code\Graphics\VertexBuffer.cpp" />
     <ClCompile Include="Code\Math\Transform.cpp" />
     <ClCompile Include="Code\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -30,7 +30,9 @@ namespace Matcha
         mContext.InitWindowContext();
         mContext.InitGLContext();
 
+#ifdef MT_DEBUG
         mContext.LogContext();
+#endif
 
         while (mIsRunning)
         {

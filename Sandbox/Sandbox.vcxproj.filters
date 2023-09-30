@@ -27,4 +27,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Shaders\QuadShader.vert" />
+    <None Include="Assets\Shaders\QuadShader.frag" />
+  </ItemGroup>
 </Project>

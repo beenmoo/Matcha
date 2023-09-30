@@ -8,6 +8,12 @@
 #include "Core/Time.h"
 #include "Core/Window.h"
 
+#include "Graphics/IndexBuffer.h"
+#include "Graphics/Renderer.h"
+#include "Graphics/Shader.h"
+#include "Graphics/VertexArray.h"
+#include "Graphics/VertexBuffer.h"
+
 #include "Math/Matrix.h"
 #include "Math/Quaternion.h"
 #include "Math/Transform.h"

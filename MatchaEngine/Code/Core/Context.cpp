@@ -163,6 +163,7 @@ namespace Matcha
         return mNativeWindow;
     }
     
+#ifdef MT_DEBUG
     void Context::LogContext()
     {
         int matchaEngineMajor = 0, matchaEngineMinor = 1;
@@ -171,7 +172,7 @@ namespace Matcha
 #ifdef MT_PLATFORM_WINDOWS
         MT_CORE_INFO("Platform: WINDOWS");
 #endif
-#ifdef HIPPO_PLATFORM_LINUX
+#ifdef MT_PLATFORM_LINUX
         MT_CORE_INFO("Platform: LINUX");
 #endif
 
@@ -191,4 +192,5 @@ namespace Matcha
         SDL_VERSION(&sdlVersion);
         MT_CORE_INFO("SDL v{}.{}.{}", (int32_t)sdlVersion.major, (int32_t)sdlVersion.minor, (int32_t)sdlVersion.patch);
     }
+#endif
 }

@@ -10,6 +10,9 @@
 #include <memory>
 #include <iostream>
 #include <filesystem>
+#include <sstream>
+#include <fstream>
+#include <utility>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
