@@ -41,6 +41,14 @@ namespace Matcha
         bool IsMinimized() const;
 
     private:
+        void InitSDLContext();
+        void InitWindow();
+        void InitGLContext();
+
+    private:
+        SDL_Window* mNativeWindow = nullptr;
+        SDL_GLContext mGLContext;
+
         Context& mContext;
         WindowSpecification mWindowSpec;
         bool mIsOpen = false;

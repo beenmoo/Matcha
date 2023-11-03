@@ -10,7 +10,11 @@ namespace Matcha
     Window::Window(Context& ctx, const WindowSpecification& spec) :
         mContext(ctx),
         mWindowSpec(spec)
-    {}
+    {
+        InitSDLContext();
+        InitWindow();
+        Init 
+    }
 
     void Window::ProcessEvents(const SDL_Event& evt)
     {
@@ -71,5 +75,37 @@ namespace Matcha
     bool Window::IsMinimized() const
     {
         return SDL_GetWindowFlags(mContext.GetNativeWindow()) & SDL_WINDOW_MINIMIZED;
+    }
+
+    void Window::InitSDLContext()
+    {
+        if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
+            MT_CORE_ERROR(SDL_GetError());
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    }
+
+    void Window::InitWindow()
+    {
+        mNativeWindow = SDL_CreateWindow(GetWindowSpecification().mTitle.c_str(),
+                                         GetWindowSpecification().mWindowLocationX,
+                                         GetWindowSpecification().mWindowLocationY,
+                                         GetWindowSpecification().mWidth,
+                                         GetWindowSpecification().mHeight,
+                                         GetWindowSpecification().mFlags);
+
+        MT_ASSERT(mNativeWindow, SDL_GetError());
+    }
+
+    void Window::InitGLContext()
+    {
+        mGLContext = SDL_GL_CreateContext(mNativeWindow);
+        SDL_GL_MakeCurrent(mNativeWindow, mGLContext);
+
+        int status = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
+
+        MT_ASSERT(status, SDL_GetError());
     }
 }

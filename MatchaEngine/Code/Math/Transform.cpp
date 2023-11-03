@@ -157,7 +157,7 @@ namespace Matcha
         Quaternion rotation;
         Vector3 scale;
         Vector3 skew;
-        glm::vec4 perspective;
+        Vector4 perspective;
 
         decompose(model, scale, rotation, translation, skew, perspective);
 

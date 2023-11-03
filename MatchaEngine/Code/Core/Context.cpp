@@ -17,11 +17,6 @@ namespace Matcha
         mWindow(window)
     {}
 
-    Context::~Context()
-    {
-        SDL_DestroyWindow(mNativeWindow);
-    }
-
     void Context::InitSDLContext()
     {
         if (mSDLInit)
@@ -163,7 +158,6 @@ namespace Matcha
         return mNativeWindow;
     }
     
-#ifdef MT_DEBUG
     void Context::LogContext()
     {
         int matchaEngineMajor = 0, matchaEngineMinor = 1;
@@ -192,5 +186,4 @@ namespace Matcha
         SDL_VERSION(&sdlVersion);
         MT_CORE_INFO("SDL v{}.{}.{}", (int32_t)sdlVersion.major, (int32_t)sdlVersion.minor, (int32_t)sdlVersion.patch);
     }
-#endif
 }
