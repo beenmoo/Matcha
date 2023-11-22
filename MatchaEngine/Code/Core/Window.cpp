@@ -7,13 +7,12 @@
 
 namespace Matcha
 {
-    Window::Window(Context& ctx, const WindowSpecification& spec) :
-        mContext(ctx),
+    Window::Window(const WindowSpecification& spec) :
         mWindowSpec(spec)
     {
         InitSDLContext();
         InitWindow();
-        Init 
+        InitGLContext();
     }
 
     void Window::ProcessEvents(const SDL_Event& evt)
@@ -39,12 +38,12 @@ namespace Matcha
 
     void Window::Resize(int width, int height)
     {
-        SDL_SetWindowSize(mContext.GetNativeWindow(), width, height);
+        SDL_SetWindowSize(mNativeWindow, width, height);
     }
 
     void Window::SwapBuffers()
     {
-        SDL_GL_SwapWindow(mContext.GetNativeWindow());
+        SDL_GL_SwapWindow(mNativeWindow);
     }
 
     int Window::GetWidth() const
@@ -74,7 +73,7 @@ namespace Matcha
 
     bool Window::IsMinimized() const
     {
-        return SDL_GetWindowFlags(mContext.GetNativeWindow()) & SDL_WINDOW_MINIMIZED;
+        return SDL_GetWindowFlags(mNativeWindow) & SDL_WINDOW_MINIMIZED;
     }
 
     void Window::InitSDLContext()

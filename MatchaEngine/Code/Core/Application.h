@@ -47,6 +47,7 @@ namespace Matcha
     private:
         void Update();
         void PollEvents();
+        void LogContext();
 
     private:
         ApplicationSpecification mAppSpec;

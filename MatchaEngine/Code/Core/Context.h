@@ -13,32 +13,25 @@ namespace Matcha
     class Context
     {
     public:
-        Context(Application* application,
-                Input* input,
-                Time* time,
-                Window* window);
-        ~Context();
+        Context(Application& application,
+                Input& input,
+                Time& time,
+                Window& window);
 
-        Application* GetApplication();
-        const Application* GetApplication() const;
-        Input* GetInput();
-        const Input* GetInput() const;
-        Time* GetTime();
-        const Time* GetTime() const;
-        Window* GetWindow();
-        const Window* GetWindow() const;
-
-        SDL_Window* GetNativeWindow();
-        const SDL_Window* GetNativeWindow() const;
+        Application& GetApplication();
+        const Application& GetApplication() const;
+        Input& GetInput();
+        const Input& GetInput() const;
+        Time& GetTime();
+        const Time& GetTime() const;
+        Window& GetWindow();
+        const Window& GetWindow() const;
 
     private:
-        void LogContext();
-
-    private:
-        Application* mApplication;
-        Input* mInput;
-        Time* mTime;
-        Window* mWindow;
+        Application& mApplication;
+        Input& mInput;
+        Time& mTime;
+        Window& mWindow;
 
         bool mSDLInit = false;
         bool mWindowInit = false;

@@ -24,8 +24,7 @@ namespace Matcha
         };
 
     public:
-        Window(Context& ctx, 
-               const WindowSpecification& spec = WindowSpecification());
+        Window(const WindowSpecification& spec = WindowSpecification());
 
         void Resize(int width, int height);
         void SwapBuffers();
@@ -49,7 +48,6 @@ namespace Matcha
         SDL_Window* mNativeWindow = nullptr;
         SDL_GLContext mGLContext;
 
-        Context& mContext;
         WindowSpecification mWindowSpec;
         bool mIsOpen = false;
     };

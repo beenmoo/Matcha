@@ -6,13 +6,8 @@ namespace Matcha
 {
     Application::Application(const ApplicationSpecification& spec) :
         mAppSpec(spec),
-        mWindow(mContext)
-    {
-        mContext.SetApplication(this);
-        mContext.SetInput(&mInput);
-        mContext.SetTime(&mTime);
-        mContext.SetWindow(&mWindow);
-    }
+        mContext(*this, mInput, mTime, mWindow)
+    {}
 
     Application::~Application()
     {
@@ -73,5 +68,33 @@ namespace Matcha
             mInput.ProcessEvents(evt);
             mWindow.ProcessEvents(evt);
         }
+    }
+    void Application::LogContext()
+    {
+        int matchaEngineMajor = 0, matchaEngineMinor = 1;
+
+        MT_CORE_INFO("MatchaEngine v{}.{}", matchaEngineMajor, matchaEngineMinor);
+#ifdef MT_PLATFORM_WINDOWS
+        MT_CORE_INFO("Platform: WINDOWS");
+#endif
+#ifdef MT_PLATFORM_LINUX
+        MT_CORE_INFO("Platform: LINUX");
+#endif
+
+        const char* vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+        const char* renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+        const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+
+        MT_CORE_INFO("OpenGL Info:");
+        MT_CORE_INFO("  Vendor: {0}", vendor);
+        MT_CORE_INFO("  Renderer: {0}", renderer);
+        MT_CORE_INFO("  Version: {0}", version);
+
+        MT_ASSERT(GLVersion.major > 4 || (GLVersion.major == 4 && GLVersion.minor >= 6),
+                  "Matcha requires at least OpenGL version 4.6!");
+
+        SDL_version sdlVersion;
+        SDL_VERSION(&sdlVersion);
+        MT_CORE_INFO("SDL v{}.{}.{}", (int32_t)sdlVersion.major, (int32_t)sdlVersion.minor, (int32_t)sdlVersion.patch);
     }
 }
