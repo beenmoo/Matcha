@@ -1,7 +1,7 @@
 #include "Texture.h"
 #include "Core/Core.h"
 
-#include <stb/stb_image.h>
+#include <stb_image/stb_image.h>
 
 namespace Matcha
 {

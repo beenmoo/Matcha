@@ -37,7 +37,6 @@ namespace Matcha
             return GL_NONE;
         }
 
-#ifdef MT_DEBUG
         static std::vector<char> GetShaderErrorInfo(int32_t id, GLenum statusType)
         {
             std::vector<char> infoLog;
@@ -63,7 +62,6 @@ namespace Matcha
 
             return infoLog;
         }
-#endif
 
         static uint32_t ShaderDataTypeSize(ShaderDataType type)
         {

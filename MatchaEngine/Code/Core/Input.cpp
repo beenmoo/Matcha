@@ -5,7 +5,7 @@ namespace Matcha
     Input::Input()
     {
         mKeyboardState = SDL_GetKeyboardState(&mNumKeys);
-        mPrevKeyboardState = new uint8_t[mNumKeys];
+        mPrevKeyboardState = new bool[mNumKeys];
         memcpy(mPrevKeyboardState, mKeyboardState, mNumKeys);
 
         mMouseState = SDL_GetMouseState(&mMouseData.mMousePositionX, &mMouseData.mMousePositionY);
@@ -20,15 +20,15 @@ namespace Matcha
     {
         switch (evt.type)
         {
-        case SDL_MOUSEMOTION:
+        case SDL_EVENT_MOUSE_MOTION:
             mMouseData.mMouseAxis.x = evt.motion.xrel;
             mMouseData.mMouseAxis.y = evt.motion.yrel;
             break;
-        case SDL_JOYAXISMOTION:
+        case SDL_EVENT_JOYSTICK_AXIS_MOTION:
             mJoystickAxis.x = evt.motion.xrel;
             mJoystickAxis.y = evt.motion.yrel;
             break;
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_WHEEL:
             mMouseData.mMouseScrollDelta.x = evt.wheel.x;
             mMouseData.mMouseScrollDelta.y = evt.wheel.y;
             break;
@@ -173,10 +173,10 @@ namespace Matcha
         switch (state)
         {
         case CursorLockState::Locked:
-            SDL_SetRelativeMouseMode(SDL_TRUE);
+            //SDL_SetWindowRelativeMouseMode(true);
             break;
         default:
-            SDL_SetRelativeMouseMode(SDL_FALSE);
+            //SDL_SetWindowRelativeMouseMode(false);
             break;
         }
     }

@@ -3,7 +3,7 @@
 #include "KeyCodes.h"
 #include "Math/Vector.h"
 
-#include <sdl/SDL.h>
+#include <SDL3/SDL.h>
 
 namespace Matcha
 {
@@ -31,6 +31,14 @@ namespace Matcha
             Forward
         };
 
+    private:
+        struct MouseData
+        {
+            float mMousePositionX = 0, mMousePositionY = 0;
+            Vector2 mMouseAxis = Vector2(0);
+            Vector2 mMouseScrollDelta = Vector2(0);
+        };
+
     public:
         Input();
         ~Input();
@@ -52,16 +60,8 @@ namespace Matcha
         CursorLockState GetCursorLockState() const;
 
     private:
-        struct MouseData
-        {
-            int mMousePositionX = 0, mMousePositionY = 0;
-            Vector2Int mMouseAxis = Vector2(0);
-            Vector2Int mMouseScrollDelta = Vector2(0);
-        };
-
-    private:
-        const uint8_t* mKeyboardState;
-        uint8_t* mPrevKeyboardState;
+        const bool* mKeyboardState;
+        bool* mPrevKeyboardState;
         int mNumKeys;
 
         uint32_t mMouseState;

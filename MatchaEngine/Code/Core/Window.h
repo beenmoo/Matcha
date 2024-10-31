@@ -4,7 +4,7 @@
 
 #include <cstdint>
 #include <string>
-#include <sdl/SDL.h>
+#include <SDL3/SDL.h>
 
 namespace Matcha
 {

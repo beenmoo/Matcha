@@ -19,17 +19,10 @@ namespace Matcha
     {
         switch (evt.type)
         {
-        case SDL_WINDOWEVENT:
-            switch (evt.window.event)
-            {
-            case SDL_WINDOWEVENT_SIZE_CHANGED:
-                mWindowSpec.mWidth = evt.window.data1;
-                mWindowSpec.mHeight = evt.window.data2;
-                glViewport(0, 0, mWindowSpec.mWidth, mWindowSpec.mHeight);
-                break;
-            default:
-                break;
-            }
+        case SDL_EVENT_WINDOW_RESIZED:
+            mWindowSpec.mWidth = evt.window.data1;
+            mWindowSpec.mHeight = evt.window.data2;
+            glViewport(0, 0, mWindowSpec.mWidth, mWindowSpec.mHeight);
             break;
         default:
             break;
@@ -78,7 +71,7 @@ namespace Matcha
 
     void Window::InitSDLContext()
     {
-        if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
+        if (SDL_Init(SDL_INIT_VIDEO) < 0)
             MT_CORE_ERROR(SDL_GetError());
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -89,8 +82,6 @@ namespace Matcha
     void Window::InitWindow()
     {
         mNativeWindow = SDL_CreateWindow(GetWindowSpecification().mTitle.c_str(),
-                                         GetWindowSpecification().mWindowLocationX,
-                                         GetWindowSpecification().mWindowLocationY,
                                          GetWindowSpecification().mWidth,
                                          GetWindowSpecification().mHeight,
                                          GetWindowSpecification().mFlags);

@@ -1,6 +1,6 @@
 #include "Application.h"
 
-#include <sdl/SDL.h>
+#include <SDL3/SDL.h>
 
 namespace Matcha
 {
@@ -58,7 +58,7 @@ namespace Matcha
         {
             switch (evt.type)
             {
-            case SDL_QUIT:
+            case SDL_EVENT_QUIT:
                 Quit();
                 break;
             default:
@@ -93,8 +93,6 @@ namespace Matcha
         MT_ASSERT(GLVersion.major > 4 || (GLVersion.major == 4 && GLVersion.minor >= 6),
                   "Matcha requires at least OpenGL version 4.6!");
 
-        SDL_version sdlVersion;
-        SDL_VERSION(&sdlVersion);
         MT_CORE_INFO("SDL v{}.{}.{}", (int32_t)sdlVersion.major, (int32_t)sdlVersion.minor, (int32_t)sdlVersion.patch);
     }
 }
