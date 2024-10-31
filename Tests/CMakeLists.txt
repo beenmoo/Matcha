@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(Sandbox)
+project(Tests)
 
-add_executable(${PROJECT_NAME} Code/main.cpp)
+enable_testing()
+include(GoogleTest)
 
-add_subdirectory(Code/Core)
+add_executable(${PROJECT_NAME} Code/test.cpp)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE MatchaEngine)
-target_include_directories(${PROJECT_NAME} PRIVATE Code)
+target_include_directories(${PROJECT_NAME} PUBLIC Code)
+target_precompile_headers(${PROJECT_NAME} PRIVATE Code/pch.h)
+target_link_libraries(${PROJECT_NAME} PRIVATE MatchaEngine gtest_main gmock_main)
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 
@@ -19,9 +21,9 @@ if (MSVC)
 endif()
 
 set_target_properties(
-	${PROJECT_NAME} 
-	PROPERTIES
-	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"
+    ${PROJECT_NAME} 
+    PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Bin"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Bin"
 )
