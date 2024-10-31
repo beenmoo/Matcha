@@ -17,5 +17,7 @@ add_subdirectory(Sandbox)
 add_subdirectory(MatchaEditor)
 
 if (BUILD_TESTS)
+    enable_testing()
+    include(GoogleTest)
     add_subdirectory(Tests)
 endif()

@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.15)
 
 project(Tests)
 
-enable_testing()
-include(GoogleTest)
-
 add_executable(${PROJECT_NAME} Code/test.cpp)
 
 target_include_directories(${PROJECT_NAME} PUBLIC Code)
@@ -14,7 +11,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE MatchaEngine gtest_main gmock_main
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 
 if (MSVC)
-    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
     file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}"
         FILES ${SOURCES})
