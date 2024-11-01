@@ -7,7 +7,8 @@ namespace Matcha
     public:
         Renderer();
 
-
+        void Submit();
+        void Flush();
 
     private:
 
