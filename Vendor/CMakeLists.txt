@@ -7,6 +7,7 @@ add_subdirectory(stb_image)
 
 set(SDL_SHARED OFF)
 set(SDL_STATIC ON)
+set(SDL_TESTS OFF)
 
 FetchContent_Declare(
     SDL
@@ -54,4 +55,8 @@ if (BUILD_TESTS)
         GIT_REPOSITORY https://github.com/google/googletest.git
         GIT_TAG release-1.12.1)
     FetchContent_MakeAvailable(googletest)
+
+    enable_testing()
+    
+    set(SDL_TESTS ON)
 endif()

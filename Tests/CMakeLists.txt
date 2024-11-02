@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project(Tests)
 
 add_executable(${PROJECT_NAME} Code/test.cpp)
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PUBLIC Code)
 target_precompile_headers(${PROJECT_NAME} PRIVATE Code/pch.h)
@@ -23,3 +24,5 @@ set_target_properties(
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Bin"
 )
+
+get_target_property(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_NAME} RUNTIME_OUTPUT_DIRECTORY)

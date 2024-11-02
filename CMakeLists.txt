@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+include(GoogleTest)
+
 project(Matcha)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -17,7 +19,5 @@ add_subdirectory(Sandbox)
 add_subdirectory(MatchaEditor)
 
 if (BUILD_TESTS)
-    enable_testing()
-    include(GoogleTest)
     add_subdirectory(Tests)
 endif()
