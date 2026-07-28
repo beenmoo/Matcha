@@ -399,3 +399,10 @@ FodyWeavers.xsd
 
 Build
 Testing
+
+# vcpkg build and binary directories
+vcpkg_packages/
+vcpkg_installed/
+
+# Local configuration overrides
+.vcpkg-root

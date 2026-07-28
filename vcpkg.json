@@ -1,0 +1,11 @@
+{
+    "name": "matcha",
+    "version": "0.1.0",
+    "dependencies": [
+        "sdl3",
+        "nlohmann-json",
+        "spdlog",
+        "glm",
+        "imgui"
+    ]
+}

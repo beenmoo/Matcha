@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Core.h"
+#include "Core/Assert.h"
+#include "Core/Logger.h"
 #include "Context.h"
 #include "Input.h"
 #include "Time.h"

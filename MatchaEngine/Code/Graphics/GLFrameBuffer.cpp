@@ -1,32 +1,32 @@
-#include "FrameBuffer.h"
+#include "GLFrameBuffer.h"
 #include "Core/Assert.h"
 
 namespace Matcha
 {
-    FrameBuffer::FrameBuffer(const FrameBufferSpecification& spec) :
+    GLFrameBuffer::GLFrameBuffer(const FrameBufferSpecification& spec) :
         mSpecification(spec)
     {
         Invalidate();
     }
 
-    FrameBuffer::~FrameBuffer()
+    GLFrameBuffer::~GLFrameBuffer()
     {
         glDeleteFramebuffers(1, &mObjectID);
         glDeleteRenderbuffers(1, &mDepthAttachmentID);
         glDeleteTextures(1, &mColorAttachmentID);
     }
 
-    void FrameBuffer::Bind() const
+    void GLFrameBuffer::Bind() const
     {
         glBindFramebuffer(GL_FRAMEBUFFER, mObjectID);
     }
 
-    void FrameBuffer::Unbind() const
+    void GLFrameBuffer::Unbind() const
     {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    void FrameBuffer::Invalidate()
+    void GLFrameBuffer::Invalidate()
     {
         if (mObjectID)
         {
@@ -67,22 +67,22 @@ namespace Matcha
         Unbind();
     }
 
-    uint32_t FrameBuffer::GetObjectID() const
+    GLuint GLFrameBuffer::GetObjectID() const
     {
         return mObjectID;
     }
 
-    uint32_t FrameBuffer::GetColorAttachmentID() const
+    GLuint GLFrameBuffer::GetColorAttachmentID() const
     {
         return mColorAttachmentID;
     }
 
-    uint32_t FrameBuffer::GetDepthAttachmentID() const
+    GLuint GLFrameBuffer::GetDepthAttachmentID() const
     {
         return mDepthAttachmentID;
     }
 
-    const FrameBuffer::FrameBufferSpecification& FrameBuffer::GetSpecification() const
+    const GLFrameBuffer::FrameBufferSpecification& GLFrameBuffer::GetSpecification() const
     {
         return mSpecification;
     }

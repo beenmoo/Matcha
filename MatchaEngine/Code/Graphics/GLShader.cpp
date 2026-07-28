@@ -1,5 +1,5 @@
-#include "Shader.h"
-#include "Core/Core.h"
+#include "GLShader.h"
+#include "Core/Logger.h"
 #include "Utils/ShaderUtils.h"
 
 #include <fstream>
@@ -8,8 +8,9 @@
 
 namespace Matcha
 {
-    Shader::Shader(std::string_view name, 
-                   const std::initializer_list<std::string>& paths) :
+    GLShader::GLShader(
+        std::string_view name, 
+        const std::initializer_list<String>& paths) :
         mObjectID(glCreateProgram()),
         mName(name)
     {
@@ -27,27 +28,27 @@ namespace Matcha
             MT_CORE_ERROR("Failed to create shader: {0}", mName);
     }
 
-    Shader::~Shader()
+    GLShader::~GLShader()
     {
         glDeleteProgram(mObjectID);
     }
 
-    void Shader::Bind() const
+    void GLShader::Bind() const
     {
         glUseProgram(mObjectID);
     }
 
-    void Shader::Unbind() const
+    void GLShader::Unbind() const
     {
         glUseProgram(0);
     }
 
-    const std::string& Shader::GetName() const
+    const std::string& GLShader::GetName() const
     {
         return mName;
     }
 
-    bool Shader::ParseFile(const std::string& path)
+    bool GLShader::ParseFile(const String& path)
     {
         std::filesystem::path filePath(path);
 
@@ -76,26 +77,26 @@ namespace Matcha
             return false;
         }
 
-        std::string source{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+        String source{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 
         mSources[shaderType] = std::make_pair(path, source);
 
         return true;
     }
     
-    bool Shader::CreateProgram()
+    bool GLShader::CreateProgram()
     {
         if (mSources.find(GL_VERTEX_SHADER) == mSources.end() || 
             mSources.find(GL_FRAGMENT_SHADER) == mSources.end())
             return false;
 
-        int32_t success = 0;
+        GLint success = 0;
 
-        std::vector<uint32_t> shaderIDs;
+        std::vector<GLuint> shaderIDs;
 
         for (const auto& s : mSources)
         {
-            uint32_t shaderID = glCreateShader(s.first);
+            GLuint shaderID = glCreateShader(s.first);
             shaderIDs.emplace_back(shaderID);
 
             const char* code = s.second.second.c_str();
@@ -107,7 +108,7 @@ namespace Matcha
             
             if (!success)
             {
-                std::vector<char> infoLog = ShaderUtils::GetShaderErrorInfo(shaderID, GL_COMPILE_STATUS);
+                std::vector<GLchar> infoLog = ShaderUtils::GetShaderErrorInfo(shaderID, GL_COMPILE_STATUS);
 
                 MT_CORE_ERROR("Shader compilation failed ({0}):\n{1}", s.second.first, infoLog.data());
 
@@ -124,7 +125,7 @@ namespace Matcha
 
             if (!success)
             {
-                std::vector<char> infoLog = ShaderUtils::GetShaderErrorInfo(mObjectID, GL_LINK_STATUS);
+                std::vector<GLchar> infoLog = ShaderUtils::GetShaderErrorInfo(mObjectID, GL_LINK_STATUS);
 
                 MT_CORE_ERROR("Shader linking failed ({0}):\n{1}", mName, infoLog.data());
             }

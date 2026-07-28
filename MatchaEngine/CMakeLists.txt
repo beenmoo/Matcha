@@ -14,6 +14,7 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE Code/pch.h)
 target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3 glm::glm spdlog::spdlog nlohmann_json::nlohmann_json stb_image glad)
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:MT_DEBUG=1>)
 
 if (MSVC)
     file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.h")

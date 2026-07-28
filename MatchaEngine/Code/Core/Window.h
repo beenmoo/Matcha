@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math/Vector.h"
+#include "Core/Types.h"
 
 #include <cstdint>
 #include <string>
@@ -15,7 +16,7 @@ namespace Matcha
     public:
         struct WindowSpecification
         {
-            std::string mTitle = "Application";
+            String mTitle = "Application";
             int mWidth = 1280;
             int mHeight = 720;
             int mWindowLocationX = SDL_WINDOWPOS_CENTERED;
@@ -28,7 +29,7 @@ namespace Matcha
 
         void Resize(int width, int height);
         void SwapBuffers();
-        void ProcessEvents(const SDL_Event& evt);
+        void ProcessEvents(const Event& evt);
 
         int GetWidth() const;
         int GetHeight() const;
@@ -40,13 +41,11 @@ namespace Matcha
         bool IsMinimized() const;
 
     private:
-        void InitSDLContext();
-        void InitWindow();
-        void InitGLContext();
+        void InitContext();
 
     private:
-        SDL_Window* mNativeWindow = nullptr;
-        SDL_GLContext mGLContext;
+        GLWindow* mNativeWindow = nullptr;
+        GLContext mGLContext;
 
         WindowSpecification mWindowSpec;
         bool mIsOpen = false;

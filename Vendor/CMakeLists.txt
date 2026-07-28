@@ -9,45 +9,11 @@ set(SDL_SHARED OFF)
 set(SDL_STATIC ON)
 set(SDL_TESTS OFF)
 
-FetchContent_Declare(
-    SDL
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG main
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
-FetchContent_MakeAvailable(SDL)
-
-FetchContent_Declare(
-    json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG develop
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
-FetchContent_MakeAvailable(json)
-
-FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v2.x
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
-FetchContent_MakeAvailable(spdlog)
-
-FetchContent_Declare(
-    glm
-    GIT_REPOSITORY https://github.com/g-truc/glm.git
-    GIT_TAG master
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
-FetchContent_MakeAvailable(glm)
-
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG docking
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
-FetchContent_MakeAvailable(imgui)
+find_package(SDL3 CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 if (BUILD_TESTS)
     FetchContent_Declare(

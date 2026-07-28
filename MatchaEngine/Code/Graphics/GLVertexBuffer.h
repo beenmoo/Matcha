@@ -8,7 +8,7 @@
 
 namespace Matcha
 {
-    class VertexBuffer
+    class GLVertexBuffer
     {
     public:
         class BufferLayout
@@ -16,20 +16,20 @@ namespace Matcha
         private:
             struct BufferElement
             {
-                ShaderUtils::ShaderDataType mType = ShaderUtils::ShaderDataType::None;
-                uint32_t mSize = 0;
-                size_t mOffset = 0;
-                bool mNormalized = false;
+                ShaderUtils::ShaderDataType type = ShaderUtils::ShaderDataType::None;
+                GLuint size = 0;
+                size_t offset = 0;
+                GLboolean normalized = false;
 
-                BufferElement(ShaderUtils::ShaderDataType type, bool normalized = false) :
-                    mType(type), 
-                    mSize(ShaderUtils::ShaderDataTypeSize(type)),
-                    mNormalized(normalized)
+                BufferElement(ShaderUtils::ShaderDataType type, GLboolean normalized = false) :
+                    type(type), 
+                    size(ShaderUtils::ShaderDataTypeSize(type)),
+                    normalized(normalized)
                 {}
 
                 uint32_t GetComponentCount() const
                 {
-                    switch (mType)
+                    switch (type)
                     {
                     case ShaderUtils::ShaderDataType::Float:   
                         return 1;
@@ -62,7 +62,7 @@ namespace Matcha
             };
 
         public:
-            BufferLayout(std::initializer_list<ShaderUtils::ShaderDataType> dataTypes, bool normalized = false)
+            BufferLayout(std::initializer_list<ShaderUtils::ShaderDataType> dataTypes, GLboolean normalized = false)
             {
                 for (const auto& i : dataTypes)
                     mElements.emplace_back(BufferElement(i, normalized));
@@ -88,43 +88,43 @@ namespace Matcha
 
                 for (auto& e : mElements)
                 {
-                    e.mOffset += offset;
-                    offset += e.mOffset;
-                    mStride += e.mSize;
+                    e.offset += offset;
+                    offset += e.offset;
+                    mStride += e.size;
                 }
             }
 
         private:
             std::vector<BufferElement> mElements;
 
-            uint32_t mStride = 0;
+            GLsizei mStride = 0;
         };
 
     public:
-        VertexBuffer(uint32_t sizeInBytes = 0);
-        VertexBuffer(const float* vertices, uint32_t sizeInBytes);
-        ~VertexBuffer();
+        GLVertexBuffer(GLuint sizeInBytes = 0);
+        GLVertexBuffer(const GLfloat* vertices, GLuint sizeInBytes);
+        ~GLVertexBuffer();
 
         void Bind() const;
         void Unbind() const;
 
-        void AddVertex(std::initializer_list<float> vertex);
-        void SetVertices(const float* vertices, uint32_t sizeInBytes);
-        void SetVerticesNew(const float* vertices, uint32_t sizeInBytes);
+        void AddVertex(std::initializer_list<GLfloat> vertex);
+        void SetVertices(const GLfloat* vertices, GLuint sizeInBytes);
+        void SetVerticesNew(const GLfloat* vertices, GLuint sizeInBytes);
         void SetDrawType(GLenum drawType);
         void Clear();
 
-        void SetLayout(const std::shared_ptr<BufferLayout>& layout);
+        void SetLayout(const std::shared_ptr<BufferLayout> layout);
         const BufferLayout* GetLayout() const;
 
-        uint32_t GetSizeInBytes() const;
+        GLuint GetSizeInBytes() const;
 
     private:
-        uint32_t mObjectID;
+        GLuint mObjectID;
 
         GLenum mDrawType = GL_STATIC_DRAW;
 
         std::shared_ptr<BufferLayout> mLayout = nullptr;
-        std::vector<float> mVertices;
+        std::vector<GLfloat> mVertices;
     };
 }

@@ -17,4 +17,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     Time.cpp
     Time.h
     Window.cpp
-    Window.h)
+    Window.h
+    Types.h)

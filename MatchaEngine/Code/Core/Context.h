@@ -32,9 +32,5 @@ namespace Matcha
         Input& mInput;
         Time& mTime;
         Window& mWindow;
-
-        bool mSDLInit = false;
-        bool mWindowInit = false;
-        bool mGLInit = false;
     };
 }

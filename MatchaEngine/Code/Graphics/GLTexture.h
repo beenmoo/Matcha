@@ -5,12 +5,12 @@
 
 namespace Matcha
 {
-    class Texture
+    class GLTexture
     {
     public:
-        Texture(uint32_t width, uint32_t height);
-        Texture(std::string_view path);
-        ~Texture();
+        GLTexture(uint32_t width, uint32_t height);
+        GLTexture(std::string_view path);
+        ~GLTexture();
 
         void Bind(uint32_t slot = 0) const;
 

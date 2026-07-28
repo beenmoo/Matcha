@@ -15,6 +15,3 @@
 #else
 #define MT_DEBUG_BREAK
 #endif
-
-#include "Logger.h"
-#include "Assert.h"

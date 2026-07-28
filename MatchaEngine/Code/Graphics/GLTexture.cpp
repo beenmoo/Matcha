@@ -1,11 +1,11 @@
-#include "Texture.h"
-#include "Core/Core.h"
+#include "GLTexture.h"
+#include "Core/Assert.h"
 
 #include <stb_image/stb_image.h>
 
 namespace Matcha
 {
-    Texture::Texture(uint32_t width, uint32_t height) :
+    GLTexture::GLTexture(uint32_t width, uint32_t height) :
         mWidth(width),
         mHeight(height)
     {
@@ -22,22 +22,22 @@ namespace Matcha
         glTextureParameteri(mObjectID, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
-    Texture::Texture(std::string_view path)
+    GLTexture::GLTexture(std::string_view path)
     {
         LoadTextureFromFile(path);
     }
 
-    Texture::~Texture()
+    GLTexture::~GLTexture()
     {
         glDeleteTextures(1, &mObjectID);
     }
 
-    void Texture::Bind(uint32_t slot) const
+    void GLTexture::Bind(uint32_t slot) const
     {
         glBindTextureUnit(slot, mObjectID);
     }
 
-    void Texture::SetData(void* data, uint32_t size)
+    void GLTexture::SetData(void* data, uint32_t size)
     {
         uint32_t bpp = mDataFormat == GL_RGBA ? 4 : 3;
 
@@ -46,22 +46,22 @@ namespace Matcha
         glTextureSubImage2D(mObjectID, 0, 0, 0, mWidth, mHeight, mDataFormat, GL_UNSIGNED_BYTE, data);
     }
 
-    uint32_t Texture::GetWidth() const
+    uint32_t GLTexture::GetWidth() const
     {
         return mWidth;
     }
 
-    uint32_t Texture::GetHeight() const
+    uint32_t GLTexture::GetHeight() const
     {
         return mHeight;
     }
 
-    const std::string& Texture::GetPath() const
+    const std::string& GLTexture::GetPath() const
     {
         return mPath;
     }
     
-    void Texture::LoadTextureFromFile(std::string_view path)
+    void GLTexture::LoadTextureFromFile(std::string_view path)
     {
         stbi_set_flip_vertically_on_load(1);
 

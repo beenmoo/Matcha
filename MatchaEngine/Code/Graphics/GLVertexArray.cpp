@@ -1,31 +1,31 @@
-#include "VertexArray.h"
-#include "Core/Core.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
+#include "GLVertexArray.h"
+#include "Core/Assert.h"
+#include "GLVertexBuffer.h"
+#include "GLIndexBuffer.h"
 
 namespace Matcha
 {
-    VertexArray::VertexArray()
+    GLVertexArray::GLVertexArray()
     {
         glCreateVertexArrays(1, &mObjectID);
     }
     
-    VertexArray::~VertexArray()
+    GLVertexArray::~GLVertexArray()
     {
         glDeleteVertexArrays(1, &mObjectID);
     }
     
-    void VertexArray::Bind() const
+    void GLVertexArray::Bind() const
     {
         glBindVertexArray(mObjectID);
     }
     
-    void VertexArray::Unbind() const
+    void GLVertexArray::Unbind() const
     {
         glBindVertexArray(0);
     }
     
-    void VertexArray::InitAttributes(uint32_t vbIndex)
+    void GLVertexArray::InitAttributes(const GLuint vbIndex)
     {
         MT_ASSERT(vbIndex < mVertexBuffers.size(), "Index out of range!");
 
@@ -34,25 +34,25 @@ namespace Matcha
         const auto& buffer = mVertexBuffers[vbIndex];
         buffer->Bind();
 
-        uint32_t attribIndex = 0;
+        GLuint attribIndex = 0;
 
         auto layout = buffer->GetLayout();
 
         for (const auto& e : layout->GetElements())
         {
-            if (e.mType == ShaderUtils::ShaderDataType::Mat3 ||
-                e.mType == ShaderUtils::ShaderDataType::Mat4)
+            if (e.type == ShaderUtils::ShaderDataType::Mat3 ||
+                e.type == ShaderUtils::ShaderDataType::Mat4)
             {
-                uint8_t count = e.GetComponentCount();
+                GLuint count = e.GetComponentCount();
 
-                for (uint8_t i = 0; i < count; i++)
+                for (GLuint i = 0; i < count; i++)
                 {
                     glVertexAttribPointer(attribIndex,
                                           count,
-                                          ShaderUtils::ShaderDataTypeToGLDataType(e.mType),
-                                          e.mNormalized,
+                                          ShaderUtils::ShaderDataTypeToGLDataType(e.type),
+                                          e.normalized,
                                           layout->GetStride(),
-                                          (const void*)(e.mOffset + sizeof(float) * count * i));
+                                          (const GLvoid*)(e.offset + sizeof(GLfloat) * count * i));
                     glVertexAttribDivisor(attribIndex, 1);
                     glEnableVertexAttribArray(attribIndex++);
                 }
@@ -61,10 +61,10 @@ namespace Matcha
             {
                 glVertexAttribPointer(attribIndex,
                                       e.GetComponentCount(),
-                                      ShaderUtils::ShaderDataTypeToGLDataType(e.mType),
-                                      e.mNormalized,
+                                      ShaderUtils::ShaderDataTypeToGLDataType(e.type),
+                                      e.normalized,
                                       layout->GetStride(),
-                                      (const void*)e.mOffset);
+                                      (const GLvoid*)e.offset);
                 glEnableVertexAttribArray(attribIndex++);
             }
         }
@@ -72,16 +72,16 @@ namespace Matcha
         Unbind();
     }
 
-    void VertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer>& buffer)
+    void GLVertexArray::AddVertexBuffer(const std::shared_ptr<GLVertexBuffer> buffer)
     {
         MT_ASSERT(buffer->GetLayout(), "Vertex Buffer has no layout!");
 
         mVertexBuffers.emplace_back(buffer);
 
-        InitAttributes(static_cast<uint32_t>(mVertexBuffers.size() - 1));
+        InitAttributes(static_cast<GLuint>(mVertexBuffers.size() - 1));
     }
     
-    void VertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& buffer)
+    void GLVertexArray::SetIndexBuffer(const std::shared_ptr<GLIndexBuffer> buffer)
     {
         mIndexBuffer = buffer;
     }

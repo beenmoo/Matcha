@@ -1,5 +1,5 @@
 #include "Window.h"
-#include "Core.h"
+#include "Assert.h"
 #include "Context.h"
 
 #include <glad/glad.h>
@@ -10,12 +10,10 @@ namespace Matcha
     Window::Window(const WindowSpecification& spec) :
         mWindowSpec(spec)
     {
-        InitSDLContext();
-        InitWindow();
-        InitGLContext();
+        InitContext();
     }
 
-    void Window::ProcessEvents(const SDL_Event& evt)
+    void Window::ProcessEvents(const Event& evt)
     {
         switch (evt.type)
         {
@@ -69,28 +67,22 @@ namespace Matcha
         return SDL_GetWindowFlags(mNativeWindow) & SDL_WINDOW_MINIMIZED;
     }
 
-    void Window::InitSDLContext()
+    void Window::InitContext()
     {
-        if (SDL_Init(SDL_INIT_VIDEO) < 0)
+        if (!SDL_Init(SDL_INIT_VIDEO))
             MT_CORE_ERROR(SDL_GetError());
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    }
 
-    void Window::InitWindow()
-    {
         mNativeWindow = SDL_CreateWindow(GetWindowSpecification().mTitle.c_str(),
-                                         GetWindowSpecification().mWidth,
-                                         GetWindowSpecification().mHeight,
-                                         GetWindowSpecification().mFlags);
+            GetWindowSpecification().mWidth,
+            GetWindowSpecification().mHeight,
+            GetWindowSpecification().mFlags);
 
         MT_ASSERT(mNativeWindow, SDL_GetError());
-    }
 
-    void Window::InitGLContext()
-    {
         mGLContext = SDL_GL_CreateContext(mNativeWindow);
         SDL_GL_MakeCurrent(mNativeWindow, mGLContext);
 
