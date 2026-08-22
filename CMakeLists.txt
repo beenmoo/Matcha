@@ -12,11 +12,21 @@ set(VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vendor)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(BUILD_TESTS "Build the tests" ON)
+option(BUILD_EDITOR "Build the Matcha Editor" ON)
+
+find_package(SDL3 CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 add_subdirectory(Vendor)
 add_subdirectory(MatchaEngine)
 add_subdirectory(Sandbox)
-add_subdirectory(MatchaEditor)
+
+if (BUILD_EDITOR)
+    add_subdirectory(MatchaEditor)
+endif()
 
 if (BUILD_TESTS)
     add_subdirectory(Tests)
