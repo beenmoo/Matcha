@@ -11,28 +11,31 @@ int main(int argc, char** argv);
 
 namespace Matcha
 {
+    struct ApplicationCommandLineArgs
+    {
+        int mCount = 0;
+        char** mArgs = nullptr;
+
+        const char* operator[](int index) const
+        {
+            MT_ASSERT(index < mCount && index >= 0, "Out of range");
+
+            return mArgs[index];
+        }
+    };
+
+    struct ApplicationSpecification
+    {
+        std::string mTitle = "Application";
+        std::string mWorkingDirectory;
+        ApplicationCommandLineArgs mCommandLineArgs;
+    };
+
     class Application
     {
     public:
-        struct ApplicationCommandLineArgs
-        {
-            int mCount = 0;
-            char** mArgs = nullptr;
-
-            const char* operator[](int index) const
-            {
-                MT_ASSERT(index < mCount && index >= 0, "Out of range");
-
-                return mArgs[index];
-            }
-        };
-
-        struct ApplicationSpecification
-        {
-            std::string mTitle = "Application";
-            std::string mWorkingDirectory;
-            ApplicationCommandLineArgs mCommandLineArgs;
-        };
+        using ApplicationCommandLineArgs = Matcha::ApplicationCommandLineArgs;
+        using ApplicationSpecification = Matcha::ApplicationSpecification;
 
     public:
         Application(const ApplicationSpecification& spec = ApplicationSpecification());

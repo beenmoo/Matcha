@@ -11,18 +11,20 @@ namespace Matcha
 {
     class Context;
 
+    struct WindowSpecification
+    {
+        String mTitle = "Application";
+        int mWidth = 1280;
+        int mHeight = 720;
+        int mWindowLocationX = SDL_WINDOWPOS_CENTERED;
+        int mWindowLocationY = SDL_WINDOWPOS_CENTERED;
+        uint32_t mFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+    };
+
     class Window
     {
     public:
-        struct WindowSpecification
-        {
-            String mTitle = "Application";
-            int mWidth = 1280;
-            int mHeight = 720;
-            int mWindowLocationX = SDL_WINDOWPOS_CENTERED;
-            int mWindowLocationY = SDL_WINDOWPOS_CENTERED;
-            uint32_t mFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-        };
+        using WindowSpecification = Matcha::WindowSpecification;
 
     public:
         Window(const WindowSpecification& spec = WindowSpecification());
