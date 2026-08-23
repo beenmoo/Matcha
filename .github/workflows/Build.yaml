@@ -37,7 +37,9 @@ jobs:
           msbuild-architecture: 'x64'
       - name: Install Linux build tools
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y ninja-build clang
+        run: >
+          sudo apt-get update && sudo apt-get install -y ninja-build clang
+          autoconf automake libtool m4 pkg-config gettext
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
