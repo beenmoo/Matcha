@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-target_sources(${PROJECT_NAME} PRIVATE
+target_sources(${TARGET_NAME} PRIVATE
     GLFrameBuffer.cpp
     GLFrameBuffer.h
     GLIndexBuffer.cpp
@@ -15,4 +15,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     GLVertexArray.h
     GLVertexBuffer.cpp
     GLVertexBuffer.h
-    GLRenderData.h)
+    GLRenderData.h
+    stb_image_impl.cpp)

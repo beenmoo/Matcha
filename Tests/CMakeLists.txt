@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(Tests)
+set(TARGET_NAME Tests)
 
-add_executable(${PROJECT_NAME} Code/test.cpp)
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+add_executable(${TARGET_NAME} Code/test.cpp)
+add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})
 
-target_include_directories(${PROJECT_NAME} PUBLIC Code)
-target_precompile_headers(${PROJECT_NAME} PRIVATE Code/pch.h)
-target_link_libraries(${PROJECT_NAME} PRIVATE MatchaEngine gtest_main gmock_main)
+target_include_directories(${TARGET_NAME} PUBLIC Code)
+target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine gtest_main gmock_main)
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 
@@ -18,7 +18,7 @@ if (MSVC)
 endif()
 
 set_target_properties(
-    ${PROJECT_NAME} 
+    ${TARGET_NAME}
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"

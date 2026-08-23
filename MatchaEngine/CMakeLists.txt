@@ -1,20 +1,21 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(MatchaEngine)
+set(TARGET_NAME MatchaEngine)
 
-add_library(${PROJECT_NAME} STATIC)
+add_library(${TARGET_NAME} STATIC)
 
 add_subdirectory(Code/Core)
 add_subdirectory(Code/Graphics)
 add_subdirectory(Code/Math)
 add_subdirectory(Code/Utils)
 
-target_include_directories(${PROJECT_NAME} PUBLIC Code ${VENDOR_DIR})
-target_precompile_headers(${PROJECT_NAME} PRIVATE Code/pch.h)
-target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3 glm::glm spdlog::spdlog nlohmann_json::nlohmann_json stb_image glad)
+target_include_directories(${TARGET_NAME} PUBLIC Code)
+target_include_directories(${TARGET_NAME} PRIVATE ${Stb_INCLUDE_DIR})
+target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
+target_link_libraries(${TARGET_NAME} PUBLIC SDL3::SDL3 glm::glm spdlog::spdlog nlohmann_json::nlohmann_json glad)
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
-target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:MT_DEBUG=1>)
+target_compile_definitions(${TARGET_NAME} PRIVATE $<$<CONFIG:Debug>:MT_DEBUG=1>)
 
 if (MSVC)
     file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
@@ -23,7 +24,7 @@ if (MSVC)
 endif()
 
 set_target_properties(
-    ${PROJECT_NAME} 
+    ${TARGET_NAME}
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"

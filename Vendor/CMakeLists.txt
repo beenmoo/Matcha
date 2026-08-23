@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.15)
 include(FetchContent)
 
 add_subdirectory(glad)
-add_subdirectory(stb_image)
 
 if (BUILD_TESTS)
     FetchContent_Declare(
