@@ -1,0 +1,22 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterStruct: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterEnum: true
+  AfterControlStatement: true
+  BeforeCatch: true
+  BeforeElse: true
+ConstructorInitializerIndentWidth: 4
+SpaceBeforeCtorInitializerColon: true
+AllowShortFunctionsOnASingleLine: false
+ColumnLimit: 0
+PointerAlignment: Left
+SpacesBeforeTrailingComments: 2
+SortIncludes: false
