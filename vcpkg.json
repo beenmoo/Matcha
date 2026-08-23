@@ -2,7 +2,19 @@
     "name": "matcha",
     "version": "0.1.0",
     "dependencies": [
-        "sdl3",
+        {
+            "name": "sdl3",
+            "default-features": false,
+            "features": [
+                "wayland",
+                "x11"
+            ],
+            "platform": "linux"
+        },
+        {
+            "name": "sdl3",
+            "platform": "!linux"
+        },
         "nlohmann-json",
         "spdlog",
         "glm",
