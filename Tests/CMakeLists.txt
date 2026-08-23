@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.15)
 
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG release-1.12.1)
+FetchContent_MakeAvailable(googletest)
+set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "ThirdParty")
+
+enable_testing()
+
 set(TARGET_NAME Tests)
 
 add_executable(${TARGET_NAME} Code/test.cpp)
