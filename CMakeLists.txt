@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 4.2)
 
-include(GoogleTest)
-
 project(Matcha)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vendor)
 
@@ -20,6 +18,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(Stb REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 
 add_subdirectory(Vendor)
 add_subdirectory(MatchaEngine)

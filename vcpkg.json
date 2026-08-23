@@ -19,6 +19,7 @@
         "spdlog",
         "glm",
         "imgui",
-        "stb"
+        "stb",
+        "assimp"
     ]
 }
