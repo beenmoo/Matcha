@@ -4,12 +4,12 @@
 
 namespace Matcha
 {
-	Application* CreateApplication(const Application::ApplicationCommandLineArgs& args)
-	{
-		Application::ApplicationSpecification spec;
-		spec.mTitle = "Hazelnut";
-		spec.mCommandLineArgs = args;
+Application* CreateApplication(const Application::ApplicationCommandLineArgs& args)
+{
+    Application::ApplicationSpecification spec;
+    spec.mTitle = "Hazelnut";
+    spec.mCommandLineArgs = args;
 
-		return new Editor(spec);
-	}
+    return new Editor(spec);
 }
+}  // namespace Matcha

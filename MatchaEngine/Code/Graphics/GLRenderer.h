@@ -3,21 +3,24 @@
 #include "GLVertexArray.h"
 #include "GLRenderData.h"
 
-#include <queue>
+#include <vector>
 
 namespace Matcha
 {
-    class GLRenderer
-    {
-    public:
-        GLRenderer();
+class GLRenderer
+{
+public:
+    GLRenderer();
 
-        void Submit(const GLRenderData& renderData);
-        void Flush();
+    void Submit(const GLRenderData& renderData);
+    void Flush();
 
-    private:
-        GLVertexArray mVertexArray;
+private:
+    void SortRenderData();
 
-        std::queue<GLRenderData> mRenderData;
-    };
-}
+private:
+    GLVertexArray mVertexArray;
+
+    std::vector<GLRenderData> mRenderData;
+};
+}  // namespace Matcha

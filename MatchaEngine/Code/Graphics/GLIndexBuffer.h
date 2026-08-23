@@ -5,27 +5,23 @@
 
 namespace Matcha
 {
-    class GLIndexBuffer
-    {
-    public:
-        GLIndexBuffer(GLuint* indices, GLuint count);
-        ~GLIndexBuffer();
+class GLIndexBuffer
+{
+public:
+    GLIndexBuffer(GLuint* indices, GLuint count);
+    ~GLIndexBuffer();
 
-        void Bind() const;
-        void Unbind() const;
+    void AddIndices(std::initializer_list<GLuint> indices);
+    void SetIndices(GLuint* indices, GLuint count);
+    void SetIndicesNew(GLuint* indices, GLuint count);
+    void Clear();
 
-        void AddIndices(std::initializer_list<GLuint> indices);
-        void SetIndices(GLuint* indices, GLuint count);
-        void SetIndicesNew(GLuint* indices, GLuint count);
-        void Clear();
+    [[nodiscard]] GLuint GetHandle() const;
+    [[nodiscard]] GLuint GetCount() const;
 
-        GLuint GetCount() const;
-
-    private:
-        GLuint mObjectID;
-
-        GLenum mDrawType = GL_STATIC_DRAW;
-
-        std::vector<GLuint> mIndices;
-    };
-}
+private:
+    GLuint mHandle;
+    GLenum mDrawType = GL_STATIC_DRAW;
+    std::vector<GLuint> mIndices;
+};
+}  // namespace Matcha

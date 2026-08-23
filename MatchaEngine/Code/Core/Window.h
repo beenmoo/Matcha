@@ -1,55 +1,60 @@
 #pragma once
 
 #include "Math/Vector.h"
-#include "Core/Types.h"
+#include "Core/Event.h"
 
-#include <cstdint>
 #include <string>
-#include <SDL3/SDL.h>
+#include <memory>
+#include <optional>
 
 namespace Matcha
 {
-    class Context;
+class Context;
 
-    struct WindowSpecification
-    {
-        String mTitle = "Application";
-        int mWidth = 1280;
-        int mHeight = 720;
-        int mWindowLocationX = SDL_WINDOWPOS_CENTERED;
-        int mWindowLocationY = SDL_WINDOWPOS_CENTERED;
-        uint32_t mFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-    };
+struct WindowSpecification
+{
+    std::string mTitle = "Application";
+    int mWidth = 1280;
+    int mHeight = 720;
+    std::optional<Vector2Int> mPosition;
+    bool mResizable = true;
+};
 
-    class Window
-    {
-    public:
-        using WindowSpecification = Matcha::WindowSpecification;
+class Window
+{
+public:
+    using WindowSpecification = Matcha::WindowSpecification;
 
-    public:
-        Window(const WindowSpecification& spec = WindowSpecification());
+public:
+    Window(const WindowSpecification& spec = WindowSpecification());
+    ~Window();
 
-        void Resize(int width, int height);
-        void SwapBuffers();
-        void ProcessEvents(const Event& evt);
+    Window(const Window&) = delete;
+    Window& operator=(const Window&) = delete;
+    Window(Window&&) noexcept;
+    Window& operator=(Window&&) noexcept;
 
-        int GetWidth() const;
-        int GetHeight() const;
-        Vector2Int GetCenter() const;
-        float GetAspectRatio() const;
+    void Resize(int width, int height);
+    void SwapBuffers();
+    void ProcessEvents(const Event& evt);
 
-        const WindowSpecification& GetWindowSpecification() const;
+    [[nodiscard]] int GetWidth() const;
+    [[nodiscard]] int GetHeight() const;
+    [[nodiscard]] Vector2Int GetCenter() const;
+    [[nodiscard]] float GetAspectRatio() const;
 
-        bool IsMinimized() const;
+    [[nodiscard]] const WindowSpecification& GetWindowSpecification() const;
 
-    private:
-        void InitContext();
+    [[nodiscard]] bool IsMinimized() const;
 
-    private:
-        GLWindow* mNativeWindow = nullptr;
-        GLContext mGLContext;
+private:
+    void InitContext();
 
-        WindowSpecification mWindowSpec;
-        bool mIsOpen = false;
-    };
-}
+private:
+    struct Impl;
+    std::unique_ptr<Impl> mImpl;
+
+    WindowSpecification mWindowSpec;
+    bool mIsOpen = false;
+};
+}  // namespace Matcha

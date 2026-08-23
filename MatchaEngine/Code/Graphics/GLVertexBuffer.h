@@ -8,123 +8,121 @@
 
 namespace Matcha
 {
-    class GLVertexBuffer
+class GLVertexBuffer
+{
+public:
+    class BufferLayout
     {
-    public:
-        class BufferLayout
+    private:
+        struct BufferElement
         {
-        private:
-            struct BufferElement
+            ShaderUtils::ShaderDataType type = ShaderUtils::ShaderDataType::None;
+            GLuint size = 0;
+            size_t offset = 0;
+            GLboolean normalized = false;
+
+            BufferElement(ShaderUtils::ShaderDataType type, GLboolean normalized = false) : type(type),
+                                                                                            size(ShaderUtils::ShaderDataTypeSize(type)),
+                                                                                            normalized(normalized)
             {
-                ShaderUtils::ShaderDataType type = ShaderUtils::ShaderDataType::None;
-                GLuint size = 0;
-                size_t offset = 0;
-                GLboolean normalized = false;
+            }
 
-                BufferElement(ShaderUtils::ShaderDataType type, GLboolean normalized = false) :
-                    type(type), 
-                    size(ShaderUtils::ShaderDataTypeSize(type)),
-                    normalized(normalized)
-                {}
-
-                uint32_t GetComponentCount() const
+            [[nodiscard]] uint32_t GetComponentCount() const
+            {
+                switch (type)
                 {
-                    switch (type)
-                    {
-                    case ShaderUtils::ShaderDataType::Float:   
-                        return 1;
-                    case ShaderUtils::ShaderDataType::Float2:  
-                        return 2;
-                    case ShaderUtils::ShaderDataType::Float3:  
-                        return 3;
-                    case ShaderUtils::ShaderDataType::Float4:  
-                        return 4;
-                    case ShaderUtils::ShaderDataType::Mat3:    
-                        return 3; 
-                    case ShaderUtils::ShaderDataType::Mat4:    
-                        return 4; 
-                    case ShaderUtils::ShaderDataType::Int:     
-                        return 1;
-                    case ShaderUtils::ShaderDataType::Int2:    
-                        return 2;
-                    case ShaderUtils::ShaderDataType::Int3:    
-                        return 3;
-                    case ShaderUtils::ShaderDataType::Int4:    
-                        return 4;
-                    case ShaderUtils::ShaderDataType::Bool:    
-                        return 1;
-                    default:
-                        break;
-                    }
-
-                    return 0;
+                case ShaderUtils::ShaderDataType::Float:
+                    return 1;
+                case ShaderUtils::ShaderDataType::Float2:
+                    return 2;
+                case ShaderUtils::ShaderDataType::Float3:
+                    return 3;
+                case ShaderUtils::ShaderDataType::Float4:
+                    return 4;
+                case ShaderUtils::ShaderDataType::Mat3:
+                    return 3;
+                case ShaderUtils::ShaderDataType::Mat4:
+                    return 4;
+                case ShaderUtils::ShaderDataType::Int:
+                    return 1;
+                case ShaderUtils::ShaderDataType::Int2:
+                    return 2;
+                case ShaderUtils::ShaderDataType::Int3:
+                    return 3;
+                case ShaderUtils::ShaderDataType::Int4:
+                    return 4;
+                case ShaderUtils::ShaderDataType::Bool:
+                    return 1;
+                default:
+                    break;
                 }
-            };
 
-        public:
-            BufferLayout(std::initializer_list<ShaderUtils::ShaderDataType> dataTypes, GLboolean normalized = false)
-            {
-                for (const auto& i : dataTypes)
-                    mElements.emplace_back(BufferElement(i, normalized));
-
-                CalculateOffsetsAndStride();
+                return 0;
             }
-
-            const std::vector<BufferElement>& GetElements() const
-            {
-                return mElements;
-            }
-
-            uint32_t GetStride() const
-            {
-                return mStride;
-            }
-
-        private:
-            void CalculateOffsetsAndStride()
-            {
-                size_t offset = 0;
-                mStride = 0;
-
-                for (auto& e : mElements)
-                {
-                    e.offset += offset;
-                    offset += e.offset;
-                    mStride += e.size;
-                }
-            }
-
-        private:
-            std::vector<BufferElement> mElements;
-
-            GLsizei mStride = 0;
         };
 
     public:
-        GLVertexBuffer(GLuint sizeInBytes = 0);
-        GLVertexBuffer(const GLfloat* vertices, GLuint sizeInBytes);
-        ~GLVertexBuffer();
+        BufferLayout(std::initializer_list<ShaderUtils::ShaderDataType> dataTypes, GLboolean normalized = false)
+        {
+            for (const auto& i : dataTypes)
+                mElements.emplace_back(BufferElement(i, normalized));
 
-        void Bind() const;
-        void Unbind() const;
+            CalculateOffsetsAndStride();
+        }
 
-        void AddVertex(std::initializer_list<GLfloat> vertex);
-        void SetVertices(const GLfloat* vertices, GLuint sizeInBytes);
-        void SetVerticesNew(const GLfloat* vertices, GLuint sizeInBytes);
-        void SetDrawType(GLenum drawType);
-        void Clear();
+        [[nodiscard]] const std::vector<BufferElement>& GetElements() const
+        {
+            return mElements;
+        }
 
-        void SetLayout(const std::shared_ptr<BufferLayout> layout);
-        const BufferLayout* GetLayout() const;
-
-        GLuint GetSizeInBytes() const;
+        [[nodiscard]] uint32_t GetStride() const
+        {
+            return mStride;
+        }
 
     private:
-        GLuint mObjectID;
+        void CalculateOffsetsAndStride()
+        {
+            size_t offset = 0;
+            mStride = 0;
 
-        GLenum mDrawType = GL_STATIC_DRAW;
+            for (auto& e : mElements)
+            {
+                e.offset += offset;
+                offset += e.offset;
+                mStride += e.size;
+            }
+        }
 
-        std::shared_ptr<BufferLayout> mLayout = nullptr;
-        std::vector<GLfloat> mVertices;
+    private:
+        std::vector<BufferElement> mElements;
+
+        GLsizei mStride = 0;
     };
-}
+
+public:
+    GLVertexBuffer(GLuint sizeInBytes = 0);
+    GLVertexBuffer(const GLfloat* vertices, GLuint sizeInBytes);
+    ~GLVertexBuffer();
+
+    void AddVertex(std::initializer_list<GLfloat> vertex);
+    void SetVertices(const GLfloat* vertices, GLuint sizeInBytes);
+    void SetVerticesNew(const GLfloat* vertices, GLuint sizeInBytes);
+    void SetDrawType(GLenum drawType);
+    void Clear();
+
+    void SetLayout(const std::shared_ptr<BufferLayout> layout);
+    [[nodiscard]] const BufferLayout* GetLayout() const;
+
+    [[nodiscard]] GLuint GetHandle() const;
+    [[nodiscard]] GLuint GetSizeInBytes() const;
+
+private:
+    GLuint mHandle;
+
+    GLenum mDrawType = GL_STATIC_DRAW;
+
+    std::shared_ptr<BufferLayout> mLayout = nullptr;
+    std::vector<GLfloat> mVertices;
+};
+}  // namespace Matcha

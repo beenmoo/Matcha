@@ -3,87 +3,72 @@
 
 namespace Matcha
 {
-    GLFrameBuffer::GLFrameBuffer(const FrameBufferSpecification& spec) :
-        mSpecification(spec)
-    {
-        Invalidate();
-    }
+GLFrameBuffer::GLFrameBuffer(const FrameBufferSpecification& spec) : mSpecification(spec)
+{
+    Invalidate();
+}
 
-    GLFrameBuffer::~GLFrameBuffer()
+GLFrameBuffer::~GLFrameBuffer()
+{
+    glDeleteFramebuffers(1, &mHandle);
+    glDeleteRenderbuffers(1, &mDepthAttachmentID);
+    glDeleteTextures(1, &mColorAttachmentID);
+}
+
+void GLFrameBuffer::Bind() const
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, mHandle);
+}
+
+void GLFrameBuffer::Unbind() const
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GLFrameBuffer::Invalidate()
+{
+    if (mHandle)
     {
-        glDeleteFramebuffers(1, &mObjectID);
+        glDeleteFramebuffers(1, &mHandle);
         glDeleteRenderbuffers(1, &mDepthAttachmentID);
         glDeleteTextures(1, &mColorAttachmentID);
+
+        mHandle = 0;
+        mDepthAttachmentID = 0;
     }
 
-    void GLFrameBuffer::Bind() const
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, mObjectID);
-    }
+    glCreateFramebuffers(1, &mHandle);
 
-    void GLFrameBuffer::Unbind() const
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+    glCreateTextures(GL_TEXTURE_2D, 1, &mColorAttachmentID);
+    glTextureStorage2D(mColorAttachmentID, 1, mSpecification.mTextureFormat, mSpecification.mWidth, mSpecification.mHeight);
+    glTextureParameteri(mColorAttachmentID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(mColorAttachmentID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glNamedFramebufferTexture(mHandle, GL_COLOR_ATTACHMENT0, mColorAttachmentID, 0);
 
-    void GLFrameBuffer::Invalidate()
-    {
-        if (mObjectID)
-        {
-            glDeleteFramebuffers(1, &mObjectID);
-            glDeleteRenderbuffers(1, &mDepthAttachmentID);
-            glDeleteTextures(1, &mColorAttachmentID);
+    glCreateRenderbuffers(1, &mDepthAttachmentID);
+    glNamedRenderbufferStorage(mDepthAttachmentID, mSpecification.mDepthFormat, mSpecification.mWidth, mSpecification.mHeight);
+    glNamedFramebufferRenderbuffer(mHandle, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthAttachmentID);
 
-            mObjectID = 0;
-            mDepthAttachmentID = 0;
-        }
-
-        glCreateFramebuffers(1, &mObjectID);
-        Bind();
-
-        glCreateTextures(GL_TEXTURE_2D, 1, &mColorAttachmentID);
-        glBindTexture(GL_TEXTURE_2D, mColorAttachmentID);
-        glTexImage2D(GL_TEXTURE_2D, 0,
-                     mSpecification.mTextureFormat,
-                     mSpecification.mWidth, mSpecification.mHeight,
-                     0,
-                     mSpecification.mTextureFormat,
-                     GL_UNSIGNED_BYTE,
-                     nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mColorAttachmentID, 0);
-
-        glCreateRenderbuffers(1, &mDepthAttachmentID);
-        glBindRenderbuffer(GL_RENDERBUFFER, mDepthAttachmentID);
-        glRenderbufferStorage(GL_RENDERBUFFER, 
-                              mSpecification.mDepthFormat, 
-                              mSpecification.mWidth, mSpecification.mHeight);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-        MT_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
-
-        Unbind();
-    }
-
-    GLuint GLFrameBuffer::GetObjectID() const
-    {
-        return mObjectID;
-    }
-
-    GLuint GLFrameBuffer::GetColorAttachmentID() const
-    {
-        return mColorAttachmentID;
-    }
-
-    GLuint GLFrameBuffer::GetDepthAttachmentID() const
-    {
-        return mDepthAttachmentID;
-    }
-
-    const GLFrameBuffer::FrameBufferSpecification& GLFrameBuffer::GetSpecification() const
-    {
-        return mSpecification;
-    }
+    MT_ASSERT(glCheckNamedFramebufferStatus(mHandle, GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
 }
+
+GLuint GLFrameBuffer::GetHandle() const
+{
+    return mHandle;
+}
+
+GLuint GLFrameBuffer::GetColorAttachmentID() const
+{
+    return mColorAttachmentID;
+}
+
+GLuint GLFrameBuffer::GetDepthAttachmentID() const
+{
+    return mDepthAttachmentID;
+}
+
+const GLFrameBuffer::FrameBufferSpecification& GLFrameBuffer::GetSpecification() const
+{
+    return mSpecification;
+}
+}  // namespace Matcha

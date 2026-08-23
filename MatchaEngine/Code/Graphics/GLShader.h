@@ -1,36 +1,36 @@
 #pragma once
 
-#include "Core/Types.h"
-
 #include <unordered_map>
 #include <string>
+#include <string_view>
 #include <initializer_list>
 #include <utility>
+#include <expected>
 #include <glad/glad.h>
 
 namespace Matcha
 {
-    class GLShader
-    {
-    public:
-        GLShader(
-            std::string_view name,
-            const std::initializer_list<String>& paths);
-        ~GLShader();
+class GLShader
+{
+public:
+    GLShader(
+        std::string_view name,
+        const std::initializer_list<std::string>& paths);
+    ~GLShader();
 
-        void Bind() const;
-        void Unbind() const;
+    void Bind() const;
+    void Unbind() const;
 
-        const String& GetName() const;
+    [[nodiscard]] const std::string& GetName() const;
+    [[nodiscard]] GLuint GetHandle() const;
 
-    private:
-        bool ParseFile(const String& path);
-        bool CreateProgram();
+private:
+    [[nodiscard("error must be handled")]] std::expected<void, std::string> ParseFile(const std::string& path);
+    [[nodiscard("error must be handled")]] std::expected<void, std::string> CreateProgram();
 
-    private:
-        GLuint mObjectID;
-
-        String mName;
-        std::unordered_map<GLenum, std::pair<String, String>> mSources;
-    };
-}
+private:
+    GLuint mHandle;
+    std::string mName;
+    std::unordered_map<GLenum, std::pair<std::string, std::string>> mSources;
+};
+}  // namespace Matcha

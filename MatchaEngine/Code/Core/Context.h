@@ -1,36 +1,34 @@
 #pragma once
 
-#include <SDL3/SDL.h>
-
 namespace Matcha
 {
-    class Application;
-    class Input;
-    class Logger;
-    class Time;
-    class Window;
+class Application;
+class Input;
+class Logger;
+class Time;
+class Window;
 
-    class Context
-    {
-    public:
-        Context(Application& application,
-                Input& input,
-                Time& time,
-                Window& window);
+class Context
+{
+public:
+    Context(Application& application,
+            Input& input,
+            Time& time,
+            Window& window);
 
-        Application& GetApplication();
-        const Application& GetApplication() const;
-        Input& GetInput();
-        const Input& GetInput() const;
-        Time& GetTime();
-        const Time& GetTime() const;
-        Window& GetWindow();
-        const Window& GetWindow() const;
+    [[nodiscard]] Application& GetApplication();
+    [[nodiscard]] const Application& GetApplication() const;
+    [[nodiscard]] Input& GetInput();
+    [[nodiscard]] const Input& GetInput() const;
+    [[nodiscard]] Time& GetTime();
+    [[nodiscard]] const Time& GetTime() const;
+    [[nodiscard]] Window& GetWindow();
+    [[nodiscard]] const Window& GetWindow() const;
 
-    private:
-        Application& mApplication;
-        Input& mInput;
-        Time& mTime;
-        Window& mWindow;
-    };
-}
+private:
+    Application& mApplication;
+    Input& mInput;
+    Time& mTime;
+    Window& mWindow;
+};
+}  // namespace Matcha

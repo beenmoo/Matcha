@@ -6,6 +6,7 @@ target_sources(${TARGET_NAME} PRIVATE
     Context.h
     Core.h
     EntryPoint.h
+    Event.h
     Input.cpp
     Input.h
     KeyCodes.h
@@ -15,5 +16,4 @@ target_sources(${TARGET_NAME} PRIVATE
     Time.cpp
     Time.h
     Window.cpp
-    Window.h
-    Types.h)
+    Window.h)

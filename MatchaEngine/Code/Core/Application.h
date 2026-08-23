@@ -11,59 +11,62 @@ int main(int argc, char** argv);
 
 namespace Matcha
 {
-    struct ApplicationCommandLineArgs
+struct ApplicationCommandLineArgs
+{
+    int mCount = 0;
+    char** mArgs = nullptr;
+
+    [[nodiscard]] const char* operator[](int index) const
     {
-        int mCount = 0;
-        char** mArgs = nullptr;
+        MT_ASSERT(index < mCount && index >= 0, "Out of range");
 
-        const char* operator[](int index) const
-        {
-            MT_ASSERT(index < mCount && index >= 0, "Out of range");
+        return mArgs[index];
+    }
+};
 
-            return mArgs[index];
-        }
-    };
+struct ApplicationSpecification
+{
+    std::string mTitle = "Application";
+    std::string mWorkingDirectory;
+    ApplicationCommandLineArgs mCommandLineArgs;
+};
 
-    struct ApplicationSpecification
+class Application
+{
+public:
+    using ApplicationCommandLineArgs = Matcha::ApplicationCommandLineArgs;
+    using ApplicationSpecification = Matcha::ApplicationSpecification;
+
+public:
+    Application(const ApplicationSpecification& spec = ApplicationSpecification());
+    virtual ~Application();
+
+    void Run();
+    void Quit();
+
+protected:
+    template <typename Self>
+    [[nodiscard]] auto& GetContext(this Self& self)
     {
-        std::string mTitle = "Application";
-        std::string mWorkingDirectory;
-        ApplicationCommandLineArgs mCommandLineArgs;
-    };
+        return self.mContext;
+    }
 
-    class Application
-    {
-    public:
-        using ApplicationCommandLineArgs = Matcha::ApplicationCommandLineArgs;
-        using ApplicationSpecification = Matcha::ApplicationSpecification;
+private:
+    void Update();
+    void PollEvents();
+    void LogContext();
 
-    public:
-        Application(const ApplicationSpecification& spec = ApplicationSpecification());
-        virtual ~Application();
+private:
+    ApplicationSpecification mAppSpec;
 
-        void Run();
-        void Quit();
+    Input mInput;
+    Logger mLogger;
+    Time mTime;
+    Window mWindow;
+    Context mContext;
 
-    protected:
-        Context& GetContext();
-        const Context& GetContext() const;
+    bool mIsRunning = false;
+};
 
-    private:
-        void Update();
-        void PollEvents();
-        void LogContext();
-
-    private:
-        ApplicationSpecification mAppSpec;
-
-        Input mInput;
-        Logger mLogger;
-        Time mTime;
-        Window mWindow;
-        Context mContext;
-
-        bool mIsRunning = false;
-    };
-
-    Application* CreateApplication(const Application::ApplicationCommandLineArgs& args);
-}
+[[nodiscard]] Application* CreateApplication(const Application::ApplicationCommandLineArgs& args);
+}  // namespace Matcha

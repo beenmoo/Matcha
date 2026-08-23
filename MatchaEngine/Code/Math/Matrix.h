@@ -4,5 +4,5 @@
 
 namespace Matcha
 {
-    using Matrix4 = glm::mat4;
+using Matrix4 = glm::mat4;
 }

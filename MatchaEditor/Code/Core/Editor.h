@@ -4,10 +4,10 @@
 
 namespace Matcha
 {
-    class Editor : public Application
-    {
-    public:
-        Editor(const Application::ApplicationSpecification& spec);
-        virtual ~Editor() = default;
-    }; 
-}
+class Editor : public Application
+{
+public:
+    Editor(const Application::ApplicationSpecification& spec);
+    virtual ~Editor() = default;
+};
+}  // namespace Matcha

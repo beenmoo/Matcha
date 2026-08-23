@@ -4,5 +4,5 @@
 
 namespace Matcha
 {
-    using Quaternion = glm::quat;
+using Quaternion = glm::quat;
 }

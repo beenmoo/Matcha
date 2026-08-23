@@ -1,19 +1,19 @@
 #pragma once
 
-#include "Types.h"
+#include <cstdint>
 
 namespace Matcha
 {
-    class Time
-    {
-    public:
-        void Update();
+class Time
+{
+public:
+    void Update();
 
-        float GetDeltaTime() const;
+    [[nodiscard]] float GetDeltaTime() const;
 
-    private:
-        uint64 mLastFrameTime = 0;
-        uint64 mElapsedTime = 0;
-        float mDeltaTime = 0.0f;
-    };
-}
+private:
+    std::uint64_t mLastFrameTime = 0;
+    std::uint64_t mElapsedTime = 0;
+    float mDeltaTime = 0.0f;
+};
+}  // namespace Matcha
