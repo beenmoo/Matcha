@@ -19,11 +19,11 @@ public:
 
     [[nodiscard]] const float* GetData() const
     {
-        return mData;
+        return m_Data;
     }
 
 private:
-    float mData[16] = {};
+    float m_Data[16] = {};
 };
 
 [[nodiscard]] Matrix4 Translate(const Matrix4& m, const Vector3& translation);

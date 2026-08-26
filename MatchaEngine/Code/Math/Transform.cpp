@@ -4,22 +4,22 @@
 
 namespace Matcha
 {
-Transform::Transform() : mPosition(0.0f),
-                         mRotation(Vector3(0.0f)),
-                         mScale(1.0f)
+Transform::Transform() : m_Position(0.0f),
+                         m_Rotation(Vector3(0.0f)),
+                         m_Scale(1.0f)
 {
 }
 
 void Transform::Translate(const Vector3& translation)
 {
-    mPosition += translation;
+    m_Position += translation;
 }
 
 void Transform::Translate(float x, float y, float z)
 {
-    mPosition.x += x;
-    mPosition.y += y;
-    mPosition.z += z;
+    m_Position.x += x;
+    m_Position.y += y;
+    m_Position.z += z;
 }
 
 void Transform::Rotate(const Vector3& eulers, Space space)
@@ -29,10 +29,10 @@ void Transform::Rotate(const Vector3& eulers, Space space)
     switch (space)
     {
     case Space::Self:
-        mRotation *= rot;
+        m_Rotation *= rot;
         break;
     case Space::World:
-        mRotation = rot * mRotation;
+        m_Rotation = rot * m_Rotation;
         break;
     default:
         std::unreachable();
@@ -51,10 +51,10 @@ void Transform::Rotate(const Vector3& axis, float angle, Space space)
     switch (space)
     {
     case Space::Self:
-        mRotation *= rot;
+        m_Rotation *= rot;
         break;
     case Space::World:
-        mRotation = rot * mRotation;
+        m_Rotation = rot * m_Rotation;
         break;
     default:
         std::unreachable();
@@ -63,7 +63,7 @@ void Transform::Rotate(const Vector3& axis, float angle, Space space)
 
 void Transform::SetPosition(const Vector3& position)
 {
-    mPosition = position;
+    m_Position = position;
 }
 
 void Transform::SetPosition(float x, float y, float z)
@@ -73,12 +73,12 @@ void Transform::SetPosition(float x, float y, float z)
 
 void Transform::SetRotation(const Quaternion& rotation)
 {
-    mRotation = rotation;
+    m_Rotation = rotation;
 }
 
 void Transform::SetRotationEuler(const Vector3& eulers)
 {
-    mRotation = Quaternion(Radians(eulers));
+    m_Rotation = Quaternion(Radians(eulers));
 }
 
 void Transform::SetRotationEuler(float x, float y, float z)
@@ -88,17 +88,17 @@ void Transform::SetRotationEuler(float x, float y, float z)
 
 const Quaternion& Transform::GetRotation() const
 {
-    return mRotation;
+    return m_Rotation;
 }
 
 Vector3 Transform::GetRotationEuler() const
 {
-    return EulerAngles(mRotation);
+    return EulerAngles(m_Rotation);
 }
 
 void Transform::SetScale(const Vector3& scale)
 {
-    mScale = scale;
+    m_Scale = scale;
 }
 
 void Transform::SetScale(float x, float y, float z)
@@ -108,31 +108,31 @@ void Transform::SetScale(float x, float y, float z)
 
 const Vector3& Transform::GetScale() const
 {
-    return mScale;
+    return m_Scale;
 }
 
 Vector3 Transform::GetForward() const
 {
-    return Inverse(mRotation) * Vector3(0.0f, 0.0f, -1.0f);
+    return Inverse(m_Rotation) * Vector3(0.0f, 0.0f, -1.0f);
 }
 
 Vector3 Transform::GetRight() const
 {
-    return Inverse(mRotation) * Vector3(1.0f, 0.0f, 0.0f);
+    return Inverse(m_Rotation) * Vector3(1.0f, 0.0f, 0.0f);
 }
 
 Vector3 Transform::GetUp() const
 {
-    return Inverse(mRotation) * Vector3(0.0f, 1.0f, 0.0f);
+    return Inverse(m_Rotation) * Vector3(0.0f, 1.0f, 0.0f);
 }
 
 Matrix4 Transform::GetModelMatrix() const
 {
     Matrix4 model(1.0f);
 
-    const Matrix4 translate = Matcha::Translate(model, mPosition);
-    const Matrix4 rotate = ToMat4(mRotation);
-    const Matrix4 scale = Matcha::Scale(model, mScale);
+    const Matrix4 translate = Matcha::Translate(model, m_Position);
+    const Matrix4 rotate = ToMat4(m_Rotation);
+    const Matrix4 scale = Matcha::Scale(model, m_Scale);
 
     model = translate * rotate * scale;
 

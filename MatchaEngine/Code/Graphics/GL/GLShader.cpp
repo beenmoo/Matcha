@@ -11,7 +11,7 @@ namespace Matcha
 {
 GLShader::GLShader(
     std::string_view name,
-    const std::initializer_list<std::string>& paths) : mHandle(glCreateProgram())
+    const std::initializer_list<std::string>& paths) : m_Handle(glCreateProgram())
 {
     for (const auto& p : paths)
     {
@@ -23,18 +23,18 @@ GLShader::GLShader(
         }
     }
 
-    if (auto result = Utils::CreateProgram(mSources, mHandle); !result)
+    if (auto result = Utils::CreateProgram(m_Sources, m_Handle); !result)
         MT_CORE_ERROR("Failed to create shader: {0}", result.error());
 }
 
 GLShader::~GLShader()
 {
-    glDeleteProgram(mHandle);
+    glDeleteProgram(m_Handle);
 }
 
 void GLShader::Bind() const
 {
-    glUseProgram(mHandle);
+    glUseProgram(m_Handle);
 }
 
 void GLShader::Unbind() const
@@ -45,9 +45,9 @@ void GLShader::Unbind() const
 bool GLShader::Reload()
 {
     std::vector<std::string> paths;
-    paths.reserve(mSources.size());
+    paths.reserve(m_Sources.size());
 
-    for (const auto& [type, source] : mSources)
+    for (const auto& [type, source] : m_Sources)
         paths.push_back(source.first);
 
     for (const auto& path : paths)
@@ -61,7 +61,7 @@ bool GLShader::Reload()
 
     GLuint newHandle = glCreateProgram();
 
-    auto result = Utils::CreateProgram(mSources, newHandle);
+    auto result = Utils::CreateProgram(m_Sources, newHandle);
 
     if (!result)
     {
@@ -70,17 +70,17 @@ bool GLShader::Reload()
         return false;
     }
 
-    if (mHandle != 0)
-        glDeleteProgram(mHandle);
+    if (m_Handle != 0)
+        glDeleteProgram(m_Handle);
 
-    mHandle = newHandle;
+    m_Handle = newHandle;
 
     return true;
 }
 
 GLuint GLShader::GetHandle() const
 {
-    return mHandle;
+    return m_Handle;
 }
 
 std::expected<void, std::string> GLShader::ParseFile(const std::string& path)
@@ -102,7 +102,7 @@ std::expected<void, std::string> GLShader::ParseFile(const std::string& path)
 
     std::string source{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 
-    mSources[shaderType] = std::make_pair(path, source);
+    m_Sources[shaderType] = std::make_pair(path, source);
 
     return {};
 }

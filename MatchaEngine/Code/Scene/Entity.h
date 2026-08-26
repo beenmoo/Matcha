@@ -7,10 +7,10 @@ public:
     virtual ~Entity() = default;
 
     virtual void Update();
-    void SetActive(bool active) { mActive = active; }
-    [[nodiscard]] bool IsActive() const { return mActive; }
+    void SetActive(bool active) { m_Active = active; }
+    [[nodiscard]] bool IsActive() const { return m_Active; }
 
 private:
-    bool mActive = true;
+    bool m_Active = true;
 };
 }

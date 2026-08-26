@@ -7,23 +7,23 @@
 
 namespace Matcha
 {
-GLRenderer::GLRenderer(GLResourceManager& resourceManager) : mResourceManager(resourceManager)
+GLRenderer::GLRenderer(GLResourceManager& resourceManager) : m_ResourceManager(resourceManager)
 {
 }
 
 void GLRenderer::Submit(const RenderData& renderData)
 {
-    mRenderData.emplace_back(renderData);
+    m_RenderData.emplace_back(renderData);
 }
 
 void GLRenderer::Flush()
 {
     SortRenderData();
 
-    for (const auto& renderData : mRenderData)
+    for (const auto& renderData : m_RenderData)
     {
-        auto* mesh = mResourceManager.GetMesh(renderData.mesh);
-        auto* shader = mResourceManager.GetShader(renderData.shader);
+        auto* mesh = m_ResourceManager.GetMesh(renderData.mesh);
+        auto* shader = m_ResourceManager.GetShader(renderData.shader);
 
         MT_ASSERT(mesh, "Submitted RenderData references an unknown mesh handle!");
         MT_ASSERT(shader, "Submitted RenderData references an unknown shader handle!");
@@ -33,7 +33,7 @@ void GLRenderer::Flush()
 
         if (renderData.texture.IsValid())
         {
-            auto* texture = mResourceManager.GetTexture(renderData.texture);
+            auto* texture = m_ResourceManager.GetTexture(renderData.texture);
 
             MT_ASSERT(texture, "Submitted RenderData references an unknown texture handle!");
 
@@ -43,12 +43,12 @@ void GLRenderer::Flush()
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(renderData.indexCount), GL_UNSIGNED_INT, nullptr);
     }
 
-    mRenderData.clear();
+    m_RenderData.clear();
 }
 
 void GLRenderer::SortRenderData()
 {
-    std::sort(mRenderData.begin(), mRenderData.end(), [](const RenderData& a, const RenderData& b) {
+    std::sort(m_RenderData.begin(), m_RenderData.end(), [](const RenderData& a, const RenderData& b) {
         if (a.shader.GetID() != b.shader.GetID())
             return a.shader.GetID() < b.shader.GetID();
 

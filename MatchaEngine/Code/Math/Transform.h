@@ -31,7 +31,7 @@ public:
     template <typename Self>
     [[nodiscard]] auto& GetPosition(this Self& self)
     {
-        return self.mPosition;
+        return self.m_Position;
     }
 
     void SetRotation(const Quaternion& rotation);
@@ -53,8 +53,8 @@ public:
     Transform& operator*=(const Transform& rhs);
 
 private:
-    Vector3 mPosition;
-    Quaternion mRotation;
-    Vector3 mScale;
+    Vector3 m_Position;
+    Quaternion m_Rotation;
+    Vector3 m_Scale;
 };
 }  // namespace Matcha

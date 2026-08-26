@@ -9,10 +9,10 @@ class GLFrameBuffer
 public:
     struct FrameBufferSpecification
     {
-        GLuint mWidth = 0, mHeight = 0;
-        GLuint mNumSamples = 1;
-        GLenum mTextureFormat = GL_RGB8;
-        GLenum mDepthFormat = GL_DEPTH24_STENCIL8;
+        GLuint m_Width = 0, m_Height = 0;
+        GLuint m_NumSamples = 1;
+        GLenum m_TextureFormat = GL_RGB8;
+        GLenum m_DepthFormat = GL_DEPTH24_STENCIL8;
     };
 
 public:
@@ -31,9 +31,9 @@ public:
     [[nodiscard]] const FrameBufferSpecification& GetSpecification() const;
 
 private:
-    GLuint mHandle = 0;
-    GLuint mColorAttachmentID = 0;
-    GLuint mDepthAttachmentID = 0;
-    FrameBufferSpecification mSpecification;
+    GLuint m_Handle = 0;
+    GLuint m_ColorAttachmentID = 0;
+    GLuint m_DepthAttachmentID = 0;
+    FrameBufferSpecification m_Specification;
 };
 }  // namespace Matcha

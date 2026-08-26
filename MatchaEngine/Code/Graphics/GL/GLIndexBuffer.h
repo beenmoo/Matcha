@@ -20,8 +20,8 @@ public:
     [[nodiscard]] GLuint GetCount() const;
 
 private:
-    GLuint mHandle;
-    GLenum mDrawType = GL_STATIC_DRAW;
-    std::vector<GLuint> mIndices;
+    GLuint m_Handle;
+    GLenum m_DrawType = GL_STATIC_DRAW;
+    std::vector<GLuint> m_Indices;
 };
 }  // namespace Matcha

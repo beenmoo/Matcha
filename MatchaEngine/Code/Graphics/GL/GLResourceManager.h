@@ -56,21 +56,21 @@ private:
     void WatchShaderPaths(uint32_t shaderID, const std::initializer_list<std::string>& paths);
 
 private:
-    uint32_t mNextShaderID = 1;
-    uint32_t mNextTextureID = 1;
-    uint32_t mNextMeshID = 1;
+    uint32_t m_NextShaderID = 1;
+    uint32_t m_NextTextureID = 1;
+    uint32_t m_NextMeshID = 1;
 
-    std::unordered_map<uint32_t, std::unique_ptr<GLShader>> mShaders;
-    std::unordered_map<uint32_t, std::unique_ptr<GLTexture>> mTextures;
-    std::unordered_map<uint32_t, std::unique_ptr<Mesh>> mMeshes;
+    std::unordered_map<uint32_t, std::unique_ptr<GLShader>> m_Shaders;
+    std::unordered_map<uint32_t, std::unique_ptr<GLTexture>> m_Textures;
+    std::unordered_map<uint32_t, std::unique_ptr<Mesh>> m_Meshes;
 
     // Shader hot-reload: efsw notifies on a background thread, so changed paths are only
     // recorded here and the actual GL reload happens on the main thread via ReloadModifiedShaders().
-    FileWatcher mFileWatcher;
-    std::unordered_map<std::string, WatchHandle> mWatchedDirectories;
+    FileWatcher m_FileWatcher;
+    std::unordered_map<std::string, WatchHandle> m_WatchedDirectories;
 
-    std::mutex mShaderWatchMutex;
-    std::unordered_map<std::string, std::vector<uint32_t>> mFileToShaderIDs;
-    std::vector<uint32_t> mPendingShaderReloads;
+    std::mutex m_ShaderWatchMutex;
+    std::unordered_map<std::string, std::vector<uint32_t>> m_FileToShaderIDs;
+    std::vector<uint32_t> m_PendingShaderReloads;
 };
 }  // namespace Matcha

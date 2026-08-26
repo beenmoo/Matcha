@@ -13,11 +13,11 @@ class Context;
 
 struct WindowSpecification
 {
-    std::string mTitle = "Application";
-    int mWidth = 1280;
-    int mHeight = 720;
-    std::optional<Vector2Int> mPosition;
-    bool mResizable = true;
+    std::string m_Title = "Application";
+    int m_Width = 1280;
+    int m_Height = 720;
+    std::optional<Vector2Int> m_Position;
+    bool m_Resizable = true;
 };
 
 class Window
@@ -52,9 +52,9 @@ private:
 
 private:
     struct Impl;
-    std::unique_ptr<Impl> mImpl;
+    std::unique_ptr<Impl> m_Impl;
 
-    WindowSpecification mWindowSpec;
-    bool mIsOpen = false;
+    WindowSpecification m_WindowSpec;
+    bool m_IsOpen = false;
 };
 }  // namespace Matcha

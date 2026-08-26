@@ -7,17 +7,17 @@ namespace Matcha
 {
 GLVertexArray::GLVertexArray()
 {
-    glCreateVertexArrays(1, &mHandle);
+    glCreateVertexArrays(1, &m_Handle);
 }
 
 GLVertexArray::~GLVertexArray()
 {
-    glDeleteVertexArrays(1, &mHandle);
+    glDeleteVertexArrays(1, &m_Handle);
 }
 
 void GLVertexArray::Bind() const
 {
-    glBindVertexArray(mHandle);
+    glBindVertexArray(m_Handle);
 }
 
 void GLVertexArray::Unbind() const
@@ -27,9 +27,9 @@ void GLVertexArray::Unbind() const
 
 void GLVertexArray::InitAttributes(const GLuint vbIndex)
 {
-    MT_ASSERT(vbIndex < mVertexBuffers.size(), "Index out of range!");
+    MT_ASSERT(vbIndex < m_VertexBuffers.size(), "Index out of range!");
 
-    const auto& buffer = mVertexBuffers[vbIndex];
+    const auto& buffer = m_VertexBuffers[vbIndex];
 
     GLuint attribIndex = 0;
 
@@ -44,29 +44,29 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
 
             for (GLuint i = 0; i < count; i++)
             {
-                glVertexArrayVertexBuffer(mHandle, attribIndex, buffer->GetHandle(), 0, layout->GetStride());
-                glVertexArrayAttribFormat(mHandle,
+                glVertexArrayVertexBuffer(m_Handle, attribIndex, buffer->GetHandle(), 0, layout->GetStride());
+                glVertexArrayAttribFormat(m_Handle,
                                           attribIndex,
                                           count,
                                           Utils::ShaderDataTypeToGLDataType(e.type),
                                           e.normalized,
                                           static_cast<GLuint>(e.offset + sizeof(GLfloat) * count * i));
-                glVertexArrayAttribBinding(mHandle, attribIndex, attribIndex);
-                glVertexArrayBindingDivisor(mHandle, attribIndex, 1);
-                glEnableVertexArrayAttrib(mHandle, attribIndex++);
+                glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);
+                glVertexArrayBindingDivisor(m_Handle, attribIndex, 1);
+                glEnableVertexArrayAttrib(m_Handle, attribIndex++);
             }
         }
         else
         {
-            glVertexArrayVertexBuffer(mHandle, attribIndex, buffer->GetHandle(), 0, layout->GetStride());
-            glVertexArrayAttribFormat(mHandle,
+            glVertexArrayVertexBuffer(m_Handle, attribIndex, buffer->GetHandle(), 0, layout->GetStride());
+            glVertexArrayAttribFormat(m_Handle,
                                       attribIndex,
                                       e.GetComponentCount(),
                                       Utils::ShaderDataTypeToGLDataType(e.type),
                                       e.normalized,
                                       static_cast<GLuint>(e.offset));
-            glVertexArrayAttribBinding(mHandle, attribIndex, attribIndex);
-            glEnableVertexArrayAttrib(mHandle, attribIndex++);
+            glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);
+            glEnableVertexArrayAttrib(m_Handle, attribIndex++);
         }
     }
 }
@@ -75,15 +75,15 @@ void GLVertexArray::AddVertexBuffer(const std::shared_ptr<GLVertexBuffer> buffer
 {
     MT_ASSERT(buffer->GetLayout(), "Vertex Buffer has no layout!");
 
-    mVertexBuffers.emplace_back(buffer);
+    m_VertexBuffers.emplace_back(buffer);
 
-    InitAttributes(static_cast<GLuint>(mVertexBuffers.size() - 1));
+    InitAttributes(static_cast<GLuint>(m_VertexBuffers.size() - 1));
 }
 
 void GLVertexArray::SetIndexBuffer(const std::shared_ptr<GLIndexBuffer> buffer)
 {
-    mIndexBuffer = buffer;
+    m_IndexBuffer = buffer;
 
-    glVertexArrayElementBuffer(mHandle, buffer->GetHandle());
+    glVertexArrayElementBuffer(m_Handle, buffer->GetHandle());
 }
 }  // namespace Matcha

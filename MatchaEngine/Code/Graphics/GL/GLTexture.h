@@ -24,11 +24,11 @@ private:
     void LoadTextureFromFile(std::string_view path);
 
 private:
-    uint32_t mHandle;
+    uint32_t m_Handle;
 
-    std::string mPath;
+    std::string m_Path;
 
-    uint32_t mWidth, mHeight;
-    GLenum mInternalFormat, mDataFormat;
+    uint32_t m_Width, m_Height;
+    GLenum m_InternalFormat, m_DataFormat;
 };
 }  // namespace Matcha

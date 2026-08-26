@@ -19,8 +19,8 @@ private:
     void SortRenderData();
 
 private:
-    GLResourceManager& mResourceManager;
+    GLResourceManager& m_ResourceManager;
 
-    std::vector<RenderData> mRenderData;
+    std::vector<RenderData> m_RenderData;
 };
 }  // namespace Matcha

@@ -7,13 +7,13 @@ namespace Matcha
 {
 GLResourceManager::GLResourceManager()
 {
-    mFileWatcher.Watch();
+    m_FileWatcher.Watch();
 }
 
 ShaderHandle GLResourceManager::CreateShader(std::string_view name, const std::initializer_list<std::string>& paths)
 {
-    ShaderHandle handle(mNextShaderID++);
-    mShaders.emplace(handle.GetID(), std::make_unique<GLShader>(name, paths));
+    ShaderHandle handle(m_NextShaderID++);
+    m_Shaders.emplace(handle.GetID(), std::make_unique<GLShader>(name, paths));
 
     WatchShaderPaths(handle.GetID(), paths);
 
@@ -22,11 +22,11 @@ ShaderHandle GLResourceManager::CreateShader(std::string_view name, const std::i
 
 void GLResourceManager::DestroyShader(ShaderHandle handle)
 {
-    mShaders.erase(handle.GetID());
+    m_Shaders.erase(handle.GetID());
 
-    std::scoped_lock lock(mShaderWatchMutex);
+    std::scoped_lock lock(m_ShaderWatchMutex);
 
-    for (auto& [path, shaderIDs] : mFileToShaderIDs)
+    for (auto& [path, shaderIDs] : m_FileToShaderIDs)
         std::erase(shaderIDs, handle.GetID());
 }
 
@@ -35,17 +35,17 @@ void GLResourceManager::ReloadModifiedShaders()
     std::vector<uint32_t> pending;
 
     {
-        std::scoped_lock lock(mShaderWatchMutex);
-        pending.swap(mPendingShaderReloads);
+        std::scoped_lock lock(m_ShaderWatchMutex);
+        pending.swap(m_PendingShaderReloads);
     }
 
     std::unordered_set<uint32_t> uniqueIDs(pending.begin(), pending.end());
 
     for (uint32_t id : uniqueIDs)
     {
-        auto it = mShaders.find(id);
+        auto it = m_Shaders.find(id);
 
-        if (it != mShaders.end())
+        if (it != m_Shaders.end())
             it->second->Reload();
     }
 }
@@ -59,14 +59,14 @@ void GLResourceManager::WatchShaderPaths(uint32_t shaderID, const std::initializ
         std::string normalizedPath = filePath.lexically_normal().string();
 
         {
-            std::scoped_lock lock(mShaderWatchMutex);
-            mFileToShaderIDs[normalizedPath].push_back(shaderID);
+            std::scoped_lock lock(m_ShaderWatchMutex);
+            m_FileToShaderIDs[normalizedPath].push_back(shaderID);
         }
 
-        if (mWatchedDirectories.contains(directory))
+        if (m_WatchedDirectories.contains(directory))
             continue;
 
-        WatchHandle watchHandle = mFileWatcher.AddWatch(
+        WatchHandle watchHandle = m_FileWatcher.AddWatch(
             directory,
             [this](const std::string& dir, const std::string& filename, FileAction action)
             {
@@ -75,40 +75,40 @@ void GLResourceManager::WatchShaderPaths(uint32_t shaderID, const std::initializ
 
                 std::string changedPath = (std::filesystem::path(dir) / filename).lexically_normal().string();
 
-                std::scoped_lock lock(mShaderWatchMutex);
+                std::scoped_lock lock(m_ShaderWatchMutex);
 
-                auto it = mFileToShaderIDs.find(changedPath);
+                auto it = m_FileToShaderIDs.find(changedPath);
 
-                if (it == mFileToShaderIDs.end())
+                if (it == m_FileToShaderIDs.end())
                     return;
 
-                mPendingShaderReloads.insert(mPendingShaderReloads.end(), it->second.begin(), it->second.end());
+                m_PendingShaderReloads.insert(m_PendingShaderReloads.end(), it->second.begin(), it->second.end());
             },
             false);
 
-        mWatchedDirectories.emplace(directory, watchHandle);
+        m_WatchedDirectories.emplace(directory, watchHandle);
     }
 }
 
 TextureHandle GLResourceManager::CreateTexture(std::string_view path)
 {
-    TextureHandle handle(mNextTextureID++);
-    mTextures.emplace(handle.GetID(), std::make_unique<GLTexture>(path));
+    TextureHandle handle(m_NextTextureID++);
+    m_Textures.emplace(handle.GetID(), std::make_unique<GLTexture>(path));
 
     return handle;
 }
 
 TextureHandle GLResourceManager::CreateTexture(uint32_t width, uint32_t height)
 {
-    TextureHandle handle(mNextTextureID++);
-    mTextures.emplace(handle.GetID(), std::make_unique<GLTexture>(width, height));
+    TextureHandle handle(m_NextTextureID++);
+    m_Textures.emplace(handle.GetID(), std::make_unique<GLTexture>(width, height));
 
     return handle;
 }
 
 void GLResourceManager::DestroyTexture(TextureHandle handle)
 {
-    mTextures.erase(handle.GetID());
+    m_Textures.erase(handle.GetID());
 }
 
 MeshHandle GLResourceManager::CreateMesh(std::span<const float> vertices,
@@ -125,35 +125,35 @@ MeshHandle GLResourceManager::CreateMesh(std::span<const float> vertices,
     mesh->vertexArray.AddVertexBuffer(mesh->vertexBuffer);
     mesh->vertexArray.SetIndexBuffer(mesh->indexBuffer);
 
-    MeshHandle handle(mNextMeshID++);
-    mMeshes.emplace(handle.GetID(), std::move(mesh));
+    MeshHandle handle(m_NextMeshID++);
+    m_Meshes.emplace(handle.GetID(), std::move(mesh));
 
     return handle;
 }
 
 void GLResourceManager::DestroyMesh(MeshHandle handle)
 {
-    mMeshes.erase(handle.GetID());
+    m_Meshes.erase(handle.GetID());
 }
 
 GLShader* GLResourceManager::GetShader(ShaderHandle handle)
 {
-    auto it = mShaders.find(handle.GetID());
+    auto it = m_Shaders.find(handle.GetID());
 
-    return it != mShaders.end() ? it->second.get() : nullptr;
+    return it != m_Shaders.end() ? it->second.get() : nullptr;
 }
 
 GLTexture* GLResourceManager::GetTexture(TextureHandle handle)
 {
-    auto it = mTextures.find(handle.GetID());
+    auto it = m_Textures.find(handle.GetID());
 
-    return it != mTextures.end() ? it->second.get() : nullptr;
+    return it != m_Textures.end() ? it->second.get() : nullptr;
 }
 
 GLResourceManager::Mesh* GLResourceManager::GetMesh(MeshHandle handle)
 {
-    auto it = mMeshes.find(handle.GetID());
+    auto it = m_Meshes.find(handle.GetID());
 
-    return it != mMeshes.end() ? it->second.get() : nullptr;
+    return it != m_Meshes.end() ? it->second.get() : nullptr;
 }
 }  // namespace Matcha

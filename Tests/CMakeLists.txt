@@ -12,6 +12,7 @@ enable_testing()
 set(TARGET_NAME Tests)
 
 add_executable(${TARGET_NAME}
+    Code/FileWatcherTests.cpp
     Code/MatrixTests.cpp
     Code/QuaternionTests.cpp
     Code/RendererTests.cpp

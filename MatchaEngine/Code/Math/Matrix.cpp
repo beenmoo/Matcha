@@ -33,12 +33,12 @@ Vector3 FromGLM(const glm::vec3& v)
 Matrix4::Matrix4(float diagonal)
 {
     glm::mat4 m(diagonal);
-    std::memcpy(mData, &m[0][0], sizeof(mData));
+    std::memcpy(m_Data, &m[0][0], sizeof(m_Data));
 }
 
 Matrix4::Matrix4(const float data[16])
 {
-    std::memcpy(mData, data, sizeof(mData));
+    std::memcpy(m_Data, data, sizeof(m_Data));
 }
 
 Matrix4 Matrix4::operator*(const Matrix4& rhs) const

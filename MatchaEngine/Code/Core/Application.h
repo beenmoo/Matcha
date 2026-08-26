@@ -17,22 +17,22 @@ namespace Matcha
 {
 struct ApplicationCommandLineArgs
 {
-    int mCount = 0;
-    char** mArgs = nullptr;
+    int m_Count = 0;
+    char** m_Args = nullptr;
 
     [[nodiscard]] const char* operator[](int index) const
     {
-        MT_ASSERT(index < mCount && index >= 0, "Out of range");
+        MT_ASSERT(index < m_Count && index >= 0, "Out of range");
 
-        return mArgs[index];
+        return m_Args[index];
     }
 };
 
 struct ApplicationSpecification
 {
-    std::string mTitle = "Application";
-    std::string mWorkingDirectory;
-    ApplicationCommandLineArgs mCommandLineArgs;
+    std::string m_Title = "Application";
+    std::string m_WorkingDirectory;
+    ApplicationCommandLineArgs m_CommandLineArgs;
 };
 
 class Application
@@ -52,7 +52,7 @@ protected:
     template <typename Self>
     [[nodiscard]] auto& GetContext(this Self& self)
     {
-        return self.mContext;
+        return self.m_Context;
     }
 
 private:
@@ -61,17 +61,17 @@ private:
     void LogContext();
 
 private:
-    ApplicationSpecification mAppSpec;
+    ApplicationSpecification m_AppSpec;
 
-    Input mInput;
-    Logger mLogger;
-    Time mTime;
-    Window mWindow;
-    std::unique_ptr<ResourceManager> mResourceManager;
-    std::unique_ptr<Renderer> mRenderer;
-    Context mContext;
+    Input m_Input;
+    Logger m_Logger;
+    Time m_Time;
+    Window m_Window;
+    std::unique_ptr<ResourceManager> m_ResourceManager;
+    std::unique_ptr<Renderer> m_Renderer;
+    Context m_Context;
 
-    bool mIsRunning = false;
+    bool m_IsRunning = false;
 };
 
 [[nodiscard]] Application* CreateApplication(const Application::ApplicationCommandLineArgs& args);

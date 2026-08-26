@@ -35,9 +35,9 @@ public:
 private:
     struct MouseData
     {
-        float mMousePositionX = 0, mMousePositionY = 0;
-        Vector2Int mMouseAxis = Vector2Int(0);
-        Vector2Int mMouseScrollDelta = Vector2Int(0);
+        float m_MousePositionX = 0, m_MousePositionY = 0;
+        Vector2Int m_MouseAxis = Vector2Int(0);
+        Vector2Int m_MouseScrollDelta = Vector2Int(0);
     };
 
 public:
@@ -64,16 +64,16 @@ private:
     [[nodiscard]] static uint32_t ToMouseButtonMask(MouseButton button);
 
 private:
-    const bool* mKeyboardState;
-    bool* mPrevKeyboardState;
-    int mNumKeys;
+    const bool* m_KeyboardState;
+    bool* m_PrevKeyboardState;
+    int m_NumKeys;
 
-    uint32_t mMouseState;
-    uint32_t mPrevMouseState = 0;
-    MouseData mMouseData;
+    uint32_t m_MouseState;
+    uint32_t m_PrevMouseState = 0;
+    MouseData m_MouseData;
 
-    Vector2Int mJoystickAxis = Vector2Int(0);
+    Vector2Int m_JoystickAxis = Vector2Int(0);
 
-    CursorLockState mCursorLockState = CursorLockState::None;
+    CursorLockState m_CursorLockState = CursorLockState::None;
 };
 }  // namespace Matcha

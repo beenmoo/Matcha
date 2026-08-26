@@ -65,39 +65,39 @@ public:
         BufferLayout(std::initializer_list<Utils::ShaderDataType> dataTypes, GLboolean normalized = false)
         {
             for (const auto& i : dataTypes)
-                mElements.emplace_back(BufferElement(i, normalized));
+                m_Elements.emplace_back(BufferElement(i, normalized));
 
             CalculateOffsetsAndStride();
         }
 
         [[nodiscard]] const std::vector<BufferElement>& GetElements() const
         {
-            return mElements;
+            return m_Elements;
         }
 
         [[nodiscard]] uint32_t GetStride() const
         {
-            return mStride;
+            return m_Stride;
         }
 
     private:
         void CalculateOffsetsAndStride()
         {
             size_t offset = 0;
-            mStride = 0;
+            m_Stride = 0;
 
-            for (auto& e : mElements)
+            for (auto& e : m_Elements)
             {
                 e.offset += offset;
                 offset += e.offset;
-                mStride += e.size;
+                m_Stride += e.size;
             }
         }
 
     private:
-        std::vector<BufferElement> mElements;
+        std::vector<BufferElement> m_Elements;
 
-        GLsizei mStride = 0;
+        GLsizei m_Stride = 0;
     };
 
 public:
@@ -118,11 +118,11 @@ public:
     [[nodiscard]] GLuint GetSizeInBytes() const;
 
 private:
-    GLuint mHandle;
+    GLuint m_Handle;
 
-    GLenum mDrawType = GL_STATIC_DRAW;
+    GLenum m_DrawType = GL_STATIC_DRAW;
 
-    std::shared_ptr<BufferLayout> mLayout = nullptr;
-    std::vector<GLfloat> mVertices;
+    std::shared_ptr<BufferLayout> m_Layout = nullptr;
+    std::vector<GLfloat> m_Vertices;
 };
 }  // namespace Matcha

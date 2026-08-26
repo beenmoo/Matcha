@@ -6,15 +6,15 @@ namespace Matcha
 {
 void Time::Update()
 {
-    mLastFrameTime = mElapsedTime;
-    mElapsedTime = SDL_GetPerformanceCounter();
-    mDeltaTime = static_cast<float>((mElapsedTime - mLastFrameTime) * 1000.0f /
+    m_LastFrameTime = m_ElapsedTime;
+    m_ElapsedTime = SDL_GetPerformanceCounter();
+    m_DeltaTime = static_cast<float>((m_ElapsedTime - m_LastFrameTime) * 1000.0f /
                                     static_cast<float>(SDL_GetPerformanceFrequency())) *
                  0.001f;
 }
 
 float Time::GetDeltaTime() const
 {
-    return mDeltaTime;
+    return m_DeltaTime;
 }
 }  // namespace Matcha

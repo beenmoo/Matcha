@@ -12,8 +12,8 @@ public:
     [[nodiscard]] float GetDeltaTime() const;
 
 private:
-    std::uint64_t mLastFrameTime = 0;
-    std::uint64_t mElapsedTime = 0;
-    float mDeltaTime = 0.0f;
+    std::uint64_t m_LastFrameTime = 0;
+    std::uint64_t m_ElapsedTime = 0;
+    float m_DeltaTime = 0.0f;
 };
 }  // namespace Matcha

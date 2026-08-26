@@ -28,10 +28,13 @@ FileAction ToFileAction(efsw::Action action)
 
 struct FileWatcher::Impl : public efsw::FileWatchListener
 {
-    efsw::FileWatcher watcher;
+    // watcher must be declared last: members are destroyed in reverse declaration order, and
+    // its destructor is what stops/joins the background thread. Declaring it first would destroy
+    // watchIDs/callbacks while that thread could still be calling handleFileAction() on them.
     std::unordered_map<uint32_t, efsw::WatchID> watchIDs;
     std::unordered_map<efsw::WatchID, FileWatchCallback> callbacks;
     uint32_t nextHandleID = 1;
+    efsw::FileWatcher watcher;
 
     void handleFileAction(efsw::WatchID watchID, const std::string& dir, const std::string& filename,
                            efsw::Action action, const std::string& oldFilename) override
@@ -43,7 +46,7 @@ struct FileWatcher::Impl : public efsw::FileWatchListener
     }
 };
 
-FileWatcher::FileWatcher() : mImpl(std::make_unique<Impl>())
+FileWatcher::FileWatcher() : m_Impl(std::make_unique<Impl>())
 {
 }
 
@@ -51,7 +54,7 @@ FileWatcher::~FileWatcher() = default;
 
 WatchHandle FileWatcher::AddWatch(std::string_view directory, FileWatchCallback callback, bool recursive)
 {
-    efsw::WatchID watchID = mImpl->watcher.addWatch(std::string(directory), mImpl.get(), recursive);
+    efsw::WatchID watchID = m_Impl->watcher.addWatch(std::string(directory), m_Impl.get(), recursive);
 
     if (watchID < 0)
     {
@@ -59,28 +62,28 @@ WatchHandle FileWatcher::AddWatch(std::string_view directory, FileWatchCallback 
         return WatchHandle();
     }
 
-    WatchHandle handle(mImpl->nextHandleID++);
+    WatchHandle handle(m_Impl->nextHandleID++);
 
-    mImpl->watchIDs.emplace(handle.GetID(), watchID);
-    mImpl->callbacks.emplace(watchID, std::move(callback));
+    m_Impl->watchIDs.emplace(handle.GetID(), watchID);
+    m_Impl->callbacks.emplace(watchID, std::move(callback));
 
     return handle;
 }
 
 void FileWatcher::RemoveWatch(WatchHandle handle)
 {
-    auto it = mImpl->watchIDs.find(handle.GetID());
+    auto it = m_Impl->watchIDs.find(handle.GetID());
 
-    if (it == mImpl->watchIDs.end())
+    if (it == m_Impl->watchIDs.end())
         return;
 
-    mImpl->watcher.removeWatch(it->second);
-    mImpl->callbacks.erase(it->second);
-    mImpl->watchIDs.erase(it);
+    m_Impl->watcher.removeWatch(it->second);
+    m_Impl->callbacks.erase(it->second);
+    m_Impl->watchIDs.erase(it);
 }
 
 void FileWatcher::Watch()
 {
-    mImpl->watcher.watch();
+    m_Impl->watcher.watch();
 }
 }  // namespace Matcha

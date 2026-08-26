@@ -7,8 +7,8 @@ namespace Matcha
 Application* CreateApplication(const Application::ApplicationCommandLineArgs& args)
 {
     Application::ApplicationSpecification spec;
-    spec.mTitle = "Matcha";
-    spec.mCommandLineArgs = args;
+    spec.m_Title = "Matcha";
+    spec.m_CommandLineArgs = args;
 
     return new Sandbox(spec);
 }

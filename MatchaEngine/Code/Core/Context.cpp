@@ -11,72 +11,72 @@ Context::Context(Application& application,
                  Time& time,
                  Window& window,
                  Renderer& renderer,
-                 ResourceManager& resourceManager) : mApplication(application),
-                                                     mInput(input),
-                                                     mTime(time),
-                                                     mWindow(window),
-                                                     mRenderer(renderer),
-                                                     mResourceManager(resourceManager)
+                 ResourceManager& resourceManager) : m_Application(application),
+                                                     m_Input(input),
+                                                     m_Time(time),
+                                                     m_Window(window),
+                                                     m_Renderer(renderer),
+                                                     m_ResourceManager(resourceManager)
 {
 }
 
 Application& Context::GetApplication()
 {
-    return mApplication;
+    return m_Application;
 }
 
 const Application& Context::GetApplication() const
 {
-    return mApplication;
+    return m_Application;
 }
 
 Input& Context::GetInput()
 {
-    return mInput;
+    return m_Input;
 }
 
 const Input& Context::GetInput() const
 {
-    return mInput;
+    return m_Input;
 }
 
 Time& Context::GetTime()
 {
-    return mTime;
+    return m_Time;
 }
 
 const Time& Context::GetTime() const
 {
-    return mTime;
+    return m_Time;
 }
 
 Window& Context::GetWindow()
 {
-    return mWindow;
+    return m_Window;
 }
 
 const Window& Context::GetWindow() const
 {
-    return mWindow;
+    return m_Window;
 }
 
 Renderer& Context::GetRenderer()
 {
-    return mRenderer;
+    return m_Renderer;
 }
 
 const Renderer& Context::GetRenderer() const
 {
-    return mRenderer;
+    return m_Renderer;
 }
 
 ResourceManager& Context::GetResourceManager()
 {
-    return mResourceManager;
+    return m_ResourceManager;
 }
 
 const ResourceManager& Context::GetResourceManager() const
 {
-    return mResourceManager;
+    return m_ResourceManager;
 }
 }  // namespace Matcha

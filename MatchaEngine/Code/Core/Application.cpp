@@ -30,10 +30,10 @@ std::optional<Event> TranslateEvent(const SDL_Event& sdlEvent)
 }
 }  // namespace
 
-Application::Application(const ApplicationSpecification& spec) : mAppSpec(spec),
-                                                                 mResourceManager(std::make_unique<GLResourceManager>()),
-                                                                 mRenderer(std::make_unique<GLRenderer>(static_cast<GLResourceManager&>(*mResourceManager))),
-                                                                 mContext(*this, mInput, mTime, mWindow, *mRenderer, *mResourceManager)
+Application::Application(const ApplicationSpecification& spec) : m_AppSpec(spec),
+                                                                 m_ResourceManager(std::make_unique<GLResourceManager>()),
+                                                                 m_Renderer(std::make_unique<GLRenderer>(static_cast<GLResourceManager&>(*m_ResourceManager))),
+                                                                 m_Context(*this, m_Input, m_Time, m_Window, *m_Renderer, *m_ResourceManager)
 {
     LogContext();
 }
@@ -45,12 +45,12 @@ Application::~Application()
 
 void Application::Run()
 {
-    if (mIsRunning)
+    if (m_IsRunning)
         return;
 
-    mIsRunning = true;
+    m_IsRunning = true;
 
-    while (mIsRunning)
+    while (m_IsRunning)
     {
         PollEvents();
         Update();
@@ -59,15 +59,15 @@ void Application::Run()
 
 void Application::Quit()
 {
-    mIsRunning = false;
+    m_IsRunning = false;
 }
 
 void Application::Update()
 {
-    mInput.Update();
-    mTime.Update();
-    mResourceManager->ReloadModifiedShaders();
-    mWindow.SwapBuffers();
+    m_Input.Update();
+    m_Time.Update();
+    m_ResourceManager->ReloadModifiedShaders();
+    m_Window.SwapBuffers();
 }
 
 void Application::PollEvents()
@@ -84,8 +84,8 @@ void Application::PollEvents()
         if (evt->type == EventType::Quit)
             Quit();
 
-        mInput.ProcessEvents(*evt);
-        mWindow.ProcessEvents(*evt);
+        m_Input.ProcessEvents(*evt);
+        m_Window.ProcessEvents(*evt);
     }
 }
 

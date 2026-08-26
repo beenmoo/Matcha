@@ -7,6 +7,8 @@ add_subdirectory(Code/Core)
 target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 
+matcha_copy_engine_assets(${TARGET_NAME})
+
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 
 file(GLOB_RECURSE SHADER_SOURCES

@@ -29,7 +29,7 @@ private:
     [[nodiscard("error must be handled")]] std::expected<void, std::string> ParseFile(const std::string& path);
 
 private:
-    GLuint mHandle;
-    std::unordered_map<GLenum, std::pair<std::string, std::string>> mSources;
+    GLuint m_Handle;
+    std::unordered_map<GLenum, std::pair<std::string, std::string>> m_Sources;
 };
 }  // namespace Matcha

@@ -4,78 +4,78 @@ namespace Matcha
 {
 GLVertexBuffer::GLVertexBuffer(GLuint sizeInBytes)
 {
-    glCreateBuffers(1, &mHandle);
-    glNamedBufferData(mHandle, sizeInBytes, nullptr, GL_DYNAMIC_DRAW);
+    glCreateBuffers(1, &m_Handle);
+    glNamedBufferData(m_Handle, sizeInBytes, nullptr, GL_DYNAMIC_DRAW);
 }
 
 GLVertexBuffer::GLVertexBuffer(const GLfloat* vertices, GLuint sizeInBytes)
 {
-    glCreateBuffers(1, &mHandle);
-    glNamedBufferData(mHandle, sizeInBytes, vertices, GL_STATIC_DRAW);
+    glCreateBuffers(1, &m_Handle);
+    glNamedBufferData(m_Handle, sizeInBytes, vertices, GL_STATIC_DRAW);
 
     for (size_t i = 0; i < sizeInBytes / sizeof(GLfloat); ++i)
-        mVertices.emplace_back(vertices[i]);
+        m_Vertices.emplace_back(vertices[i]);
 }
 
 GLVertexBuffer::~GLVertexBuffer()
 {
-    glDeleteBuffers(1, &mHandle);
+    glDeleteBuffers(1, &m_Handle);
 }
 
 void GLVertexBuffer::AddVertex(std::initializer_list<GLfloat> vertex)
 {
-    mVertices.insert(mVertices.end(), vertex.begin(), vertex.end());
+    m_Vertices.insert(m_Vertices.end(), vertex.begin(), vertex.end());
 
-    glNamedBufferData(mHandle, GetSizeInBytes(), mVertices.data(), mDrawType);
+    glNamedBufferData(m_Handle, GetSizeInBytes(), m_Vertices.data(), m_DrawType);
 }
 
 void GLVertexBuffer::SetVertices(const GLfloat* vertices, GLuint sizeInBytes)
 {
-    glNamedBufferSubData(mHandle, 0, sizeInBytes, vertices);
+    glNamedBufferSubData(m_Handle, 0, sizeInBytes, vertices);
 
     Clear();
 
     for (size_t i = 0; i < sizeInBytes / sizeof(GLfloat); ++i)
-        mVertices.emplace_back(vertices[i]);
+        m_Vertices.emplace_back(vertices[i]);
 }
 
 void GLVertexBuffer::SetVerticesNew(const GLfloat* vertices, GLuint sizeInBytes)
 {
-    glNamedBufferData(mHandle, sizeInBytes, vertices, mDrawType);
+    glNamedBufferData(m_Handle, sizeInBytes, vertices, m_DrawType);
 
     Clear();
 
     for (size_t i = 0; i < sizeInBytes / sizeof(GLfloat); ++i)
-        mVertices.emplace_back(vertices[i]);
+        m_Vertices.emplace_back(vertices[i]);
 }
 
 void GLVertexBuffer::SetDrawType(GLenum drawType)
 {
-    mDrawType = drawType;
+    m_DrawType = drawType;
 }
 
 uint32_t GLVertexBuffer::GetSizeInBytes() const
 {
-    return static_cast<GLuint>(mVertices.size() * sizeof(GLfloat));
+    return static_cast<GLuint>(m_Vertices.size() * sizeof(GLfloat));
 }
 
 void GLVertexBuffer::Clear()
 {
-    mVertices.clear();
+    m_Vertices.clear();
 }
 
 void GLVertexBuffer::SetLayout(const std::shared_ptr<BufferLayout> layout)
 {
-    mLayout = layout;
+    m_Layout = layout;
 }
 
 const GLVertexBuffer::BufferLayout* GLVertexBuffer::GetLayout() const
 {
-    return mLayout.get();
+    return m_Layout.get();
 }
 
 GLuint GLVertexBuffer::GetHandle() const
 {
-    return mHandle;
+    return m_Handle;
 }
 }  // namespace Matcha

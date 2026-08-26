@@ -37,6 +37,6 @@ public:
 
 private:
     struct Impl;
-    std::unique_ptr<Impl> mImpl;
+    std::unique_ptr<Impl> m_Impl;
 };
 }  // namespace Matcha

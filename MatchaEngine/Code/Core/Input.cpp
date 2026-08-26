@@ -8,16 +8,16 @@ namespace Matcha
 {
 Input::Input()
 {
-    mKeyboardState = SDL_GetKeyboardState(&mNumKeys);
-    mPrevKeyboardState = new bool[mNumKeys];
-    memcpy(mPrevKeyboardState, mKeyboardState, mNumKeys);
+    m_KeyboardState = SDL_GetKeyboardState(&m_NumKeys);
+    m_PrevKeyboardState = new bool[m_NumKeys];
+    memcpy(m_PrevKeyboardState, m_KeyboardState, m_NumKeys);
 
-    mMouseState = SDL_GetMouseState(&mMouseData.mMousePositionX, &mMouseData.mMousePositionY);
+    m_MouseState = SDL_GetMouseState(&m_MouseData.m_MousePositionX, &m_MouseData.m_MousePositionY);
 }
 
 Input::~Input()
 {
-    delete[] mPrevKeyboardState;
+    delete[] m_PrevKeyboardState;
 }
 
 void Input::ProcessEvents(const Event& evt)
@@ -25,18 +25,18 @@ void Input::ProcessEvents(const Event& evt)
     switch (evt.type)
     {
     case EventType::MouseMoved:
-        mMouseData.mMouseAxis.x = evt.x;
-        mMouseData.mMouseAxis.y = evt.y;
+        m_MouseData.m_MouseAxis.x = evt.x;
+        m_MouseData.m_MouseAxis.y = evt.y;
         break;
     case EventType::JoystickMoved:
         if (evt.axis == 0)
-            mJoystickAxis.x = evt.x;
+            m_JoystickAxis.x = evt.x;
         else if (evt.axis == 1)
-            mJoystickAxis.y = evt.x;
+            m_JoystickAxis.y = evt.x;
         break;
     case EventType::MouseScrolled:
-        mMouseData.mMouseScrollDelta.x = evt.x;
-        mMouseData.mMouseScrollDelta.y = evt.y;
+        m_MouseData.m_MouseScrollDelta.x = evt.x;
+        m_MouseData.m_MouseScrollDelta.y = evt.y;
         break;
     default:
         break;
@@ -45,27 +45,27 @@ void Input::ProcessEvents(const Event& evt)
 
 void Input::Update()
 {
-    memcpy(mPrevKeyboardState, mKeyboardState, mNumKeys);
+    memcpy(m_PrevKeyboardState, m_KeyboardState, m_NumKeys);
 
-    mMouseData.mMouseAxis = Vector2Int(0);
-    mMouseData.mMouseScrollDelta = Vector2Int(0);
-    mPrevMouseState = mMouseState;
-    mMouseState = SDL_GetMouseState(&mMouseData.mMousePositionX, &mMouseData.mMousePositionY);
+    m_MouseData.m_MouseAxis = Vector2Int(0);
+    m_MouseData.m_MouseScrollDelta = Vector2Int(0);
+    m_PrevMouseState = m_MouseState;
+    m_MouseState = SDL_GetMouseState(&m_MouseData.m_MousePositionX, &m_MouseData.m_MousePositionY);
 }
 
 bool Input::GetKey(KeyCode code) const
 {
-    return mKeyboardState[std::to_underlying(code)];
+    return m_KeyboardState[std::to_underlying(code)];
 }
 
 bool Input::GetKeyDown(KeyCode code) const
 {
-    return !mPrevKeyboardState[std::to_underlying(code)] && mKeyboardState[std::to_underlying(code)];
+    return !m_PrevKeyboardState[std::to_underlying(code)] && m_KeyboardState[std::to_underlying(code)];
 }
 
 bool Input::GetKeyUp(KeyCode code) const
 {
-    return mPrevKeyboardState[std::to_underlying(code)] && !mKeyboardState[std::to_underlying(code)];
+    return m_PrevKeyboardState[std::to_underlying(code)] && !m_KeyboardState[std::to_underlying(code)];
 }
 
 uint32_t Input::ToMouseButtonMask(MouseButton button)
@@ -91,21 +91,21 @@ bool Input::GetMouseButton(MouseButton button) const
 {
     uint32_t mask = ToMouseButtonMask(button);
 
-    return mMouseState & mask;
+    return m_MouseState & mask;
 }
 
 bool Input::GetMouseButtonDown(MouseButton button) const
 {
     uint32_t mask = ToMouseButtonMask(button);
 
-    return !(mPrevMouseState & mask) && (mMouseState & mask);
+    return !(m_PrevMouseState & mask) && (m_MouseState & mask);
 }
 
 bool Input::GetMouseButtonUp(MouseButton button) const
 {
     uint32_t mask = ToMouseButtonMask(button);
 
-    return (mPrevMouseState & mask) && !(mMouseState & mask);
+    return (m_PrevMouseState & mask) && !(m_MouseState & mask);
 }
 
 Vector2Int Input::GetAxis(AxisType type) const
@@ -113,9 +113,9 @@ Vector2Int Input::GetAxis(AxisType type) const
     switch (type)
     {
     case AxisType::Mouse:
-        return mMouseData.mMouseAxis;
+        return m_MouseData.m_MouseAxis;
     case AxisType::Joystick:
-        return mJoystickAxis;
+        return m_JoystickAxis;
     default:
         break;
     }
@@ -125,12 +125,12 @@ Vector2Int Input::GetAxis(AxisType type) const
 
 const Vector2Int& Input::GetMouseScrollDelta() const
 {
-    return mMouseData.mMouseScrollDelta;
+    return m_MouseData.m_MouseScrollDelta;
 }
 
 void Input::SetCursorLockState(CursorLockState state)
 {
-    mCursorLockState = state;
+    m_CursorLockState = state;
 
     switch (state)
     {
@@ -145,6 +145,6 @@ void Input::SetCursorLockState(CursorLockState state)
 
 Input::CursorLockState Input::GetCursorLockState() const
 {
-    return mCursorLockState;
+    return m_CursorLockState;
 }
 }  // namespace Matcha

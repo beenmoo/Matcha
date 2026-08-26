@@ -35,11 +35,11 @@ public:
     [[nodiscard]] const ResourceManager& GetResourceManager() const;
 
 private:
-    Application& mApplication;
-    Input& mInput;
-    Time& mTime;
-    Window& mWindow;
-    Renderer& mRenderer;
-    ResourceManager& mResourceManager;
+    Application& m_Application;
+    Input& m_Input;
+    Time& m_Time;
+    Window& m_Window;
+    Renderer& m_Renderer;
+    ResourceManager& m_ResourceManager;
 };
 }  // namespace Matcha

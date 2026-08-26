@@ -5,20 +5,20 @@
 
 namespace Matcha
 {
-GLTexture::GLTexture(uint32_t width, uint32_t height) : mWidth(width),
-                                                        mHeight(height)
+GLTexture::GLTexture(uint32_t width, uint32_t height) : m_Width(width),
+                                                        m_Height(height)
 {
-    mInternalFormat = GL_RGBA8;
-    mDataFormat = GL_RGBA;
+    m_InternalFormat = GL_RGBA8;
+    m_DataFormat = GL_RGBA;
 
-    glCreateTextures(GL_TEXTURE_2D, 1, &mHandle);
-    glTextureStorage2D(mHandle, 1, mInternalFormat, mWidth, mHeight);
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_Handle);
+    glTextureStorage2D(m_Handle, 1, m_InternalFormat, m_Width, m_Height);
 
-    glTextureParameteri(mHandle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTextureParameteri(mHandle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(m_Handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(m_Handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTextureParameteri(mHandle, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(mHandle, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 GLTexture::GLTexture(std::string_view path)
@@ -28,36 +28,36 @@ GLTexture::GLTexture(std::string_view path)
 
 GLTexture::~GLTexture()
 {
-    glDeleteTextures(1, &mHandle);
+    glDeleteTextures(1, &m_Handle);
 }
 
 void GLTexture::Bind(uint32_t slot) const
 {
-    glBindTextureUnit(slot, mHandle);
+    glBindTextureUnit(slot, m_Handle);
 }
 
 void GLTexture::SetData(void* data, uint32_t size)
 {
-    uint32_t bpp = mDataFormat == GL_RGBA ? 4 : 3;
+    uint32_t bpp = m_DataFormat == GL_RGBA ? 4 : 3;
 
-    MT_ASSERT(size == mWidth * mHeight * bpp, "Data must be entire texture!");
+    MT_ASSERT(size == m_Width * m_Height * bpp, "Data must be entire texture!");
 
-    glTextureSubImage2D(mHandle, 0, 0, 0, mWidth, mHeight, mDataFormat, GL_UNSIGNED_BYTE, data);
+    glTextureSubImage2D(m_Handle, 0, 0, 0, m_Width, m_Height, m_DataFormat, GL_UNSIGNED_BYTE, data);
 }
 
 uint32_t GLTexture::GetWidth() const
 {
-    return mWidth;
+    return m_Width;
 }
 
 uint32_t GLTexture::GetHeight() const
 {
-    return mHeight;
+    return m_Height;
 }
 
 const std::string& GLTexture::GetPath() const
 {
-    return mPath;
+    return m_Path;
 }
 
 void GLTexture::LoadTextureFromFile(std::string_view path)
@@ -69,8 +69,8 @@ void GLTexture::LoadTextureFromFile(std::string_view path)
 
     if (data)
     {
-        mWidth = width;
-        mHeight = height;
+        m_Width = width;
+        m_Height = height;
 
         GLenum internalFormat = 0, dataFormat = 0;
 
@@ -85,21 +85,21 @@ void GLTexture::LoadTextureFromFile(std::string_view path)
             dataFormat = GL_RGB;
         }
 
-        mInternalFormat = internalFormat;
-        mDataFormat = dataFormat;
+        m_InternalFormat = internalFormat;
+        m_DataFormat = dataFormat;
 
         MT_ASSERT(internalFormat & dataFormat, "Format not supported!");
 
-        glCreateTextures(GL_TEXTURE_2D, 1, &mHandle);
-        glTextureStorage2D(mHandle, 1, internalFormat, mWidth, mHeight);
+        glCreateTextures(GL_TEXTURE_2D, 1, &m_Handle);
+        glTextureStorage2D(m_Handle, 1, internalFormat, m_Width, m_Height);
 
-        glTextureParameteri(mHandle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(mHandle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(m_Handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(m_Handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glTextureParameteri(mHandle, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteri(mHandle, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        glTextureSubImage2D(mHandle, 0, 0, 0, mWidth, mHeight, dataFormat, GL_UNSIGNED_BYTE, data);
+        glTextureSubImage2D(m_Handle, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
 
         stbi_image_free(data);
     }

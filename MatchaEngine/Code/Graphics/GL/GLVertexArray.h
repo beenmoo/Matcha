@@ -22,9 +22,9 @@ public:
     void SetIndexBuffer(const std::shared_ptr<GLIndexBuffer> buffer);
 
 private:
-    GLuint mHandle;
+    GLuint m_Handle;
 
-    std::vector<std::shared_ptr<GLVertexBuffer>> mVertexBuffers;
-    std::shared_ptr<GLIndexBuffer> mIndexBuffer = nullptr;
+    std::vector<std::shared_ptr<GLVertexBuffer>> m_VertexBuffers;
+    std::shared_ptr<GLIndexBuffer> m_IndexBuffer = nullptr;
 };
 }  // namespace Matcha

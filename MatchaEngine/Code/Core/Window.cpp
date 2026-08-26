@@ -9,12 +9,12 @@ namespace Matcha
 {
 struct Window::Impl
 {
-    SDL_Window* mNativeWindow = nullptr;
-    SDL_GLContext mGLContext = nullptr;
+    SDL_Window* m_NativeWindow = nullptr;
+    SDL_GLContext m_GLContext = nullptr;
 };
 
-Window::Window(const WindowSpecification& spec) : mImpl(std::make_unique<Impl>()),
-                                                  mWindowSpec(spec)
+Window::Window(const WindowSpecification& spec) : m_Impl(std::make_unique<Impl>()),
+                                                  m_WindowSpec(spec)
 {
     InitContext();
 }
@@ -28,9 +28,9 @@ void Window::ProcessEvents(const Event& evt)
     switch (evt.type)
     {
     case EventType::WindowResized:
-        mWindowSpec.mWidth = evt.width;
-        mWindowSpec.mHeight = evt.height;
-        glViewport(0, 0, mWindowSpec.mWidth, mWindowSpec.mHeight);
+        m_WindowSpec.m_Width = evt.width;
+        m_WindowSpec.m_Height = evt.height;
+        glViewport(0, 0, m_WindowSpec.m_Width, m_WindowSpec.m_Height);
         break;
     default:
         break;
@@ -39,42 +39,42 @@ void Window::ProcessEvents(const Event& evt)
 
 void Window::Resize(int width, int height)
 {
-    SDL_SetWindowSize(mImpl->mNativeWindow, width, height);
+    SDL_SetWindowSize(m_Impl->m_NativeWindow, width, height);
 }
 
 void Window::SwapBuffers()
 {
-    SDL_GL_SwapWindow(mImpl->mNativeWindow);
+    SDL_GL_SwapWindow(m_Impl->m_NativeWindow);
 }
 
 int Window::GetWidth() const
 {
-    return mWindowSpec.mWidth;
+    return m_WindowSpec.m_Width;
 }
 
 int Window::GetHeight() const
 {
-    return mWindowSpec.mHeight;
+    return m_WindowSpec.m_Height;
 }
 
 Vector2Int Window::GetCenter() const
 {
-    return Vector2Int(mWindowSpec.mWidth / 2, mWindowSpec.mHeight / 2);
+    return Vector2Int(m_WindowSpec.m_Width / 2, m_WindowSpec.m_Height / 2);
 }
 
 float Window::GetAspectRatio() const
 {
-    return static_cast<float>(mWindowSpec.mWidth) / mWindowSpec.mHeight;
+    return static_cast<float>(m_WindowSpec.m_Width) / m_WindowSpec.m_Height;
 }
 
 const Window::WindowSpecification& Window::GetWindowSpecification() const
 {
-    return mWindowSpec;
+    return m_WindowSpec;
 }
 
 bool Window::IsMinimized() const
 {
-    return SDL_GetWindowFlags(mImpl->mNativeWindow) & SDL_WINDOW_MINIMIZED;
+    return SDL_GetWindowFlags(m_Impl->m_NativeWindow) & SDL_WINDOW_MINIMIZED;
 }
 
 void Window::InitContext()
@@ -88,23 +88,23 @@ void Window::InitContext()
 
     uint32_t flags = SDL_WINDOW_OPENGL;
 
-    if (mWindowSpec.mResizable)
+    if (m_WindowSpec.m_Resizable)
         flags |= SDL_WINDOW_RESIZABLE;
 
-    mImpl->mNativeWindow = SDL_CreateWindow(GetWindowSpecification().mTitle.c_str(),
-                                            GetWindowSpecification().mWidth,
-                                            GetWindowSpecification().mHeight,
+    m_Impl->m_NativeWindow = SDL_CreateWindow(GetWindowSpecification().m_Title.c_str(),
+                                            GetWindowSpecification().m_Width,
+                                            GetWindowSpecification().m_Height,
                                             flags);
 
-    MT_ASSERT(mImpl->mNativeWindow, SDL_GetError());
+    MT_ASSERT(m_Impl->m_NativeWindow, SDL_GetError());
 
-    if (mWindowSpec.mPosition)
-        SDL_SetWindowPosition(mImpl->mNativeWindow, mWindowSpec.mPosition->x, mWindowSpec.mPosition->y);
+    if (m_WindowSpec.m_Position)
+        SDL_SetWindowPosition(m_Impl->m_NativeWindow, m_WindowSpec.m_Position->x, m_WindowSpec.m_Position->y);
     else
-        SDL_SetWindowPosition(mImpl->mNativeWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        SDL_SetWindowPosition(m_Impl->m_NativeWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
-    mImpl->mGLContext = SDL_GL_CreateContext(mImpl->mNativeWindow);
-    SDL_GL_MakeCurrent(mImpl->mNativeWindow, mImpl->mGLContext);
+    m_Impl->m_GLContext = SDL_GL_CreateContext(m_Impl->m_NativeWindow);
+    SDL_GL_MakeCurrent(m_Impl->m_NativeWindow, m_Impl->m_GLContext);
 
     int status = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 
