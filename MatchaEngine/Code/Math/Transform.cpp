@@ -1,6 +1,5 @@
 #include "Transform.h"
 
-#include <glm/gtx/matrix_decompose.hpp>
 #include <utility>
 
 namespace Matcha
@@ -25,7 +24,7 @@ void Transform::Translate(float x, float y, float z)
 
 void Transform::Rotate(const Vector3& eulers, Space space)
 {
-    const Quaternion rot = Quaternion(radians(eulers));
+    const Quaternion rot = Quaternion(Radians(eulers));
 
     switch (space)
     {
@@ -47,7 +46,7 @@ void Transform::Rotate(float x, float y, float z, Space space)
 
 void Transform::Rotate(const Vector3& axis, float angle, Space space)
 {
-    const Quaternion rot = angleAxis(glm::radians(angle), axis);
+    const Quaternion rot = AngleAxis(Radians(angle), axis);
 
     switch (space)
     {
@@ -79,7 +78,7 @@ void Transform::SetRotation(const Quaternion& rotation)
 
 void Transform::SetRotationEuler(const Vector3& eulers)
 {
-    mRotation = Quaternion(radians(eulers));
+    mRotation = Quaternion(Radians(eulers));
 }
 
 void Transform::SetRotationEuler(float x, float y, float z)
@@ -94,7 +93,7 @@ const Quaternion& Transform::GetRotation() const
 
 Vector3 Transform::GetRotationEuler() const
 {
-    return Vector3(eulerAngles(mRotation));
+    return EulerAngles(mRotation);
 }
 
 void Transform::SetScale(const Vector3& scale)
@@ -114,26 +113,26 @@ const Vector3& Transform::GetScale() const
 
 Vector3 Transform::GetForward() const
 {
-    return inverse(mRotation) * Vector3(0.0f, 0.0f, -1.0f);
+    return Inverse(mRotation) * Vector3(0.0f, 0.0f, -1.0f);
 }
 
 Vector3 Transform::GetRight() const
 {
-    return inverse(mRotation) * Vector3(1.0f, 0.0f, 0.0f);
+    return Inverse(mRotation) * Vector3(1.0f, 0.0f, 0.0f);
 }
 
 Vector3 Transform::GetUp() const
 {
-    return inverse(mRotation) * Vector3(0.0f, 1.0f, 0.0f);
+    return Inverse(mRotation) * Vector3(0.0f, 1.0f, 0.0f);
 }
 
 Matrix4 Transform::GetModelMatrix() const
 {
     Matrix4 model(1.0f);
 
-    const Matrix4 translate = glm::translate(model, mPosition);
-    const Matrix4 rotate = toMat4(mRotation);
-    const Matrix4 scale = glm::scale(model, mScale);
+    const Matrix4 translate = Matcha::Translate(model, mPosition);
+    const Matrix4 rotate = ToMat4(mRotation);
+    const Matrix4 scale = Matcha::Scale(model, mScale);
 
     model = translate * rotate * scale;
 
@@ -150,10 +149,10 @@ Transform& Transform::operator*=(const Transform& rhs)
     Vector3 skew;
     Vector4 perspective;
 
-    decompose(model, scale, rotation, translation, skew, perspective);
+    (void)Decompose(model, scale, rotation, translation, skew, perspective);
 
     Translate(translation);
-    Rotate(eulerAngles(rotation));
+    Rotate(EulerAngles(rotation));
     SetScale(scale);
 
     return *this;

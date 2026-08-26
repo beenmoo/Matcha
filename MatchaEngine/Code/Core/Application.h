@@ -6,6 +6,10 @@
 #include "Input.h"
 #include "Time.h"
 #include "Window.h"
+#include "Graphics/Renderer.h"
+#include "Graphics/ResourceManager.h"
+
+#include <memory>
 
 int main(int argc, char** argv);
 
@@ -63,6 +67,8 @@ private:
     Logger mLogger;
     Time mTime;
     Window mWindow;
+    std::unique_ptr<ResourceManager> mResourceManager;
+    std::unique_ptr<Renderer> mRenderer;
     Context mContext;
 
     bool mIsRunning = false;

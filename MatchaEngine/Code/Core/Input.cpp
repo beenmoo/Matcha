@@ -47,8 +47,8 @@ void Input::Update()
 {
     memcpy(mPrevKeyboardState, mKeyboardState, mNumKeys);
 
-    mMouseData.mMouseAxis = Vector2(0.0f);
-    mMouseData.mMouseScrollDelta = Vector2(0.0f);
+    mMouseData.mMouseAxis = Vector2Int(0);
+    mMouseData.mMouseScrollDelta = Vector2Int(0);
     mPrevMouseState = mMouseState;
     mMouseState = SDL_GetMouseState(&mMouseData.mMousePositionX, &mMouseData.mMousePositionY);
 }

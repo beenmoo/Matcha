@@ -7,6 +7,7 @@ target_sources(${TARGET_NAME} PRIVATE
     Core.h
     EntryPoint.h
     Event.h
+    Handle.h
     Input.cpp
     Input.h
     KeyCodes.h

@@ -20,6 +20,7 @@
         "glm",
         "imgui",
         "stb",
-        "assimp"
+        "assimp",
+        "efsw"
     ]
 }

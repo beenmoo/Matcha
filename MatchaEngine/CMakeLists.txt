@@ -10,17 +10,24 @@ add_subdirectory(Code/Utils)
 target_include_directories(${TARGET_NAME} PUBLIC Code)
 target_include_directories(${TARGET_NAME} PRIVATE ${Stb_INCLUDE_DIR})
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
-target_link_libraries(${TARGET_NAME} PRIVATE SDL3::SDL3)
-target_link_libraries(${TARGET_NAME} PUBLIC glm::glm spdlog::spdlog nlohmann_json::nlohmann_json glad)
+target_link_libraries(${TARGET_NAME} PRIVATE SDL3::SDL3 efsw::efsw glm::glm spdlog::spdlog nlohmann_json::nlohmann_json glad assimp::assimp)
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 target_compile_definitions(${TARGET_NAME} PRIVATE $<$<CONFIG:Debug>:MT_DEBUG=1>)
+
+file(GLOB_RECURSE SHADER_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Shaders/*.vert"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Shaders/*.frag")
+
+target_sources(${TARGET_NAME} PRIVATE ${SHADER_SOURCES})
+set_source_files_properties(${SHADER_SOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 if (MSVC)
     file(GLOB_RECURSE CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
     file(GLOB_RECURSE HEADER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Source Files" FILES ${CPP_SOURCES})
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Header Files" FILES ${HEADER_SOURCES})
+    source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Shaders" PREFIX "Shaders" FILES ${SHADER_SOURCES})
 endif()
 
 set_target_properties(

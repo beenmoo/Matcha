@@ -2,7 +2,7 @@
 
 namespace Matcha
 {
-GLIndexBuffer::GLIndexBuffer(GLuint* indices, GLuint count)
+GLIndexBuffer::GLIndexBuffer(const GLuint* indices, GLuint count)
 {
     glCreateBuffers(1, &mHandle);
     glNamedBufferData(mHandle, count * sizeof(GLuint), indices, GL_STATIC_DRAW);
@@ -23,7 +23,7 @@ void GLIndexBuffer::AddIndices(std::initializer_list<GLuint> indices)
     glNamedBufferData(mHandle, mIndices.size() * sizeof(GLuint), mIndices.data(), mDrawType);
 }
 
-void GLIndexBuffer::SetIndices(GLuint* indices, GLuint count)
+void GLIndexBuffer::SetIndices(const GLuint* indices, GLuint count)
 {
     glNamedBufferSubData(mHandle, 0, count * sizeof(GLuint), indices);
 
@@ -33,7 +33,7 @@ void GLIndexBuffer::SetIndices(GLuint* indices, GLuint count)
         mIndices.emplace_back(indices[i]);
 }
 
-void GLIndexBuffer::SetIndicesNew(GLuint* indices, GLuint count)
+void GLIndexBuffer::SetIndicesNew(const GLuint* indices, GLuint count)
 {
     glNamedBufferData(mHandle, count * sizeof(GLuint), indices, GL_STATIC_DRAW);
 

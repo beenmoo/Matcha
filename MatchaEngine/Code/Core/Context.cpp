@@ -9,10 +9,14 @@ namespace Matcha
 Context::Context(Application& application,
                  Input& input,
                  Time& time,
-                 Window& window) : mApplication(application),
-                                   mInput(input),
-                                   mTime(time),
-                                   mWindow(window)
+                 Window& window,
+                 Renderer& renderer,
+                 ResourceManager& resourceManager) : mApplication(application),
+                                                     mInput(input),
+                                                     mTime(time),
+                                                     mWindow(window),
+                                                     mRenderer(renderer),
+                                                     mResourceManager(resourceManager)
 {
 }
 
@@ -54,5 +58,25 @@ Window& Context::GetWindow()
 const Window& Context::GetWindow() const
 {
     return mWindow;
+}
+
+Renderer& Context::GetRenderer()
+{
+    return mRenderer;
+}
+
+const Renderer& Context::GetRenderer() const
+{
+    return mRenderer;
+}
+
+ResourceManager& Context::GetResourceManager()
+{
+    return mResourceManager;
+}
+
+const ResourceManager& Context::GetResourceManager() const
+{
+    return mResourceManager;
 }
 }  // namespace Matcha

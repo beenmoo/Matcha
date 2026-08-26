@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Graphics/Renderer.h"
+#include "Graphics/ResourceManager.h"
+
 namespace Matcha
 {
 class Application;
@@ -14,7 +17,9 @@ public:
     Context(Application& application,
             Input& input,
             Time& time,
-            Window& window);
+            Window& window,
+            Renderer& renderer,
+            ResourceManager& resourceManager);
 
     [[nodiscard]] Application& GetApplication();
     [[nodiscard]] const Application& GetApplication() const;
@@ -24,11 +29,17 @@ public:
     [[nodiscard]] const Time& GetTime() const;
     [[nodiscard]] Window& GetWindow();
     [[nodiscard]] const Window& GetWindow() const;
+    [[nodiscard]] Renderer& GetRenderer();
+    [[nodiscard]] const Renderer& GetRenderer() const;
+    [[nodiscard]] ResourceManager& GetResourceManager();
+    [[nodiscard]] const ResourceManager& GetResourceManager() const;
 
 private:
     Application& mApplication;
     Input& mInput;
     Time& mTime;
     Window& mWindow;
+    Renderer& mRenderer;
+    ResourceManager& mResourceManager;
 };
 }  // namespace Matcha

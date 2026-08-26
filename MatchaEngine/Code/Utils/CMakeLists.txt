@@ -1,2 +1,5 @@
 target_sources(${TARGET_NAME} PRIVATE
-    ShaderUtils.h)
+    FileWatcher.h
+    FileWatcher.cpp
+    ShaderDataType.h
+)

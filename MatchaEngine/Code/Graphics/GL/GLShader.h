@@ -21,16 +21,15 @@ public:
     void Bind() const;
     void Unbind() const;
 
-    [[nodiscard]] const std::string& GetName() const;
+    bool Reload();
+
     [[nodiscard]] GLuint GetHandle() const;
 
 private:
     [[nodiscard("error must be handled")]] std::expected<void, std::string> ParseFile(const std::string& path);
-    [[nodiscard("error must be handled")]] std::expected<void, std::string> CreateProgram();
 
 private:
     GLuint mHandle;
-    std::string mName;
     std::unordered_map<GLenum, std::pair<std::string, std::string>> mSources;
 };
 }  // namespace Matcha

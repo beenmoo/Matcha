@@ -8,11 +8,7 @@
 #include "Core/Time.h"
 #include "Core/Window.h"
 
-#include "Graphics/GLIndexBuffer.h"
-#include "Graphics/GLRenderer.h"
-#include "Graphics/GLShader.h"
-#include "Graphics/GLVertexArray.h"
-#include "Graphics/GLVertexBuffer.h"
+#include "Graphics/Renderer.h"
 
 #include "Math/Matrix.h"
 #include "Math/Quaternion.h"

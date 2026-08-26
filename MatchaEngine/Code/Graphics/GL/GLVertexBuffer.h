@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Math/Vector.h"
-#include "Utils/ShaderUtils.h"
+#include "GLShaderUtils.h"
 
 #include <vector>
 #include <initializer_list>
@@ -16,13 +16,13 @@ public:
     private:
         struct BufferElement
         {
-            ShaderUtils::ShaderDataType type = ShaderUtils::ShaderDataType::None;
+            Utils::ShaderDataType type = Utils::ShaderDataType::None;
             GLuint size = 0;
             size_t offset = 0;
             GLboolean normalized = false;
 
-            BufferElement(ShaderUtils::ShaderDataType type, GLboolean normalized = false) : type(type),
-                                                                                            size(ShaderUtils::ShaderDataTypeSize(type)),
+            BufferElement(Utils::ShaderDataType type, GLboolean normalized = false) : type(type),
+                                                                                            size(Utils::ShaderDataTypeSize(type)),
                                                                                             normalized(normalized)
             {
             }
@@ -31,27 +31,27 @@ public:
             {
                 switch (type)
                 {
-                case ShaderUtils::ShaderDataType::Float:
+                case Utils::ShaderDataType::Float:
                     return 1;
-                case ShaderUtils::ShaderDataType::Float2:
+                case Utils::ShaderDataType::Float2:
                     return 2;
-                case ShaderUtils::ShaderDataType::Float3:
+                case Utils::ShaderDataType::Float3:
                     return 3;
-                case ShaderUtils::ShaderDataType::Float4:
+                case Utils::ShaderDataType::Float4:
                     return 4;
-                case ShaderUtils::ShaderDataType::Mat3:
+                case Utils::ShaderDataType::Mat3:
                     return 3;
-                case ShaderUtils::ShaderDataType::Mat4:
+                case Utils::ShaderDataType::Mat4:
                     return 4;
-                case ShaderUtils::ShaderDataType::Int:
+                case Utils::ShaderDataType::Int:
                     return 1;
-                case ShaderUtils::ShaderDataType::Int2:
+                case Utils::ShaderDataType::Int2:
                     return 2;
-                case ShaderUtils::ShaderDataType::Int3:
+                case Utils::ShaderDataType::Int3:
                     return 3;
-                case ShaderUtils::ShaderDataType::Int4:
+                case Utils::ShaderDataType::Int4:
                     return 4;
-                case ShaderUtils::ShaderDataType::Bool:
+                case Utils::ShaderDataType::Bool:
                     return 1;
                 default:
                     break;
@@ -62,7 +62,7 @@ public:
         };
 
     public:
-        BufferLayout(std::initializer_list<ShaderUtils::ShaderDataType> dataTypes, GLboolean normalized = false)
+        BufferLayout(std::initializer_list<Utils::ShaderDataType> dataTypes, GLboolean normalized = false)
         {
             for (const auto& i : dataTypes)
                 mElements.emplace_back(BufferElement(i, normalized));

@@ -36,8 +36,8 @@ private:
     struct MouseData
     {
         float mMousePositionX = 0, mMousePositionY = 0;
-        Vector2 mMouseAxis = Vector2(0);
-        Vector2 mMouseScrollDelta = Vector2(0);
+        Vector2Int mMouseAxis = Vector2Int(0);
+        Vector2Int mMouseScrollDelta = Vector2Int(0);
     };
 
 public:
@@ -72,7 +72,7 @@ private:
     uint32_t mPrevMouseState = 0;
     MouseData mMouseData;
 
-    Vector2Int mJoystickAxis = Vector2(0.0f);
+    Vector2Int mJoystickAxis = Vector2Int(0);
 
     CursorLockState mCursorLockState = CursorLockState::None;
 };

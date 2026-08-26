@@ -1,4 +1,6 @@
 #include "Application.h"
+#include "Graphics/GL/GLRenderer.h"
+#include "Graphics/GL/GLResourceManager.h"
 
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
@@ -29,7 +31,9 @@ std::optional<Event> TranslateEvent(const SDL_Event& sdlEvent)
 }  // namespace
 
 Application::Application(const ApplicationSpecification& spec) : mAppSpec(spec),
-                                                                 mContext(*this, mInput, mTime, mWindow)
+                                                                 mResourceManager(std::make_unique<GLResourceManager>()),
+                                                                 mRenderer(std::make_unique<GLRenderer>(static_cast<GLResourceManager&>(*mResourceManager))),
+                                                                 mContext(*this, mInput, mTime, mWindow, *mRenderer, *mResourceManager)
 {
     LogContext();
 }
@@ -62,6 +66,7 @@ void Application::Update()
 {
     mInput.Update();
     mTime.Update();
+    mResourceManager->ReloadModifiedShaders();
     mWindow.SwapBuffers();
 }
 

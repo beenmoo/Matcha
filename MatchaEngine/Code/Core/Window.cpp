@@ -80,7 +80,7 @@ bool Window::IsMinimized() const
 void Window::InitContext()
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
-        MT_CORE_ERROR(SDL_GetError());
+        MT_CORE_ERROR("{}", SDL_GetError());
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);

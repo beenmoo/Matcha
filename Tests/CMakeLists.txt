@@ -11,7 +11,12 @@ enable_testing()
 
 set(TARGET_NAME Tests)
 
-add_executable(${TARGET_NAME} Code/test.cpp)
+add_executable(${TARGET_NAME}
+    Code/MatrixTests.cpp
+    Code/QuaternionTests.cpp
+    Code/RendererTests.cpp
+    Code/TransformTests.cpp
+    Code/VectorTests.cpp)
 
 target_include_directories(${TARGET_NAME} PUBLIC Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)

@@ -37,8 +37,8 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
 
     for (const auto& e : layout->GetElements())
     {
-        if (e.type == ShaderUtils::ShaderDataType::Mat3 ||
-            e.type == ShaderUtils::ShaderDataType::Mat4)
+        if (e.type == Utils::ShaderDataType::Mat3 ||
+            e.type == Utils::ShaderDataType::Mat4)
         {
             GLuint count = e.GetComponentCount();
 
@@ -48,7 +48,7 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
                 glVertexArrayAttribFormat(mHandle,
                                           attribIndex,
                                           count,
-                                          ShaderUtils::ShaderDataTypeToGLDataType(e.type),
+                                          Utils::ShaderDataTypeToGLDataType(e.type),
                                           e.normalized,
                                           static_cast<GLuint>(e.offset + sizeof(GLfloat) * count * i));
                 glVertexArrayAttribBinding(mHandle, attribIndex, attribIndex);
@@ -62,7 +62,7 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
             glVertexArrayAttribFormat(mHandle,
                                       attribIndex,
                                       e.GetComponentCount(),
-                                      ShaderUtils::ShaderDataTypeToGLDataType(e.type),
+                                      Utils::ShaderDataTypeToGLDataType(e.type),
                                       e.normalized,
                                       static_cast<GLuint>(e.offset));
             glVertexArrayAttribBinding(mHandle, attribIndex, attribIndex);
