@@ -1,12 +1,9 @@
 #pragma once
 
 #include "Graphics/ResourceManager.h"
-#include "GLIndexBuffer.h"
 #include "GLMesh.h"
 #include "GLShader.h"
 #include "GLTexture.h"
-#include "GLVertexArray.h"
-#include "GLVertexBuffer.h"
 #include "Graphics/ShaderDataType.h"
 #include "Utils/FileWatcher.h"
 

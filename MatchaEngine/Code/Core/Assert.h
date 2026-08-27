@@ -3,8 +3,6 @@
 #include "Core/Core.h"
 #include "Core/Logger.h"
 
-#include <filesystem>
-
 #ifdef MT_ENABLE_ASSERTS
 #define MT_ASSERT(x, msg)                                                                                 \
     if ((x))                                                                                              \

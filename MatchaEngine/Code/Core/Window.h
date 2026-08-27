@@ -9,7 +9,7 @@
 
 namespace Matcha
 {
-class Context;
+class EngineContext;
 
 struct WindowSpecification
 {

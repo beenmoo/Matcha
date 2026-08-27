@@ -2,7 +2,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Logger.h"
-#include "Context.h"
+#include "EngineContext.h"
 #include "Input.h"
 #include "Time.h"
 #include "Window.h"
@@ -74,7 +74,7 @@ private:
     Window m_Window;
     std::unique_ptr<ResourceManager> m_ResourceManager;
     std::unique_ptr<Renderer> m_Renderer;
-    Context m_Context;
+    EngineContext m_Context;
 
     bool m_IsRunning = false;
 };

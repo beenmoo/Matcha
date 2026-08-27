@@ -1,6 +1,5 @@
 #include "GLRenderer.h"
 #include "Core/Assert.h"
-#include "Core/Core.h"
 
 #include <algorithm>
 #include <glad/glad.h>

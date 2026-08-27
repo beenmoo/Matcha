@@ -2,9 +2,9 @@ target_sources(${TARGET_NAME} PRIVATE
     Application.cpp
     Application.h
     Assert.h
-    Context.cpp
-    Context.h
     Core.h
+    EngineContext.cpp
+    EngineContext.h
     EntryPoint.h
     Event.h
     Handle.h

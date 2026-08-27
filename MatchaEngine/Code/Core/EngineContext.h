@@ -3,6 +3,8 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/ResourceManager.h"
 
+#include <type_traits>
+
 namespace Matcha
 {
 class Application;
@@ -11,28 +13,51 @@ class Logger;
 class Time;
 class Window;
 
-class Context
+class EngineContext
 {
 public:
-    Context(Application& application,
+    EngineContext(Application& application,
             Input& input,
             Time& time,
             Window& window,
             Renderer& renderer,
             ResourceManager& resourceManager);
 
-    [[nodiscard]] Application& GetApplication();
-    [[nodiscard]] const Application& GetApplication() const;
-    [[nodiscard]] Input& GetInput();
-    [[nodiscard]] const Input& GetInput() const;
-    [[nodiscard]] Time& GetTime();
-    [[nodiscard]] const Time& GetTime() const;
-    [[nodiscard]] Window& GetWindow();
-    [[nodiscard]] const Window& GetWindow() const;
-    [[nodiscard]] Renderer& GetRenderer();
-    [[nodiscard]] const Renderer& GetRenderer() const;
-    [[nodiscard]] ResourceManager& GetResourceManager();
-    [[nodiscard]] const ResourceManager& GetResourceManager() const;
+    template <typename Self>
+    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Application&, Application&> GetApplication(this Self& self)
+    {
+        return self.m_Application;
+    }
+
+    template <typename Self>
+    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Input&, Input&> GetInput(this Self& self)
+    {
+        return self.m_Input;
+    }
+
+    template <typename Self>
+    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Time&, Time&> GetTime(this Self& self)
+    {
+        return self.m_Time;
+    }
+
+    template <typename Self>
+    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Window&, Window&> GetWindow(this Self& self)
+    {
+        return self.m_Window;
+    }
+
+    template <typename Self>
+    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Renderer&, Renderer&> GetRenderer(this Self& self)
+    {
+        return self.m_Renderer;
+    }
+
+    template <typename Self>
+    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const ResourceManager&, ResourceManager&> GetResourceManager(this Self& self)
+    {
+        return self.m_ResourceManager;
+    }
 
 private:
     Application& m_Application;
