@@ -7,7 +7,8 @@ namespace Matcha
 {
 Renderer::Renderer(RendererAPI& rendererAPI, ResourceManager& resourceManager)
     : m_RendererAPI(rendererAPI),
-      m_ResourceManager(resourceManager)
+      m_ResourceManager(resourceManager),
+      m_CameraUniformBuffer(UniformBuffer::Create(sizeof(Matrix4), 0))
 {
 }
 
@@ -29,6 +30,8 @@ void Renderer::Flush()
         MT_ASSERT(shader, "Submitted RenderData references an unknown shader handle!");
 
         shader->Bind();
+        shader->SetMat4("u_WorldMatrix", renderData.transform);
+        shader->SetFloat4("u_AlbedoColor", renderData.albedoColor);
 
         if (renderData.texture.IsValid())
         {
@@ -39,7 +42,7 @@ void Renderer::Flush()
             texture->Bind(0);
         }
 
-        m_RendererAPI.DrawIndexed(*mesh->vertexArray, renderData.indexCount);
+        m_RendererAPI.DrawIndexed(*mesh->vertexArray, mesh->indexBuffer->GetCount());
     }
 
     m_RenderData.clear();
@@ -53,6 +56,11 @@ void Renderer::Clear()
 void Renderer::SetClearColor(const Vector4& color)
 {
     m_RendererAPI.SetClearColor(color);
+}
+
+void Renderer::SetViewProjection(const Matrix4& viewProjection)
+{
+    m_CameraUniformBuffer->SetData(viewProjection.GetData(), sizeof(Matrix4));
 }
 
 void Renderer::SortRenderData()

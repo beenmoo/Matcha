@@ -1,4 +1,7 @@
 #include "Application.h"
+#include "Scene/System/CameraSystem.h"
+#include "Scene/System/RenderSystem.h"
+#include "Scene/System/TransformSystem.h"
 
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
@@ -88,6 +91,11 @@ void Application::Update()
 void Application::Render()
 {
     m_Renderer.Clear();
+
+    TransformSystem::Update(m_Scene);
+    CameraSystem::Update(m_Scene);
+    RenderSystem::Update(m_Scene, m_Renderer);
+
     OnRender();
     m_Renderer.Flush();
     m_Window.SwapBuffers();

@@ -79,6 +79,18 @@ bool GLShader::Reload()
     return true;
 }
 
+void GLShader::SetMat4(std::string_view name, const Matrix4& value)
+{
+    GLint location = glGetUniformLocation(m_Handle, std::string(name).c_str());
+    glProgramUniformMatrix4fv(m_Handle, location, 1, GL_FALSE, value.GetData());
+}
+
+void GLShader::SetFloat4(std::string_view name, const Vector4& value)
+{
+    GLint location = glGetUniformLocation(m_Handle, std::string(name).c_str());
+    glProgramUniform4f(m_Handle, location, value.x, value.y, value.z, value.w);
+}
+
 GLuint GLShader::GetHandle() const
 {
     return m_Handle;

@@ -89,4 +89,10 @@ Matrix4 Orthographic(float left, float right, float bottom, float top, float nea
     glm::mat4 result = glm::ortho(left, right, bottom, top, nearPlane, farPlane);
     return Matrix4(&result[0][0]);
 }
+
+Matrix4 Inverse(const Matrix4& m)
+{
+    glm::mat4 result = glm::inverse(ToGLM(m));
+    return Matrix4(&result[0][0]);
+}
 }  // namespace Matcha

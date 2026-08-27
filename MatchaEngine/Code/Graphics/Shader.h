@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Math/Matrix.h"
+#include "Math/Vector.h"
+
 #include <cstdint>
 #include <initializer_list>
 #include <memory>
@@ -17,6 +20,9 @@ public:
     virtual void Unbind() const = 0;
 
     virtual bool Reload() = 0;
+
+    virtual void SetMat4(std::string_view name, const Matrix4& value) = 0;
+    virtual void SetFloat4(std::string_view name, const Vector4& value) = 0;
 
     [[nodiscard]] virtual uint32_t GetHandle() const = 0;
 

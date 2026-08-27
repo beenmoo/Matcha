@@ -34,4 +34,6 @@ private:
 // fovDegrees is the full vertical field of view, in degrees.
 [[nodiscard]] Matrix4 Perspective(float fovDegrees, float aspectRatio, float nearPlane, float farPlane);
 [[nodiscard]] Matrix4 Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane);
+
+[[nodiscard]] Matrix4 Inverse(const Matrix4& m);
 }  // namespace Matcha

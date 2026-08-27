@@ -87,9 +87,9 @@ std::expected<void, std::string> CreateProgram(const std::unordered_map<GLenum, 
 
 GLenum ShaderTypeFromString(const std::string& type)
 {
-    if (type == "vert")
+    if (type == ".vert")
         return GL_VERTEX_SHADER;
-    if (type == "frag")
+    if (type == ".frag")
         return GL_FRAGMENT_SHADER;
 
     return GL_NONE;
