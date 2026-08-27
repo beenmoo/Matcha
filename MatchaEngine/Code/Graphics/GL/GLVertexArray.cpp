@@ -1,8 +1,6 @@
 #include "GLVertexArray.h"
 #include "Core/Assert.h"
-#include "GLIndexBuffer.h"
 #include "GLShaderUtils.h"
-#include "GLVertexBuffer.h"
 #include "Graphics/ShaderDataType.h"
 
 namespace Matcha
@@ -76,7 +74,7 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
     }
 }
 
-void GLVertexArray::AddVertexBuffer(const std::shared_ptr<GLVertexBuffer> buffer)
+void GLVertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer> buffer)
 {
     MT_ASSERT(buffer->GetLayout(), "Vertex Buffer has no layout!");
 
@@ -85,7 +83,7 @@ void GLVertexArray::AddVertexBuffer(const std::shared_ptr<GLVertexBuffer> buffer
     InitAttributes(static_cast<GLuint>(m_VertexBuffers.size() - 1));
 }
 
-void GLVertexArray::SetIndexBuffer(const std::shared_ptr<GLIndexBuffer> buffer)
+void GLVertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer> buffer)
 {
     m_IndexBuffer = buffer;
 

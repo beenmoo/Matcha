@@ -3,23 +3,41 @@ target_sources(${TARGET_NAME} PRIVATE
     GL/GLFrameBuffer.h
     GL/GLIndexBuffer.cpp
     GL/GLIndexBuffer.h
-    GL/GLMesh.h
-    GL/GLRenderer.cpp
-    GL/GLRenderer.h
-    GL/GLResourceManager.cpp
-    GL/GLResourceManager.h
+    GL/GLRendererAPI.cpp
+    GL/GLRendererAPI.h
     GL/GLShader.cpp
     GL/GLShader.h
     GL/GLShaderUtils.cpp
     GL/GLShaderUtils.h
     GL/GLTexture.cpp
     GL/GLTexture.h
+    GL/GLUniformBuffer.cpp
+    GL/GLUniformBuffer.h
     GL/GLVertexArray.cpp
     GL/GLVertexArray.h
     GL/GLVertexBuffer.cpp
     GL/GLVertexBuffer.h
     stb_image_impl.cpp
+    FrameBuffer.cpp
+    FrameBuffer.h
+    IndexBuffer.cpp
+    IndexBuffer.h
+    Mesh.h
+    Renderer.cpp
     Renderer.h
+    RendererAPI.cpp
+    RendererAPI.h
+    ResourceManager.cpp
     ResourceManager.h
     RenderHandles.h
-    ShaderDataType.h)
+    Shader.cpp
+    Shader.h
+    ShaderDataType.h
+    Texture.cpp
+    Texture.h
+    UniformBuffer.cpp
+    UniformBuffer.h
+    VertexArray.cpp
+    VertexArray.h
+    VertexBuffer.cpp
+    VertexBuffer.h)

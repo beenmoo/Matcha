@@ -77,4 +77,16 @@ bool Decompose(const Matrix4& m, Vector3& scale, Quaternion& rotation, Vector3& 
 
     return success;
 }
+
+Matrix4 Perspective(float fovDegrees, float aspectRatio, float nearPlane, float farPlane)
+{
+    glm::mat4 result = glm::perspective(Radians(fovDegrees), aspectRatio, nearPlane, farPlane);
+    return Matrix4(&result[0][0]);
+}
+
+Matrix4 Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane)
+{
+    glm::mat4 result = glm::ortho(left, right, bottom, top, nearPlane, farPlane);
+    return Matrix4(&result[0][0]);
+}
 }  // namespace Matcha

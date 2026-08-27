@@ -48,7 +48,7 @@ public:
     [[nodiscard]] Vector3 GetRight() const;
     [[nodiscard]] Vector3 GetUp() const;
 
-    [[nodiscard]] Matrix4 GetModelMatrix() const;
+    [[nodiscard]] Matrix4 GetLocalMatrix() const;
 
     Transform& operator*=(const Transform& rhs);
 

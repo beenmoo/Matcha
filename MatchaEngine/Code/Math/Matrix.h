@@ -30,4 +30,8 @@ private:
 [[nodiscard]] Matrix4 Translate(const Matrix4& m, const Vector3& translation);
 [[nodiscard]] Matrix4 Scale(const Matrix4& m, const Vector3& scale);
 [[nodiscard]] bool Decompose(const Matrix4& m, Vector3& scale, Quaternion& rotation, Vector3& translation, Vector3& skew, Vector4& perspective);
+
+// fovDegrees is the full vertical field of view, in degrees.
+[[nodiscard]] Matrix4 Perspective(float fovDegrees, float aspectRatio, float nearPlane, float farPlane);
+[[nodiscard]] Matrix4 Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane);
 }  // namespace Matcha

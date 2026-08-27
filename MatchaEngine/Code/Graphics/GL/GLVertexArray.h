@@ -1,31 +1,31 @@
 #pragma once
 
-#include <vector>
-#include <memory>
+#include "Graphics/VertexArray.h"
+
 #include <glad/glad.h>
+#include <vector>
 
 namespace Matcha
 {
-class GLVertexBuffer;
-class GLIndexBuffer;
-
-class GLVertexArray
+class GLVertexArray final : public VertexArray
 {
 public:
     GLVertexArray();
-    ~GLVertexArray();
+    ~GLVertexArray() override;
 
-    void Bind() const;
-    void Unbind() const;
+    void Bind() const override;
+    void Unbind() const override;
 
+    void AddVertexBuffer(const std::shared_ptr<VertexBuffer> buffer) override;
+    void SetIndexBuffer(const std::shared_ptr<IndexBuffer> buffer) override;
+
+private:
     void InitAttributes(GLuint vbIndex);
-    void AddVertexBuffer(const std::shared_ptr<GLVertexBuffer> buffer);
-    void SetIndexBuffer(const std::shared_ptr<GLIndexBuffer> buffer);
 
 private:
     GLuint m_Handle;
 
-    std::vector<std::shared_ptr<GLVertexBuffer>> m_VertexBuffers;
-    std::shared_ptr<GLIndexBuffer> m_IndexBuffer = nullptr;
+    std::vector<std::shared_ptr<VertexBuffer>> m_VertexBuffers;
+    std::shared_ptr<IndexBuffer> m_IndexBuffer = nullptr;
 };
 }  // namespace Matcha

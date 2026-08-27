@@ -1,6 +1,4 @@
 #include "Application.h"
-#include "Graphics/GL/GLRenderer.h"
-#include "Graphics/GL/GLResourceManager.h"
 
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
@@ -32,10 +30,12 @@ std::optional<Event> TranslateEvent(const SDL_Event& sdlEvent)
 
 Application::Application(const ApplicationSpecification& spec)
     : m_AppSpec(spec),
-      m_ResourceManager(std::make_unique<GLResourceManager>()),
-      m_Renderer(std::make_unique<GLRenderer>(static_cast<GLResourceManager&>(*m_ResourceManager))),
-      m_Context(*this, m_Input, m_Time, m_Window, *m_Renderer, *m_ResourceManager)
+      m_RendererAPI(RendererAPI::Create(RendererAPI::API::OpenGL)),
+      m_Renderer(*m_RendererAPI, m_ResourceManager),
+      m_Context(*this, m_Input, m_Time, m_Window, *m_RendererAPI, m_Renderer, m_ResourceManager, m_Scene)
 {
+    m_RendererAPI->Init();
+
     LogContext();
 }
 
@@ -80,16 +80,16 @@ void Application::Update()
 {
     m_Input.Update();
     m_Time.Update();
-    m_ResourceManager->ReloadModifiedShaders();
+    m_ResourceManager.ReloadModifiedShaders();
 
     OnUpdate();
 }
 
 void Application::Render()
 {
-    m_Renderer->Clear();
+    m_Renderer.Clear();
     OnRender();
-    m_Renderer->Flush();
+    m_Renderer.Flush();
     m_Window.SwapBuffers();
 }
 

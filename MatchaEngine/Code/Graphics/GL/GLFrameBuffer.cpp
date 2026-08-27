@@ -3,6 +3,25 @@
 
 namespace Matcha
 {
+namespace
+{
+GLenum ToGLInternalFormat(FrameBufferTextureFormat format)
+{
+    switch (format)
+    {
+    case FrameBufferTextureFormat::RGB8:
+        return GL_RGB8;
+    case FrameBufferTextureFormat::Depth24Stencil8:
+        return GL_DEPTH24_STENCIL8;
+    case FrameBufferTextureFormat::None:
+        break;
+    }
+
+    MT_ASSERT(false, "Unknown FrameBufferTextureFormat!");
+    return GL_NONE;
+}
+}  // namespace
+
 GLFrameBuffer::GLFrameBuffer(const FrameBufferSpecification& spec)
     : m_Specification(spec)
 {
@@ -41,34 +60,34 @@ void GLFrameBuffer::Invalidate()
     glCreateFramebuffers(1, &m_Handle);
 
     glCreateTextures(GL_TEXTURE_2D, 1, &m_ColorAttachmentID);
-    glTextureStorage2D(m_ColorAttachmentID, 1, m_Specification.m_TextureFormat, m_Specification.m_Width, m_Specification.m_Height);
+    glTextureStorage2D(m_ColorAttachmentID, 1, ToGLInternalFormat(m_Specification.textureFormat), m_Specification.width, m_Specification.height);
     glTextureParameteri(m_ColorAttachmentID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTextureParameteri(m_ColorAttachmentID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glNamedFramebufferTexture(m_Handle, GL_COLOR_ATTACHMENT0, m_ColorAttachmentID, 0);
 
     glCreateRenderbuffers(1, &m_DepthAttachmentID);
-    glNamedRenderbufferStorage(m_DepthAttachmentID, m_Specification.m_DepthFormat, m_Specification.m_Width, m_Specification.m_Height);
+    glNamedRenderbufferStorage(m_DepthAttachmentID, ToGLInternalFormat(m_Specification.depthFormat), m_Specification.width, m_Specification.height);
     glNamedFramebufferRenderbuffer(m_Handle, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_DepthAttachmentID);
 
     MT_ASSERT(glCheckNamedFramebufferStatus(m_Handle, GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
 }
 
-GLuint GLFrameBuffer::GetHandle() const
+uint32_t GLFrameBuffer::GetHandle() const
 {
     return m_Handle;
 }
 
-GLuint GLFrameBuffer::GetColorAttachmentID() const
+uint32_t GLFrameBuffer::GetColorAttachmentID() const
 {
     return m_ColorAttachmentID;
 }
 
-GLuint GLFrameBuffer::GetDepthAttachmentID() const
+uint32_t GLFrameBuffer::GetDepthAttachmentID() const
 {
     return m_DepthAttachmentID;
 }
 
-const GLFrameBuffer::FrameBufferSpecification& GLFrameBuffer::GetSpecification() const
+const FrameBufferSpecification& GLFrameBuffer::GetSpecification() const
 {
     return m_Specification;
 }

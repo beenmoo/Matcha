@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Graphics/Shader.h"
+
 #include <unordered_map>
 #include <string>
 #include <string_view>
@@ -10,20 +12,20 @@
 
 namespace Matcha
 {
-class GLShader
+class GLShader final : public Shader
 {
 public:
     GLShader(
         std::string_view name,
         const std::initializer_list<std::string>& paths);
-    ~GLShader();
+    ~GLShader() override;
 
-    void Bind() const;
-    void Unbind() const;
+    void Bind() const override;
+    void Unbind() const override;
 
-    bool Reload();
+    bool Reload() override;
 
-    [[nodiscard]] GLuint GetHandle() const;
+    [[nodiscard]] uint32_t GetHandle() const override;
 
 private:
     [[nodiscard("error must be handled")]] std::expected<void, std::string> ParseFile(const std::string& path);

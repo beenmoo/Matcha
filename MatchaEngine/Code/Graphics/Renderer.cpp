@@ -1,22 +1,22 @@
-#include "GLRenderer.h"
+#include "Renderer.h"
 #include "Core/Assert.h"
 
 #include <algorithm>
-#include <glad/glad.h>
 
 namespace Matcha
 {
-GLRenderer::GLRenderer(GLResourceManager& resourceManager)
-    : m_ResourceManager(resourceManager)
+Renderer::Renderer(RendererAPI& rendererAPI, ResourceManager& resourceManager)
+    : m_RendererAPI(rendererAPI),
+      m_ResourceManager(resourceManager)
 {
 }
 
-void GLRenderer::Submit(const RenderData& renderData)
+void Renderer::Submit(const RenderData& renderData)
 {
     m_RenderData.emplace_back(renderData);
 }
 
-void GLRenderer::Flush()
+void Renderer::Flush()
 {
     SortRenderData();
 
@@ -28,7 +28,6 @@ void GLRenderer::Flush()
         MT_ASSERT(mesh, "Submitted RenderData references an unknown mesh handle!");
         MT_ASSERT(shader, "Submitted RenderData references an unknown shader handle!");
 
-        mesh->vertexArray.Bind();
         shader->Bind();
 
         if (renderData.texture.IsValid())
@@ -40,24 +39,23 @@ void GLRenderer::Flush()
             texture->Bind(0);
         }
 
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(renderData.indexCount), GL_UNSIGNED_INT, nullptr);
+        m_RendererAPI.DrawIndexed(*mesh->vertexArray, renderData.indexCount);
     }
 
     m_RenderData.clear();
 }
 
-void GLRenderer::Clear()
+void Renderer::Clear()
 {
-    glClearColor(m_ClearColor.x, m_ClearColor.y, m_ClearColor.z, m_ClearColor.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    m_RendererAPI.Clear();
 }
 
-void GLRenderer::SetClearColor(const Vector4& color)
+void Renderer::SetClearColor(const Vector4& color)
 {
-    m_ClearColor = color;
+    m_RendererAPI.SetClearColor(color);
 }
 
-void GLRenderer::SortRenderData()
+void Renderer::SortRenderData()
 {
     std::sort(m_RenderData.begin(), m_RenderData.end(), [](const RenderData& a, const RenderData& b) {
         if (a.shader.GetID() != b.shader.GetID())

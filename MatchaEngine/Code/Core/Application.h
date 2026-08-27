@@ -7,7 +7,9 @@
 #include "Time.h"
 #include "Window.h"
 #include "Graphics/Renderer.h"
+#include "Graphics/RendererAPI.h"
 #include "Graphics/ResourceManager.h"
+#include "Scene/Scene.h"
 
 #include <memory>
 
@@ -72,8 +74,10 @@ private:
     Logger m_Logger;
     Time m_Time;
     Window m_Window;
-    std::unique_ptr<ResourceManager> m_ResourceManager;
-    std::unique_ptr<Renderer> m_Renderer;
+    std::unique_ptr<RendererAPI> m_RendererAPI;
+    ResourceManager m_ResourceManager;
+    Renderer m_Renderer;
+    Scene m_Scene;
     EngineContext m_Context;
 
     bool m_IsRunning = false;

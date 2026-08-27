@@ -127,7 +127,7 @@ Vector3 Transform::GetUp() const
     return Inverse(m_Rotation) * Vector3(0.0f, 1.0f, 0.0f);
 }
 
-Matrix4 Transform::GetModelMatrix() const
+Matrix4 Transform::GetLocalMatrix() const
 {
     Matrix4 model(1.0f);
 
@@ -142,7 +142,7 @@ Matrix4 Transform::GetModelMatrix() const
 
 Transform& Transform::operator*=(const Transform& rhs)
 {
-    const Matrix4 model = GetModelMatrix() * rhs.GetModelMatrix();
+    const Matrix4 model = GetLocalMatrix() * rhs.GetLocalMatrix();
 
     Vector3 translation;
     Quaternion rotation;

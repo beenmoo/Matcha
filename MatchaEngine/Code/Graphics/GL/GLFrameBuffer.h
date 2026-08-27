@@ -1,34 +1,27 @@
 #pragma once
 
+#include "Graphics/FrameBuffer.h"
+
 #include <glad/glad.h>
 
 namespace Matcha
 {
-class GLFrameBuffer
+class GLFrameBuffer final : public FrameBuffer
 {
 public:
-    struct FrameBufferSpecification
-    {
-        GLuint m_Width = 0, m_Height = 0;
-        GLuint m_NumSamples = 1;
-        GLenum m_TextureFormat = GL_RGB8;
-        GLenum m_DepthFormat = GL_DEPTH24_STENCIL8;
-    };
-
-public:
     GLFrameBuffer(const FrameBufferSpecification& spec);
-    ~GLFrameBuffer();
+    ~GLFrameBuffer() override;
 
-    void Bind() const;
-    void Unbind() const;
+    void Bind() const override;
+    void Unbind() const override;
 
-    void Invalidate();
+    void Invalidate() override;
 
-    [[nodiscard]] GLuint GetHandle() const;
-    [[nodiscard]] GLuint GetColorAttachmentID() const;
-    [[nodiscard]] GLuint GetDepthAttachmentID() const;
+    [[nodiscard]] uint32_t GetHandle() const override;
+    [[nodiscard]] uint32_t GetColorAttachmentID() const override;
+    [[nodiscard]] uint32_t GetDepthAttachmentID() const override;
 
-    [[nodiscard]] const FrameBufferSpecification& GetSpecification() const;
+    [[nodiscard]] const FrameBufferSpecification& GetSpecification() const override;
 
 private:
     GLuint m_Handle = 0;

@@ -16,7 +16,7 @@ TEST(TransformTests, DefaultTransformIsIdentity)
     ExpectQuaternionNear(t.GetRotation(), Quaternion());
 
     Matrix4 identity;
-    ExpectMatrixNear(t.GetModelMatrix(), identity);
+    ExpectMatrixNear(t.GetLocalMatrix(), identity);
 }
 
 TEST(TransformTests, DefaultOrientationVectors)
@@ -88,13 +88,13 @@ TEST(TransformTests, RotationEulerRoundTrip)
     ExpectVectorNear(eulers, Vector3(0.0f, Radians(45.0f), 0.0f), 1e-3f);
 }
 
-TEST(TransformTests, ModelMatrixMatchesTranslateAndScaleComposition)
+TEST(TransformTests, LocalMatrixMatchesTranslateAndScaleComposition)
 {
     Transform t;
     t.SetPosition(1.0f, 0.0f, 0.0f);
     t.SetScale(2.0f, 2.0f, 2.0f);
 
-    Matrix4 model = t.GetModelMatrix();
+    Matrix4 model = t.GetLocalMatrix();
 
     Vector3 scale;
     Quaternion rotation;

@@ -1,0 +1,16 @@
+target_sources(${TARGET_NAME} PRIVATE
+    Entity.h
+    Component/CameraComponent.h
+    Component/HierarchyComponent.h
+    Component/MaterialComponent.h
+    Component/MeshComponent.h
+    Component/TransformComponent.h
+    Scene.cpp
+    Scene.h
+    System/CameraSystem.cpp
+    System/CameraSystem.h
+    System/RenderSystem.cpp
+    System/RenderSystem.h
+    System/TransformSystem.cpp
+    System/TransformSystem.h
+    )

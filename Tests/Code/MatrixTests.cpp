@@ -86,3 +86,29 @@ TEST(Matrix4Tests, DecomposeRecoversTranslationAndScale)
     ExpectVectorNear(scale, Vector3(2.0f, 2.0f, 2.0f));
     ExpectQuaternionNear(rotation, Quaternion());
 }
+
+TEST(Matrix4Tests, PerspectiveWithNinetyDegreeFovAndUnitAspect)
+{
+    // tan(45 deg) == 1, so both axis scale terms collapse to 1 and the math is easy to check by hand.
+    Matrix4 projection = Perspective(90.0f, 1.0f, 0.1f, 100.0f);
+    const float* data = projection.GetData();
+
+    EXPECT_NEAR(data[0], 1.0f, kEpsilon);
+    EXPECT_NEAR(data[5], 1.0f, kEpsilon);
+    EXPECT_NEAR(data[11], -1.0f, kEpsilon);
+    EXPECT_NEAR(data[10], -(100.0f + 0.1f) / (100.0f - 0.1f), kEpsilon);
+    EXPECT_NEAR(data[14], -(2.0f * 100.0f * 0.1f) / (100.0f - 0.1f), kEpsilon);
+}
+
+TEST(Matrix4Tests, OrthographicWithSymmetricUnitCube)
+{
+    Matrix4 projection = Orthographic(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+    const float* data = projection.GetData();
+
+    EXPECT_NEAR(data[0], 1.0f, kEpsilon);
+    EXPECT_NEAR(data[5], 1.0f, kEpsilon);
+    EXPECT_NEAR(data[10], -1.0f, kEpsilon);
+    EXPECT_NEAR(data[12], 0.0f, kEpsilon);
+    EXPECT_NEAR(data[13], 0.0f, kEpsilon);
+    EXPECT_NEAR(data[14], 0.0f, kEpsilon);
+}

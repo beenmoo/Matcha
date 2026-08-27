@@ -1,26 +1,29 @@
-#include "GLResourceManager.h"
+#include "ResourceManager.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
+#include "VertexBuffer.h"
 
 #include <filesystem>
 #include <unordered_set>
 
 namespace Matcha
 {
-GLResourceManager::GLResourceManager()
+ResourceManager::ResourceManager()
 {
     m_FileWatcher.Watch();
 }
 
-ShaderHandle GLResourceManager::CreateShader(std::string_view name, const std::initializer_list<std::string>& paths)
+ShaderHandle ResourceManager::CreateShader(std::string_view name, const std::initializer_list<std::string>& paths)
 {
     ShaderHandle handle(m_NextShaderID++);
-    m_Shaders.emplace(handle.GetID(), std::make_unique<GLShader>(name, paths));
+    m_Shaders.emplace(handle.GetID(), Shader::Create(name, paths));
 
     WatchShaderPaths(handle.GetID(), paths);
 
     return handle;
 }
 
-void GLResourceManager::DestroyShader(ShaderHandle handle)
+void ResourceManager::DestroyShader(ShaderHandle handle)
 {
     m_Shaders.erase(handle.GetID());
 
@@ -30,7 +33,7 @@ void GLResourceManager::DestroyShader(ShaderHandle handle)
         std::erase(shaderIDs, handle.GetID());
 }
 
-void GLResourceManager::ReloadModifiedShaders()
+void ResourceManager::ReloadModifiedShaders()
 {
     std::vector<uint32_t> pending;
 
@@ -50,7 +53,7 @@ void GLResourceManager::ReloadModifiedShaders()
     }
 }
 
-void GLResourceManager::WatchShaderPaths(uint32_t shaderID, const std::initializer_list<std::string>& paths)
+void ResourceManager::WatchShaderPaths(uint32_t shaderID, const std::initializer_list<std::string>& paths)
 {
     for (const auto& path : paths)
     {
@@ -89,40 +92,41 @@ void GLResourceManager::WatchShaderPaths(uint32_t shaderID, const std::initializ
     }
 }
 
-TextureHandle GLResourceManager::CreateTexture(std::string_view path)
+TextureHandle ResourceManager::CreateTexture(std::string_view path)
 {
     TextureHandle handle(m_NextTextureID++);
-    m_Textures.emplace(handle.GetID(), std::make_unique<GLTexture>(path));
+    m_Textures.emplace(handle.GetID(), Texture::Create(path));
 
     return handle;
 }
 
-TextureHandle GLResourceManager::CreateTexture(uint32_t width, uint32_t height)
+TextureHandle ResourceManager::CreateTexture(uint32_t width, uint32_t height)
 {
     TextureHandle handle(m_NextTextureID++);
-    m_Textures.emplace(handle.GetID(), std::make_unique<GLTexture>(width, height));
+    m_Textures.emplace(handle.GetID(), Texture::Create(width, height));
 
     return handle;
 }
 
-void GLResourceManager::DestroyTexture(TextureHandle handle)
+void ResourceManager::DestroyTexture(TextureHandle handle)
 {
     m_Textures.erase(handle.GetID());
 }
 
-MeshHandle GLResourceManager::CreateMesh(std::span<const float> vertices,
-                                         std::initializer_list<ShaderDataType> layout,
-                                         std::span<const uint32_t> indices)
+MeshHandle ResourceManager::CreateMesh(std::span<const float> vertices,
+                                       std::initializer_list<ShaderDataType> layout,
+                                       std::span<const uint32_t> indices)
 {
-    auto mesh = std::make_unique<GLMesh>();
+    auto mesh = std::make_unique<Mesh>();
 
-    mesh->vertexBuffer = std::make_shared<GLVertexBuffer>(vertices.data(), static_cast<GLuint>(vertices.size_bytes()));
+    mesh->vertexBuffer = VertexBuffer::Create(vertices.data(), static_cast<uint32_t>(vertices.size_bytes()));
     mesh->vertexBuffer->SetLayout(std::make_shared<BufferLayout>(layout));
 
-    mesh->indexBuffer = std::make_shared<GLIndexBuffer>(indices.data(), static_cast<GLuint>(indices.size()));
+    mesh->indexBuffer = IndexBuffer::Create(indices.data(), static_cast<uint32_t>(indices.size()));
 
-    mesh->vertexArray.AddVertexBuffer(mesh->vertexBuffer);
-    mesh->vertexArray.SetIndexBuffer(mesh->indexBuffer);
+    mesh->vertexArray = VertexArray::Create();
+    mesh->vertexArray->AddVertexBuffer(mesh->vertexBuffer);
+    mesh->vertexArray->SetIndexBuffer(mesh->indexBuffer);
 
     MeshHandle handle(m_NextMeshID++);
     m_Meshes.emplace(handle.GetID(), std::move(mesh));
@@ -130,26 +134,26 @@ MeshHandle GLResourceManager::CreateMesh(std::span<const float> vertices,
     return handle;
 }
 
-void GLResourceManager::DestroyMesh(MeshHandle handle)
+void ResourceManager::DestroyMesh(MeshHandle handle)
 {
     m_Meshes.erase(handle.GetID());
 }
 
-GLShader* GLResourceManager::GetShader(ShaderHandle handle)
+Shader* ResourceManager::GetShader(ShaderHandle handle)
 {
     auto it = m_Shaders.find(handle.GetID());
 
     return it != m_Shaders.end() ? it->second.get() : nullptr;
 }
 
-GLTexture* GLResourceManager::GetTexture(TextureHandle handle)
+Texture* ResourceManager::GetTexture(TextureHandle handle)
 {
     auto it = m_Textures.find(handle.GetID());
 
     return it != m_Textures.end() ? it->second.get() : nullptr;
 }
 
-GLMesh* GLResourceManager::GetMesh(MeshHandle handle)
+Mesh* ResourceManager::GetMesh(MeshHandle handle)
 {
     auto it = m_Meshes.find(handle.GetID());
 

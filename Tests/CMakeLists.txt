@@ -12,10 +12,14 @@ enable_testing()
 set(TARGET_NAME Tests)
 
 add_executable(${TARGET_NAME}
+    Code/CameraSystemTests.cpp
     Code/FileWatcherTests.cpp
+    Code/HierarchyComponentTests.cpp
     Code/MatrixTests.cpp
     Code/QuaternionTests.cpp
     Code/RendererTests.cpp
+    Code/SceneTests.cpp
+    Code/TransformSystemTests.cpp
     Code/TransformTests.cpp
     Code/VectorTests.cpp)
 

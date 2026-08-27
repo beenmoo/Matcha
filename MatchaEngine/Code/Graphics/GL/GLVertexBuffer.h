@@ -1,54 +1,22 @@
 #pragma once
 
-#include "Graphics/ShaderDataType.h"
+#include "Graphics/VertexBuffer.h"
 
 #include <glad/glad.h>
-#include <vector>
-#include <initializer_list>
 
 namespace Matcha
 {
-class BufferLayout
-{
-private:
-    struct BufferElement
-    {
-        ShaderDataType type = ShaderDataType::None;
-        GLuint size = 0;
-        size_t offset = 0;
-        GLboolean normalized = false;
-
-        BufferElement(ShaderDataType type, GLboolean normalized = false);
-
-        [[nodiscard]] GLuint GetComponentCount() const;
-    };
-
-public:
-    BufferLayout(std::initializer_list<ShaderDataType> dataTypes, GLboolean normalized = false);
-
-    [[nodiscard]] const std::vector<BufferElement>& GetElements() const;
-    [[nodiscard]] uint32_t GetStride() const;
-
-private:
-    void CalculateOffsetsAndStride();
-
-private:
-    std::vector<BufferElement> m_Elements;
-
-    GLsizei m_Stride = 0;
-};
-
-class GLVertexBuffer
+class GLVertexBuffer final : public VertexBuffer
 {
 public:
     GLVertexBuffer(const GLfloat* vertices, GLuint sizeInBytes);
-    ~GLVertexBuffer();
+    ~GLVertexBuffer() override;
 
-    void SetLayout(const std::shared_ptr<BufferLayout> layout);
-    [[nodiscard]] const BufferLayout* GetLayout() const;
+    void SetLayout(const std::shared_ptr<BufferLayout> layout) override;
+    [[nodiscard]] const BufferLayout* GetLayout() const override;
 
-    [[nodiscard]] GLuint GetHandle() const;
-    [[nodiscard]] GLuint GetSizeInBytes() const;
+    [[nodiscard]] uint32_t GetHandle() const override;
+    [[nodiscard]] uint32_t GetSizeInBytes() const override;
 
 private:
     GLuint m_Handle;

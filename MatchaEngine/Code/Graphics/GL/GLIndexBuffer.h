@@ -1,17 +1,19 @@
 #pragma once
 
+#include "Graphics/IndexBuffer.h"
+
 #include <glad/glad.h>
 
 namespace Matcha
 {
-class GLIndexBuffer
+class GLIndexBuffer final : public IndexBuffer
 {
 public:
     GLIndexBuffer(const GLuint* indices, GLuint count);
-    ~GLIndexBuffer();
+    ~GLIndexBuffer() override;
 
-    [[nodiscard]] GLuint GetHandle() const;
-    [[nodiscard]] GLuint GetCount() const;
+    [[nodiscard]] uint32_t GetHandle() const override;
+    [[nodiscard]] uint32_t GetCount() const override;
 
 private:
     GLuint m_Handle;
