@@ -5,7 +5,7 @@ layout (location = 1) in vec3 a_Normal; // Optional, but standard
 layout (location = 2) in vec2 a_TexCoord;
 
 // --- UNIFORM BUFFER FOR CAMERA MATRICES ---
-layout (std140) uniform CameraBlock 
+layout (std140, binding = 0) uniform CameraBlock 
 {
     mat4 u_ViewProjection;
 };
