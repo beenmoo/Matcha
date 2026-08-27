@@ -15,7 +15,11 @@ public:
     float w = 1.0f;
 
     constexpr Quaternion() = default;
-    constexpr Quaternion(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
+    constexpr Quaternion(float x, float y, float z, float w)
+        : x(x),
+          y(y),
+          z(z),
+          w(w)
     {
     }
     explicit Quaternion(const Vector3& eulerRadians);

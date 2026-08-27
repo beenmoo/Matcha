@@ -37,7 +37,7 @@ struct FileWatcher::Impl : public efsw::FileWatchListener
     efsw::FileWatcher watcher;
 
     void handleFileAction(efsw::WatchID watchID, const std::string& dir, const std::string& filename,
-                           efsw::Action action, const std::string& oldFilename) override
+                          efsw::Action action, const std::string& oldFilename) override
     {
         auto it = callbacks.find(watchID);
 
@@ -46,7 +46,8 @@ struct FileWatcher::Impl : public efsw::FileWatchListener
     }
 };
 
-FileWatcher::FileWatcher() : m_Impl(std::make_unique<Impl>())
+FileWatcher::FileWatcher()
+    : m_Impl(std::make_unique<Impl>())
 {
 }
 

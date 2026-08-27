@@ -9,7 +9,8 @@ class Handle
 {
 public:
     constexpr Handle() = default;
-    constexpr explicit Handle(uint32_t id) : m_ID(id)
+    constexpr explicit Handle(uint32_t id)
+        : m_ID(id)
     {
     }
 

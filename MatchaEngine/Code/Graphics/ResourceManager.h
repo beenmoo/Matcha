@@ -1,7 +1,7 @@
 #pragma once
 
+#include "Graphics/ShaderDataType.h"
 #include "RenderHandles.h"
-#include "Utils/ShaderDataType.h"
 
 #include <cstdint>
 #include <initializer_list>
@@ -28,7 +28,7 @@ public:
     virtual void DestroyTexture(TextureHandle handle) = 0;
 
     [[nodiscard]] virtual MeshHandle CreateMesh(std::span<const float> vertices,
-                                                std::initializer_list<Utils::ShaderDataType> layout,
+                                                std::initializer_list<ShaderDataType> layout,
                                                 std::span<const uint32_t> indices) = 0;
     virtual void DestroyMesh(MeshHandle handle) = 0;
 };

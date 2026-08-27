@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Utils/ShaderDataType.h"
+#include "Graphics/ShaderDataType.h"
 
 #include <glad/glad.h>
 #include <cstdint>

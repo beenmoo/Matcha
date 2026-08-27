@@ -30,10 +30,11 @@ std::optional<Event> TranslateEvent(const SDL_Event& sdlEvent)
 }
 }  // namespace
 
-Application::Application(const ApplicationSpecification& spec) : m_AppSpec(spec),
-                                                                 m_ResourceManager(std::make_unique<GLResourceManager>()),
-                                                                 m_Renderer(std::make_unique<GLRenderer>(static_cast<GLResourceManager&>(*m_ResourceManager))),
-                                                                 m_Context(*this, m_Input, m_Time, m_Window, *m_Renderer, *m_ResourceManager)
+Application::Application(const ApplicationSpecification& spec)
+    : m_AppSpec(spec),
+      m_ResourceManager(std::make_unique<GLResourceManager>()),
+      m_Renderer(std::make_unique<GLRenderer>(static_cast<GLResourceManager&>(*m_ResourceManager))),
+      m_Context(*this, m_Input, m_Time, m_Window, *m_Renderer, *m_ResourceManager)
 {
     LogContext();
 }

@@ -66,8 +66,7 @@ TEST(TransformTests, RotatePreservesOrthonormalBasis)
     Vector3 right = t.GetRight();
     Vector3 up = t.GetUp();
 
-    auto dot = [](const Vector3& a, const Vector3& b)
-    { return a.x * b.x + a.y * b.y + a.z * b.z; };
+    auto dot = [](const Vector3& a, const Vector3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
 
     EXPECT_NEAR(dot(forward, right), 0.0f, kEpsilon);
     EXPECT_NEAR(dot(forward, up), 0.0f, kEpsilon);

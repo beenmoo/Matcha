@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Matcha::Utils
+namespace Matcha
 {
 enum class ShaderDataType
 {
@@ -17,4 +17,4 @@ enum class ShaderDataType
     Int4,
     Bool
 };
-}  // namespace Matcha::Utils
+}  // namespace Matcha

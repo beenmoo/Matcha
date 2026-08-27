@@ -4,21 +4,21 @@
 
 namespace Matcha
 {
-    enum class EventType
-    {
-        Quit,
-        WindowResized,
-        MouseMoved,
-        MouseScrolled,
-        JoystickMoved
-    };
+enum class EventType
+{
+    Quit,
+    WindowResized,
+    MouseMoved,
+    MouseScrolled,
+    JoystickMoved
+};
 
-    struct Event
-    {
-        EventType type;
+struct Event
+{
+    EventType type;
 
-        int32_t width = 0, height = 0;
-        float x = 0.0f, y = 0.0f;
-        uint8_t axis = 0;
-    };
-}
+    int32_t width = 0, height = 0;
+    float x = 0.0f, y = 0.0f;
+    uint8_t axis = 0;
+};
+}  // namespace Matcha

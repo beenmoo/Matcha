@@ -1,7 +1,9 @@
 #include "GLVertexArray.h"
 #include "Core/Assert.h"
-#include "GLVertexBuffer.h"
 #include "GLIndexBuffer.h"
+#include "GLShaderUtils.h"
+#include "GLVertexBuffer.h"
+#include "Graphics/ShaderDataType.h"
 
 namespace Matcha
 {
@@ -35,25 +37,26 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
 
     auto layout = buffer->GetLayout();
 
-    for (const auto& e : layout->GetElements())
+    for (const auto& layoutElement : layout->GetElements())
     {
-        if (e.type == Utils::ShaderDataType::Mat3 ||
-            e.type == Utils::ShaderDataType::Mat4)
+        if (layoutElement.type == ShaderDataType::Mat3 ||
+            layoutElement.type == ShaderDataType::Mat4)
         {
-            GLuint count = e.GetComponentCount();
+            GLuint count = layoutElement.GetComponentCount();
 
-            for (GLuint i = 0; i < count; i++)
+            for (GLuint index = 0; index < count; ++index)
             {
                 glVertexArrayVertexBuffer(m_Handle, attribIndex, buffer->GetHandle(), 0, layout->GetStride());
                 glVertexArrayAttribFormat(m_Handle,
                                           attribIndex,
                                           count,
-                                          Utils::ShaderDataTypeToGLDataType(e.type),
-                                          e.normalized,
-                                          static_cast<GLuint>(e.offset + sizeof(GLfloat) * count * i));
+                                          Utils::ShaderDataTypeToGLDataType(layoutElement.type),
+                                          layoutElement.normalized,
+                                          static_cast<GLuint>(layoutElement.offset + sizeof(GLfloat) * count * index));
                 glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);
-                glVertexArrayBindingDivisor(m_Handle, attribIndex, 1);
-                glEnableVertexArrayAttrib(m_Handle, attribIndex++);
+                glEnableVertexArrayAttrib(m_Handle, attribIndex);
+
+                ++attribIndex;
             }
         }
         else
@@ -61,12 +64,14 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
             glVertexArrayVertexBuffer(m_Handle, attribIndex, buffer->GetHandle(), 0, layout->GetStride());
             glVertexArrayAttribFormat(m_Handle,
                                       attribIndex,
-                                      e.GetComponentCount(),
-                                      Utils::ShaderDataTypeToGLDataType(e.type),
-                                      e.normalized,
-                                      static_cast<GLuint>(e.offset));
+                                      layoutElement.GetComponentCount(),
+                                      Utils::ShaderDataTypeToGLDataType(layoutElement.type),
+                                      layoutElement.normalized,
+                                      static_cast<GLuint>(layoutElement.offset));
             glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);
-            glEnableVertexArrayAttrib(m_Handle, attribIndex++);
+            glEnableVertexArrayAttrib(m_Handle, attribIndex);
+
+            ++attribIndex;
         }
     }
 }

@@ -11,7 +11,8 @@ namespace Matcha
 {
 GLShader::GLShader(
     std::string_view name,
-    const std::initializer_list<std::string>& paths) : m_Handle(glCreateProgram())
+    const std::initializer_list<std::string>& paths)
+    : m_Handle(glCreateProgram())
 {
     for (const auto& p : paths)
     {

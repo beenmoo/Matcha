@@ -6,8 +6,8 @@
 #include "GLTexture.h"
 #include "GLVertexArray.h"
 #include "GLVertexBuffer.h"
+#include "Graphics/ShaderDataType.h"
 #include "Utils/FileWatcher.h"
-#include "Utils/ShaderDataType.h"
 
 #include <initializer_list>
 #include <memory>
@@ -41,7 +41,7 @@ public:
     void DestroyTexture(TextureHandle handle) override;
 
     [[nodiscard]] MeshHandle CreateMesh(std::span<const float> vertices,
-                                        std::initializer_list<Utils::ShaderDataType> layout,
+                                        std::initializer_list<ShaderDataType> layout,
                                         std::span<const uint32_t> indices) override;
     void DestroyMesh(MeshHandle handle) override;
 

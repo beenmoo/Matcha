@@ -8,6 +8,12 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vendor)
 
+if (MSVC)
+    # Keeps Code Analysis (including the editor's live background analysis) from
+    # reporting on third-party headers reached via /external:I (vcpkg packages, glad).
+    add_compile_options(/analyze:external-)
+endif()
+
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(BUILD_TESTS "Build the tests" ON)
 option(BUILD_EDITOR "Build the Matcha Editor" ON)

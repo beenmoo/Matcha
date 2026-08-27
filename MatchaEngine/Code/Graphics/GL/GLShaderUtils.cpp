@@ -1,4 +1,5 @@
 #include "GLShaderUtils.h"
+#include "Graphics/ShaderDataType.h"
 
 #include <format>
 

@@ -57,8 +57,7 @@ public:
 
     [[nodiscard]] FileWatchCallback GetCallback()
     {
-        return [this](const std::string& directory, const std::string& filename, FileAction action)
-        {
+        return [this](const std::string& directory, const std::string& filename, FileAction action) {
             std::scoped_lock lock(m_Mutex);
             m_Events.push_back({directory, filename, action});
             m_Condition.notify_all();
@@ -69,8 +68,7 @@ public:
     [[nodiscard]] bool WaitFor(Predicate predicate, std::chrono::milliseconds timeout)
     {
         std::unique_lock lock(m_Mutex);
-        return m_Condition.wait_for(lock, timeout, [&]
-                                    { return std::any_of(m_Events.begin(), m_Events.end(), predicate); });
+        return m_Condition.wait_for(lock, timeout, [&] { return std::any_of(m_Events.begin(), m_Events.end(), predicate); });
     }
 
 private:
@@ -104,8 +102,7 @@ TEST(FileWatcherTests, DetectsNewFile)
     WriteFile(dir.GetPath() / "test.txt", "hello");
 
     bool detected = collector.WaitFor(
-        [](const WatchEventCollector::Event& e)
-        { return e.filename == "test.txt"; },
+        [](const WatchEventCollector::Event& e) { return e.filename == "test.txt"; },
         std::chrono::seconds(5));
 
     EXPECT_TRUE(detected);
@@ -128,8 +125,7 @@ TEST(FileWatcherTests, DetectsModifiedFile)
     WriteFile(filePath, "initial modified");
 
     bool detected = collector.WaitFor(
-        [](const WatchEventCollector::Event& e)
-        { return e.filename == "test.txt" && e.action == FileAction::Modified; },
+        [](const WatchEventCollector::Event& e) { return e.filename == "test.txt" && e.action == FileAction::Modified; },
         std::chrono::seconds(5));
 
     EXPECT_TRUE(detected);
@@ -153,8 +149,7 @@ TEST(FileWatcherTests, RemoveWatchStopsNotifications)
     WriteFile(dir.GetPath() / "test.txt", "hello");
 
     bool detected = collector.WaitFor(
-        [](const WatchEventCollector::Event&)
-        { return true; },
+        [](const WatchEventCollector::Event&) { return true; },
         std::chrono::milliseconds(1500));
 
     EXPECT_FALSE(detected);

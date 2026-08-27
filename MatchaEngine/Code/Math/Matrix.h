@@ -9,7 +9,8 @@ class Quaternion;
 class Matrix4
 {
 public:
-    Matrix4() : Matrix4(1.0f)
+    Matrix4()
+        : Matrix4(1.0f)
     {
     }
     explicit Matrix4(float diagonal);

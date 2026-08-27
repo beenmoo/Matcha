@@ -7,7 +7,8 @@
 
 namespace Matcha
 {
-GLRenderer::GLRenderer(GLResourceManager& resourceManager) : m_ResourceManager(resourceManager)
+GLRenderer::GLRenderer(GLResourceManager& resourceManager)
+    : m_ResourceManager(resourceManager)
 {
 }
 

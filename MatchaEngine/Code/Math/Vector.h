@@ -10,10 +10,14 @@ struct Vector2
     float y = 0.0f;
 
     constexpr Vector2() = default;
-    constexpr explicit Vector2(float scalar) : x(scalar), y(scalar)
+    constexpr explicit Vector2(float scalar)
+        : x(scalar),
+          y(scalar)
     {
     }
-    constexpr Vector2(float x, float y) : x(x), y(y)
+    constexpr Vector2(float x, float y)
+        : x(x),
+          y(y)
     {
     }
 
@@ -65,10 +69,14 @@ struct Vector2Int
     int32_t y = 0;
 
     constexpr Vector2Int() = default;
-    constexpr explicit Vector2Int(int32_t scalar) : x(scalar), y(scalar)
+    constexpr explicit Vector2Int(int32_t scalar)
+        : x(scalar),
+          y(scalar)
     {
     }
-    constexpr Vector2Int(int32_t x, int32_t y) : x(x), y(y)
+    constexpr Vector2Int(int32_t x, int32_t y)
+        : x(x),
+          y(y)
     {
     }
 
@@ -82,10 +90,16 @@ struct Vector3
     float z = 0.0f;
 
     constexpr Vector3() = default;
-    constexpr explicit Vector3(float scalar) : x(scalar), y(scalar), z(scalar)
+    constexpr explicit Vector3(float scalar)
+        : x(scalar),
+          y(scalar),
+          z(scalar)
     {
     }
-    constexpr Vector3(float x, float y, float z) : x(x), y(y), z(z)
+    constexpr Vector3(float x, float y, float z)
+        : x(x),
+          y(y),
+          z(z)
     {
     }
 
@@ -146,10 +160,16 @@ struct Vector3Int
     int32_t z = 0;
 
     constexpr Vector3Int() = default;
-    constexpr explicit Vector3Int(int32_t scalar) : x(scalar), y(scalar), z(scalar)
+    constexpr explicit Vector3Int(int32_t scalar)
+        : x(scalar),
+          y(scalar),
+          z(scalar)
     {
     }
-    constexpr Vector3Int(int32_t x, int32_t y, int32_t z) : x(x), y(y), z(z)
+    constexpr Vector3Int(int32_t x, int32_t y, int32_t z)
+        : x(x),
+          y(y),
+          z(z)
     {
     }
 
@@ -164,10 +184,18 @@ struct Vector4
     float w = 0.0f;
 
     constexpr Vector4() = default;
-    constexpr explicit Vector4(float scalar) : x(scalar), y(scalar), z(scalar), w(scalar)
+    constexpr explicit Vector4(float scalar)
+        : x(scalar),
+          y(scalar),
+          z(scalar),
+          w(scalar)
     {
     }
-    constexpr Vector4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
+    constexpr Vector4(float x, float y, float z, float w)
+        : x(x),
+          y(y),
+          z(z),
+          w(w)
     {
     }
 
@@ -227,10 +255,18 @@ struct Vector4Int
     int32_t w = 0;
 
     constexpr Vector4Int() = default;
-    constexpr explicit Vector4Int(int32_t scalar) : x(scalar), y(scalar), z(scalar), w(scalar)
+    constexpr explicit Vector4Int(int32_t scalar)
+        : x(scalar),
+          y(scalar),
+          z(scalar),
+          w(scalar)
     {
     }
-    constexpr Vector4Int(int32_t x, int32_t y, int32_t z, int32_t w) : x(x), y(y), z(z), w(w)
+    constexpr Vector4Int(int32_t x, int32_t y, int32_t z, int32_t w)
+        : x(x),
+          y(y),
+          z(z),
+          w(w)
     {
     }
 

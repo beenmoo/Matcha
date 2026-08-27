@@ -68,8 +68,7 @@ void GLResourceManager::WatchShaderPaths(uint32_t shaderID, const std::initializ
 
         WatchHandle watchHandle = m_FileWatcher.AddWatch(
             directory,
-            [this](const std::string& dir, const std::string& filename, FileAction action)
-            {
+            [this](const std::string& dir, const std::string& filename, FileAction action) {
                 if (action != FileAction::Modified)
                     return;
 
@@ -112,13 +111,13 @@ void GLResourceManager::DestroyTexture(TextureHandle handle)
 }
 
 MeshHandle GLResourceManager::CreateMesh(std::span<const float> vertices,
-                                         std::initializer_list<Utils::ShaderDataType> layout,
+                                         std::initializer_list<ShaderDataType> layout,
                                          std::span<const uint32_t> indices)
 {
     auto mesh = std::make_unique<Mesh>();
 
     mesh->vertexBuffer = std::make_shared<GLVertexBuffer>(vertices.data(), static_cast<GLuint>(vertices.size_bytes()));
-    mesh->vertexBuffer->SetLayout(std::make_shared<GLVertexBuffer::BufferLayout>(layout));
+    mesh->vertexBuffer->SetLayout(std::make_shared<BufferLayout>(layout));
 
     mesh->indexBuffer = std::make_shared<GLIndexBuffer>(indices.data(), static_cast<GLuint>(indices.size()));
 

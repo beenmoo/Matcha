@@ -13,8 +13,9 @@ struct Window::Impl
     SDL_GLContext m_GLContext = nullptr;
 };
 
-Window::Window(const WindowSpecification& spec) : m_Impl(std::make_unique<Impl>()),
-                                                  m_WindowSpec(spec)
+Window::Window(const WindowSpecification& spec)
+    : m_Impl(std::make_unique<Impl>()),
+      m_WindowSpec(spec)
 {
     InitContext();
 }
@@ -92,9 +93,9 @@ void Window::InitContext()
         flags |= SDL_WINDOW_RESIZABLE;
 
     m_Impl->m_NativeWindow = SDL_CreateWindow(GetWindowSpecification().m_Title.c_str(),
-                                            GetWindowSpecification().m_Width,
-                                            GetWindowSpecification().m_Height,
-                                            flags);
+                                              GetWindowSpecification().m_Width,
+                                              GetWindowSpecification().m_Height,
+                                              flags);
 
     MT_ASSERT(m_Impl->m_NativeWindow, SDL_GetError());
 

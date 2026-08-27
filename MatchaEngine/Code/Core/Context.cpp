@@ -11,12 +11,13 @@ Context::Context(Application& application,
                  Time& time,
                  Window& window,
                  Renderer& renderer,
-                 ResourceManager& resourceManager) : m_Application(application),
-                                                     m_Input(input),
-                                                     m_Time(time),
-                                                     m_Window(window),
-                                                     m_Renderer(renderer),
-                                                     m_ResourceManager(resourceManager)
+                 ResourceManager& resourceManager)
+    : m_Application(application),
+      m_Input(input),
+      m_Time(time),
+      m_Window(window),
+      m_Renderer(renderer),
+      m_ResourceManager(resourceManager)
 {
 }
 

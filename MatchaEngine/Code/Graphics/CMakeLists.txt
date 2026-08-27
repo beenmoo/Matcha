@@ -20,4 +20,5 @@ target_sources(${TARGET_NAME} PRIVATE
     stb_image_impl.cpp
     Renderer.h
     ResourceManager.h
-    RenderHandles.h)
+    RenderHandles.h
+    ShaderDataType.h)

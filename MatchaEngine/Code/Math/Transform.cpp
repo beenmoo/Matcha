@@ -4,9 +4,10 @@
 
 namespace Matcha
 {
-Transform::Transform() : m_Position(0.0f),
-                         m_Rotation(Vector3(0.0f)),
-                         m_Scale(1.0f)
+Transform::Transform()
+    : m_Position(0.0f),
+      m_Rotation(Vector3(0.0f)),
+      m_Scale(1.0f)
 {
 }
 

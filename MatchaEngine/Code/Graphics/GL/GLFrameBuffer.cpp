@@ -3,7 +3,8 @@
 
 namespace Matcha
 {
-GLFrameBuffer::GLFrameBuffer(const FrameBufferSpecification& spec) : m_Specification(spec)
+GLFrameBuffer::GLFrameBuffer(const FrameBufferSpecification& spec)
+    : m_Specification(spec)
 {
     Invalidate();
 }
