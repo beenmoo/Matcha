@@ -10,7 +10,7 @@ add_subdirectory(Code/Utils)
 target_include_directories(${TARGET_NAME} PUBLIC Code)
 target_include_directories(${TARGET_NAME} PRIVATE ${Stb_INCLUDE_DIR})
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
-target_link_libraries(${TARGET_NAME} PRIVATE SDL3::SDL3 efsw::efsw glm::glm spdlog::spdlog nlohmann_json::nlohmann_json glad assimp::assimp)
+target_link_libraries(${TARGET_NAME} PRIVATE SDL3::SDL3 efsw::efsw glm::glm spdlog::spdlog nlohmann_json::nlohmann_json glad assimp::assimp EnTT::EnTT)
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 target_compile_definitions(${TARGET_NAME} PRIVATE $<$<CONFIG:Debug>:MT_DEBUG=1>)

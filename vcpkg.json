@@ -21,6 +21,7 @@
         "imgui",
         "stb",
         "assimp",
-        "efsw"
+        "efsw",
+        "entt"
     ]
 }
