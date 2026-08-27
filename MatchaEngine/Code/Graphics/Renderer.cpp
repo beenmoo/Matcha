@@ -7,9 +7,13 @@ namespace Matcha
 {
 Renderer::Renderer(RendererAPI& rendererAPI, ResourceManager& resourceManager)
     : m_RendererAPI(rendererAPI),
-      m_ResourceManager(resourceManager),
-      m_CameraUniformBuffer(UniformBuffer::Create(sizeof(Matrix4), 0))
+      m_ResourceManager(resourceManager)
 {
+}
+
+void Renderer::Init()
+{
+    m_CameraUniformBuffer = UniformBuffer::Create(sizeof(Matrix4), 0);
 }
 
 void Renderer::Submit(const RenderData& renderData)

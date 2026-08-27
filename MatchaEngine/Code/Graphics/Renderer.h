@@ -31,6 +31,13 @@ class Renderer
 public:
     Renderer(RendererAPI& rendererAPI, ResourceManager& resourceManager);
 
+    // Creates GL-backed resources (the camera uniform buffer). Deferred out of the constructor
+    // and called from Application::InitGraphics() instead, alongside RendererAPI::Init(): under
+    // the Qt backend, the GL context isn't current and glad isn't loaded yet at the point
+    // Application's constructor init list runs (SDL's is, which is why this worked as
+    // constructor-time code before Qt existed).
+    void Init();
+
     void Submit(const RenderData& renderData);
     void Flush();
     void Clear();

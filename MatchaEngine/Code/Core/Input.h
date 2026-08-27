@@ -3,8 +3,10 @@
 #include "KeyCodes.h"
 #include "Event.h"
 #include "Math/Vector.h"
+#include "Window.h"
 
 #include <cstdint>
+#include <memory>
 
 namespace Matcha
 {
@@ -32,48 +34,25 @@ public:
         Forward
     };
 
-private:
-    struct MouseData
-    {
-        float m_MousePositionX = 0, m_MousePositionY = 0;
-        Vector2Int m_MouseAxis = Vector2Int(0);
-        Vector2Int m_MouseScrollDelta = Vector2Int(0);
-    };
-
 public:
-    Input();
-    ~Input();
+    virtual ~Input() = default;
 
-    void ProcessEvents(const Event& evt);
-    void Update();
+    virtual void ProcessEvents(const Event& evt) = 0;
+    virtual void Update() = 0;
 
-    [[nodiscard]] bool GetKey(KeyCode code) const;
-    [[nodiscard]] bool GetKeyDown(KeyCode code) const;
-    [[nodiscard]] bool GetKeyUp(KeyCode code) const;
+    [[nodiscard]] virtual bool GetKey(KeyCode code) const = 0;
+    [[nodiscard]] virtual bool GetKeyDown(KeyCode code) const = 0;
+    [[nodiscard]] virtual bool GetKeyUp(KeyCode code) const = 0;
 
-    [[nodiscard]] bool GetMouseButton(MouseButton button) const;
-    [[nodiscard]] bool GetMouseButtonDown(MouseButton button) const;
-    [[nodiscard]] bool GetMouseButtonUp(MouseButton button) const;
+    [[nodiscard]] virtual bool GetMouseButton(MouseButton button) const = 0;
+    [[nodiscard]] virtual bool GetMouseButtonDown(MouseButton button) const = 0;
+    [[nodiscard]] virtual bool GetMouseButtonUp(MouseButton button) const = 0;
 
-    [[nodiscard]] Vector2Int GetAxis(AxisType type) const;
-    [[nodiscard]] const Vector2Int& GetMouseScrollDelta() const;
-    void SetCursorLockState(CursorLockState state);
-    [[nodiscard]] CursorLockState GetCursorLockState() const;
+    [[nodiscard]] virtual Vector2Int GetAxis(AxisType type) const = 0;
+    [[nodiscard]] virtual const Vector2Int& GetMouseScrollDelta() const = 0;
+    virtual void SetCursorLockState(CursorLockState state) = 0;
+    [[nodiscard]] virtual CursorLockState GetCursorLockState() const = 0;
 
-private:
-    [[nodiscard]] static uint32_t ToMouseButtonMask(MouseButton button);
-
-private:
-    const bool* m_KeyboardState;
-    bool* m_PrevKeyboardState;
-    int m_NumKeys;
-
-    uint32_t m_MouseState;
-    uint32_t m_PrevMouseState = 0;
-    MouseData m_MouseData;
-
-    Vector2Int m_JoystickAxis = Vector2Int(0);
-
-    CursorLockState m_CursorLockState = CursorLockState::None;
+    [[nodiscard]] static std::unique_ptr<Input> Create(WindowBackend backend);
 };
 }  // namespace Matcha

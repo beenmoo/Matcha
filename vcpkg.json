@@ -22,6 +22,15 @@
         "stb",
         "assimp",
         "efsw",
-        "entt"
+        "entt",
+        {
+            "name": "qtbase",
+            "default-features": false,
+            "features": [
+                "widgets",
+                "opengl",
+                "png"
+            ]
+        }
     ]
 }

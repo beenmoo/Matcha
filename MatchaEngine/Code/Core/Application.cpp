@@ -2,44 +2,37 @@
 #include "Scene/System/CameraSystem.h"
 #include "Scene/System/RenderSystem.h"
 #include "Scene/System/TransformSystem.h"
+#include "Scene/System/ScriptSystem.h"
 
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
-#include <optional>
 
 namespace Matcha
 {
-namespace
-{
-std::optional<Event> TranslateEvent(const SDL_Event& sdlEvent)
-{
-    switch (sdlEvent.type)
-    {
-    case SDL_EVENT_QUIT:
-        return Event{.type = EventType::Quit};
-    case SDL_EVENT_WINDOW_RESIZED:
-        return Event{.type = EventType::WindowResized, .width = sdlEvent.window.data1, .height = sdlEvent.window.data2};
-    case SDL_EVENT_MOUSE_MOTION:
-        return Event{.type = EventType::MouseMoved, .x = sdlEvent.motion.xrel, .y = sdlEvent.motion.yrel};
-    case SDL_EVENT_MOUSE_WHEEL:
-        return Event{.type = EventType::MouseScrolled, .x = sdlEvent.wheel.x, .y = sdlEvent.wheel.y};
-    case SDL_EVENT_JOYSTICK_AXIS_MOTION:
-        return Event{.type = EventType::JoystickMoved, .x = static_cast<float>(sdlEvent.jaxis.value), .axis = sdlEvent.jaxis.axis};
-    default:
-        return std::nullopt;
-    }
-}
-}  // namespace
-
 Application::Application(const ApplicationSpecification& spec)
     : m_AppSpec(spec),
+      m_Input(Input::Create(spec.m_WindowBackend)),
+      m_Window(Window::Create(spec.m_WindowBackend, WindowSpecification{.m_Title = spec.m_Title}, m_Input.get())),
       m_RendererAPI(RendererAPI::Create(RendererAPI::API::OpenGL)),
       m_Renderer(*m_RendererAPI, m_ResourceManager),
-      m_Context(*this, m_Input, m_Time, m_Window, *m_RendererAPI, m_Renderer, m_ResourceManager, m_Scene)
+      m_Context(*this, *m_Input, m_Time, *m_Window, *m_RendererAPI, m_Renderer, m_ResourceManager, m_Scene)
 {
-    m_RendererAPI->Init();
+    // SDL's GL context is current immediately, so this fires synchronously here. Qt's isn't
+    // ready until QOpenGLWidget::initializeGL() runs later, so InitGraphics() is deferred until
+    // then instead - see Window::SetContextReadyCallback.
+    m_Window->SetContextReadyCallback([this] { InitGraphics(); });
 
-    LogContext();
+    // Registered once, persistently: SDL uses it inside each PumpEvents() call, Qt invokes it
+    // from the viewport widget's own event callbacks, which can fire at any time.
+    m_Window->SetEventDispatch([this](const Event& evt) {
+        if (evt.type == EventType::Quit)
+            Quit();
+
+        m_Input->ProcessEvents(evt);
+        m_Window->ProcessEvents(evt);
+
+        OnEvent(evt);
+    });
 }
 
 Application::~Application()
@@ -55,16 +48,19 @@ void Application::Run()
     m_IsRunning = true;
 
     while (m_IsRunning)
-    {
-        PollEvents();
-        Update();
-        Render();
-    }
+        Tick();
 }
 
 void Application::Quit()
 {
     m_IsRunning = false;
+}
+
+void Application::Tick()
+{
+    PollEvents();
+    Update();
+    Render();
 }
 
 void Application::OnUpdate()
@@ -81,9 +77,10 @@ void Application::OnEvent(const Event& event)
 
 void Application::Update()
 {
-    m_Input.Update();
+    m_Input->Update();
     m_Time.Update();
     m_ResourceManager.ReloadModifiedShaders();
+    ScriptSystem::Update(m_Scene);
 
     OnUpdate();
 }
@@ -98,28 +95,20 @@ void Application::Render()
 
     OnRender();
     m_Renderer.Flush();
-    m_Window.SwapBuffers();
+    m_Window->SwapBuffers();
 }
 
 void Application::PollEvents()
 {
-    SDL_Event sdlEvent;
+    m_Window->PumpEvents();
+}
 
-    while (SDL_PollEvent(&sdlEvent))
-    {
-        std::optional<Event> evt = TranslateEvent(sdlEvent);
+void Application::InitGraphics()
+{
+    m_RendererAPI->Init();
+    m_Renderer.Init();
 
-        if (!evt)
-            continue;
-
-        if (evt->type == EventType::Quit)
-            Quit();
-
-        m_Input.ProcessEvents(*evt);
-        m_Window.ProcessEvents(*evt);
-
-        OnEvent(*evt);
-    }
+    LogContext();
 }
 
 void Application::LogContext()

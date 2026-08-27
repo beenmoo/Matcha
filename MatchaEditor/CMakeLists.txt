@@ -4,10 +4,30 @@ add_executable(${TARGET_NAME} Code/main.cpp)
 
 add_subdirectory(Code/Core)
 
-target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine)
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 
 matcha_copy_engine_assets(${TARGET_NAME})
+
+if (WIN32)
+    qt_generate_deploy_app_script(
+        TARGET ${TARGET_NAME}
+        OUTPUT_SCRIPT deploy_script
+        NO_UNSUPPORTED_PLATFORM_ERROR)
+    install(SCRIPT ${deploy_script})
+
+    # qt_generate_deploy_app_script() only runs at `cmake --install` time, which nobody runs
+    # during normal iteration - without the platform plugin (qwindows[d].dll) next to the exe,
+    # QApplication can't even construct. Copy it directly as part of every normal build too, so
+    # F5/cmake --build just works.
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms/"
+        COMMENT "Copying Qt platform plugin (qwindows)"
+        VERBATIM)
+endif()
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 

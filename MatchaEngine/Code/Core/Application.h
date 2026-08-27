@@ -35,6 +35,7 @@ struct ApplicationSpecification
     std::string m_Title = "Application";
     std::string m_WorkingDirectory;
     ApplicationCommandLineArgs m_CommandLineArgs;
+    WindowBackend m_WindowBackend = WindowBackend::SDL;
 };
 
 class Application
@@ -47,8 +48,14 @@ public:
     Application(const ApplicationSpecification& spec = ApplicationSpecification());
     virtual ~Application();
 
+    // Blocking loop: while (m_IsRunning) Tick(); - what SDL-backed apps (Sandbox, an SDL-mode
+    // Editor) call. Never called under the Qt backend: Qt owns its own event loop, so a
+    // Qt-backed Editor calls Tick() directly from the viewport widget's paintGL() instead.
     void Run();
     void Quit();
+
+    // One frame: PollEvents, Update, Render.
+    void Tick();
 
 protected:
     template <typename Self>
@@ -67,13 +74,19 @@ private:
     void PollEvents();
     void LogContext();
 
+    // Deferred out of the constructor because the GL context isn't necessarily ready when the
+    // constructor returns (Qt: not until QOpenGLWidget::initializeGL() fires, later than
+    // construction). Invoked via m_Window's context-ready callback, registered in the
+    // constructor.
+    void InitGraphics();
+
 private:
     ApplicationSpecification m_AppSpec;
 
-    Input m_Input;
+    std::unique_ptr<Input> m_Input;
     Logger m_Logger;
     Time m_Time;
-    Window m_Window;
+    std::unique_ptr<Window> m_Window;
     std::unique_ptr<RendererAPI> m_RendererAPI;
     ResourceManager m_ResourceManager;
     Renderer m_Renderer;

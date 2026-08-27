@@ -1,0 +1,191 @@
+#include "QtKeyCodeMap.h"
+
+#include <Qt>
+
+namespace Matcha
+{
+std::optional<KeyCode> ToKeyCode(int qtKey)
+{
+    switch (qtKey)
+    {
+    case Qt::Key_A:
+        return KeyCode::A;
+    case Qt::Key_B:
+        return KeyCode::B;
+    case Qt::Key_C:
+        return KeyCode::C;
+    case Qt::Key_D:
+        return KeyCode::D;
+    case Qt::Key_E:
+        return KeyCode::E;
+    case Qt::Key_F:
+        return KeyCode::F;
+    case Qt::Key_G:
+        return KeyCode::G;
+    case Qt::Key_H:
+        return KeyCode::H;
+    case Qt::Key_I:
+        return KeyCode::I;
+    case Qt::Key_J:
+        return KeyCode::J;
+    case Qt::Key_K:
+        return KeyCode::K;
+    case Qt::Key_L:
+        return KeyCode::L;
+    case Qt::Key_M:
+        return KeyCode::M;
+    case Qt::Key_N:
+        return KeyCode::N;
+    case Qt::Key_O:
+        return KeyCode::O;
+    case Qt::Key_P:
+        return KeyCode::P;
+    case Qt::Key_Q:
+        return KeyCode::Q;
+    case Qt::Key_R:
+        return KeyCode::R;
+    case Qt::Key_S:
+        return KeyCode::S;
+    case Qt::Key_T:
+        return KeyCode::T;
+    case Qt::Key_U:
+        return KeyCode::U;
+    case Qt::Key_V:
+        return KeyCode::V;
+    case Qt::Key_W:
+        return KeyCode::W;
+    case Qt::Key_X:
+        return KeyCode::X;
+    case Qt::Key_Y:
+        return KeyCode::Y;
+    case Qt::Key_Z:
+        return KeyCode::Z;
+
+    case Qt::Key_0:
+        return KeyCode::ZERO;
+    case Qt::Key_1:
+        return KeyCode::ONE;
+    case Qt::Key_2:
+        return KeyCode::TWO;
+    case Qt::Key_3:
+        return KeyCode::THREE;
+    case Qt::Key_4:
+        return KeyCode::FOUR;
+    case Qt::Key_5:
+        return KeyCode::FIVE;
+    case Qt::Key_6:
+        return KeyCode::SIX;
+    case Qt::Key_7:
+        return KeyCode::SEVEN;
+    case Qt::Key_8:
+        return KeyCode::EIGHT;
+    case Qt::Key_9:
+        return KeyCode::NINE;
+
+    case Qt::Key_F1:
+        return KeyCode::F1;
+    case Qt::Key_F2:
+        return KeyCode::F2;
+    case Qt::Key_F3:
+        return KeyCode::F3;
+    case Qt::Key_F4:
+        return KeyCode::F4;
+    case Qt::Key_F5:
+        return KeyCode::F5;
+    case Qt::Key_F6:
+        return KeyCode::F6;
+    case Qt::Key_F7:
+        return KeyCode::F7;
+    case Qt::Key_F8:
+        return KeyCode::F8;
+    case Qt::Key_F9:
+        return KeyCode::F9;
+    case Qt::Key_F10:
+        return KeyCode::F10;
+    case Qt::Key_F11:
+        return KeyCode::F11;
+    case Qt::Key_F12:
+        return KeyCode::F12;
+
+    case Qt::Key_Left:
+        return KeyCode::LEFT;
+    case Qt::Key_Right:
+        return KeyCode::RIGHT;
+    case Qt::Key_Up:
+        return KeyCode::UP;
+    case Qt::Key_Down:
+        return KeyCode::DOWN;
+
+    case Qt::Key_Shift:
+        return KeyCode::LSHIFT;
+    case Qt::Key_Control:
+        return KeyCode::LCTRL;
+    case Qt::Key_Alt:
+        return KeyCode::LALT;
+    case Qt::Key_Meta:
+        return KeyCode::LGUI;
+
+    case Qt::Key_Escape:
+        return KeyCode::ESCAPE;
+    case Qt::Key_Tab:
+        return KeyCode::TAB;
+    case Qt::Key_Backspace:
+        return KeyCode::BACKSPACE;
+    case Qt::Key_Return:
+        return KeyCode::RETURN;
+    case Qt::Key_Enter:
+        return KeyCode::KP_ENTER;
+    case Qt::Key_Space:
+        return KeyCode::SPACE;
+
+    case Qt::Key_CapsLock:
+        return KeyCode::CAPSLOCK;
+    case Qt::Key_NumLock:
+        return KeyCode::NUMLOCKCLEAR;
+    case Qt::Key_ScrollLock:
+        return KeyCode::SCROLLLOCK;
+    case Qt::Key_Print:
+        return KeyCode::PRINTSCREEN;
+    case Qt::Key_Pause:
+        return KeyCode::PAUSE;
+    case Qt::Key_Insert:
+        return KeyCode::INSERT;
+    case Qt::Key_Delete:
+        return KeyCode::DEL;
+    case Qt::Key_Home:
+        return KeyCode::HOME;
+    case Qt::Key_End:
+        return KeyCode::END;
+    case Qt::Key_PageUp:
+        return KeyCode::PAGEUP;
+    case Qt::Key_PageDown:
+        return KeyCode::PAGEDOWN;
+
+    case Qt::Key_Minus:
+        return KeyCode::MINUS;
+    case Qt::Key_Equal:
+        return KeyCode::EQUALS;
+    case Qt::Key_BracketLeft:
+        return KeyCode::LEFTBRACKET;
+    case Qt::Key_BracketRight:
+        return KeyCode::RIGHTBRACKET;
+    case Qt::Key_Backslash:
+        return KeyCode::BACKSLASH;
+    case Qt::Key_Semicolon:
+        return KeyCode::SEMICOLON;
+    case Qt::Key_Apostrophe:
+        return KeyCode::APOSTROPHE;
+    case Qt::Key_QuoteLeft:
+        return KeyCode::GRAVE;
+    case Qt::Key_Comma:
+        return KeyCode::COMMA;
+    case Qt::Key_Period:
+        return KeyCode::PERIOD;
+    case Qt::Key_Slash:
+        return KeyCode::SLASH;
+
+    default:
+        return std::nullopt;
+    }
+}
+}  // namespace Matcha

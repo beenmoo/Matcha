@@ -1,10 +1,12 @@
 target_sources(${TARGET_NAME} PRIVATE
     Entity.h
+    ScriptableEntity.h
     Component/CameraComponent.h
     Component/HierarchyComponent.h
     Component/MaterialComponent.h
     Component/MeshComponent.h
     Component/TransformComponent.h
+    Component/NativeScriptComponent.h
     Scene.cpp
     Scene.h
     System/CameraSystem.cpp
@@ -13,4 +15,6 @@ target_sources(${TARGET_NAME} PRIVATE
     System/RenderSystem.h
     System/TransformSystem.cpp
     System/TransformSystem.h
+    System/ScriptSystem.cpp
+    System/ScriptSystem.h
     )

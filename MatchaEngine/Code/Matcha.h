@@ -30,15 +30,18 @@
 #include "Math/Vector.h"
 
 #include "Scene/Entity.h"
+#include "Scene/ScriptableEntity.h"
 #include "Scene/Scene.h"
 #include "Scene/Component/CameraComponent.h"
 #include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Component/MaterialComponent.h"
 #include "Scene/Component/MeshComponent.h"
 #include "Scene/Component/TransformComponent.h"
+#include "Scene/Component/NativeScriptComponent.h"
 #include "Scene/System/CameraSystem.h"
 #include "Scene/System/RenderSystem.h"
 #include "Scene/System/TransformSystem.h"
+#include "Scene/System/ScriptSystem.h"
 
 // Not included here: Core/EntryPoint.h defines main() and must be included exactly once, only
 // by the application's own entry-point translation unit (see Sandbox/Code/main.cpp). Graphics/GL

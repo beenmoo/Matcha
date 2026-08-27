@@ -17,6 +17,7 @@ endif()
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(BUILD_TESTS "Build the tests" ON)
 option(BUILD_EDITOR "Build the Matcha Editor" ON)
+option(BUILD_QT_BACKEND "Build the Qt Window/Input backend into MatchaEngine" ${BUILD_EDITOR})
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -27,6 +28,14 @@ find_package(Stb REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(efsw CONFIG REQUIRED)
 find_package(entt CONFIG REQUIRED)
+
+if (BUILD_QT_BACKEND)
+    # Must precede add_subdirectory(MatchaEngine): qt_standard_project_setup() sets
+    # CMAKE_AUTOMOC/CMAKE_AUTOUIC for this scope and below, and does not apply retroactively
+    # to targets already defined.
+    find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets)
+    qt_standard_project_setup()
+endif()
 
 add_subdirectory(Vendor)
 add_subdirectory(MatchaEngine)
