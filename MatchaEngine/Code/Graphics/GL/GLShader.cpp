@@ -76,6 +76,18 @@ bool GLShader::Reload()
 
     m_Handle = newHandle;
 
+    std::string joinedPaths;
+
+    for (size_t i = 0; i < paths.size(); ++i)
+    {
+        if (i > 0)
+            joinedPaths += ", ";
+
+        joinedPaths += paths[i];
+    }
+
+    MT_CORE_INFO("Reloaded shader: {0}", joinedPaths);
+
     return true;
 }
 
