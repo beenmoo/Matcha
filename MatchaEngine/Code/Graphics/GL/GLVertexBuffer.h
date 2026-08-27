@@ -41,15 +41,8 @@ private:
 class GLVertexBuffer
 {
 public:
-    GLVertexBuffer(GLuint sizeInBytes = 0);
     GLVertexBuffer(const GLfloat* vertices, GLuint sizeInBytes);
     ~GLVertexBuffer();
-
-    void AddVertex(std::initializer_list<GLfloat> vertex);
-    void SetVertices(const GLfloat* vertices, GLuint sizeInBytes);
-    void SetVerticesNew(const GLfloat* vertices, GLuint sizeInBytes);
-    void SetDrawType(GLenum drawType);
-    void Clear();
 
     void SetLayout(const std::shared_ptr<BufferLayout> layout);
     [[nodiscard]] const BufferLayout* GetLayout() const;
@@ -59,10 +52,8 @@ public:
 
 private:
     GLuint m_Handle;
-
-    GLenum m_DrawType = GL_STATIC_DRAW;
+    GLuint m_SizeInBytes;
 
     std::shared_ptr<BufferLayout> m_Layout = nullptr;
-    std::vector<GLfloat> m_Vertices;
 };
 }  // namespace Matcha

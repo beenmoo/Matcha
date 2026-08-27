@@ -1,5 +1,6 @@
 #include "GLTexture.h"
 #include "Core/Assert.h"
+#include "Core/Logger.h"
 
 #include <stb_image.h>
 
@@ -68,41 +69,45 @@ void GLTexture::LoadTextureFromFile(std::string_view path)
     int width, height, channels;
     stbi_uc* data = stbi_load(path.data(), &width, &height, &channels, 0);
 
-    if (data)
+    if (!data)
     {
-        m_Width = width;
-        m_Height = height;
-
-        GLenum internalFormat = 0, dataFormat = 0;
-
-        if (channels == 4)
-        {
-            internalFormat = GL_RGBA8;
-            dataFormat = GL_RGBA;
-        }
-        else if (channels == 3)
-        {
-            internalFormat = GL_RGB8;
-            dataFormat = GL_RGB;
-        }
-
-        m_InternalFormat = internalFormat;
-        m_DataFormat = dataFormat;
-
-        MT_ASSERT(internalFormat & dataFormat, "Format not supported!");
-
-        glCreateTextures(GL_TEXTURE_2D, 1, &m_Handle);
-        glTextureStorage2D(m_Handle, 1, internalFormat, m_Width, m_Height);
-
-        glTextureParameteri(m_Handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(m_Handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTextureSubImage2D(m_Handle, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
-
-        stbi_image_free(data);
+        MT_CORE_ERROR("Failed to load texture: {}", path);
+        return;
     }
+
+    m_Path = path;
+    m_Width = width;
+    m_Height = height;
+
+    GLenum internalFormat = 0, dataFormat = 0;
+
+    if (channels == 4)
+    {
+        internalFormat = GL_RGBA8;
+        dataFormat = GL_RGBA;
+    }
+    else if (channels == 3)
+    {
+        internalFormat = GL_RGB8;
+        dataFormat = GL_RGB;
+    }
+
+    m_InternalFormat = internalFormat;
+    m_DataFormat = dataFormat;
+
+    MT_ASSERT(internalFormat & dataFormat, "Format not supported!");
+
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_Handle);
+    glTextureStorage2D(m_Handle, 1, internalFormat, m_Width, m_Height);
+
+    glTextureParameteri(m_Handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(m_Handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTextureSubImage2D(m_Handle, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
+
+    stbi_image_free(data);
 }
 }  // namespace Matcha
