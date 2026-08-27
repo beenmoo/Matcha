@@ -2,6 +2,7 @@
 
 #include "RenderHandles.h"
 #include "Math/Matrix.h"
+#include "Math/Vector.h"
 
 #include <cstdint>
 
@@ -23,5 +24,7 @@ public:
 
     virtual void Submit(const RenderData& renderData) = 0;
     virtual void Flush() = 0;
+    virtual void Clear() = 0;
+    virtual void SetClearColor(const Vector4& color) = 0;
 };
 }  // namespace Matcha

@@ -2,6 +2,7 @@
 
 #include "Graphics/ResourceManager.h"
 #include "GLIndexBuffer.h"
+#include "GLMesh.h"
 #include "GLShader.h"
 #include "GLTexture.h"
 #include "GLVertexArray.h"
@@ -20,14 +21,6 @@ namespace Matcha
 {
 class GLResourceManager final : public ResourceManager
 {
-public:
-    struct Mesh
-    {
-        GLVertexArray vertexArray;
-        std::shared_ptr<GLVertexBuffer> vertexBuffer;
-        std::shared_ptr<GLIndexBuffer> indexBuffer;
-    };
-
 public:
     GLResourceManager();
 
@@ -50,7 +43,7 @@ public:
     // talking to a GLResourceManager) calls these.
     [[nodiscard]] GLShader* GetShader(ShaderHandle handle);
     [[nodiscard]] GLTexture* GetTexture(TextureHandle handle);
-    [[nodiscard]] Mesh* GetMesh(MeshHandle handle);
+    [[nodiscard]] GLMesh* GetMesh(MeshHandle handle);
 
 private:
     void WatchShaderPaths(uint32_t shaderID, const std::initializer_list<std::string>& paths);
@@ -62,7 +55,7 @@ private:
 
     std::unordered_map<uint32_t, std::unique_ptr<GLShader>> m_Shaders;
     std::unordered_map<uint32_t, std::unique_ptr<GLTexture>> m_Textures;
-    std::unordered_map<uint32_t, std::unique_ptr<Mesh>> m_Meshes;
+    std::unordered_map<uint32_t, std::unique_ptr<GLMesh>> m_Meshes;
 
     // Shader hot-reload: efsw notifies on a background thread, so changed paths are only
     // recorded here and the actual GL reload happens on the main thread via ReloadModifiedShaders().

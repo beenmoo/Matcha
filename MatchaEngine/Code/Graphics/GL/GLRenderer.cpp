@@ -47,6 +47,17 @@ void GLRenderer::Flush()
     m_RenderData.clear();
 }
 
+void GLRenderer::Clear()
+{
+    glClearColor(m_ClearColor.x, m_ClearColor.y, m_ClearColor.z, m_ClearColor.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void GLRenderer::SetClearColor(const Vector4& color)
+{
+    m_ClearColor = color;
+}
+
 void GLRenderer::SortRenderData()
 {
     std::sort(m_RenderData.begin(), m_RenderData.end(), [](const RenderData& a, const RenderData& b) {

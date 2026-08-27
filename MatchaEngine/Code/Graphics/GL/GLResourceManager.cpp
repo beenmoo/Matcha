@@ -114,7 +114,7 @@ MeshHandle GLResourceManager::CreateMesh(std::span<const float> vertices,
                                          std::initializer_list<ShaderDataType> layout,
                                          std::span<const uint32_t> indices)
 {
-    auto mesh = std::make_unique<Mesh>();
+    auto mesh = std::make_unique<GLMesh>();
 
     mesh->vertexBuffer = std::make_shared<GLVertexBuffer>(vertices.data(), static_cast<GLuint>(vertices.size_bytes()));
     mesh->vertexBuffer->SetLayout(std::make_shared<BufferLayout>(layout));
@@ -149,7 +149,7 @@ GLTexture* GLResourceManager::GetTexture(TextureHandle handle)
     return it != m_Textures.end() ? it->second.get() : nullptr;
 }
 
-GLResourceManager::Mesh* GLResourceManager::GetMesh(MeshHandle handle)
+GLMesh* GLResourceManager::GetMesh(MeshHandle handle)
 {
     auto it = m_Meshes.find(handle.GetID());
 

@@ -3,6 +3,7 @@ target_sources(${TARGET_NAME} PRIVATE
     GL/GLFrameBuffer.h
     GL/GLIndexBuffer.cpp
     GL/GLIndexBuffer.h
+    GL/GLMesh.h
     GL/GLRenderer.cpp
     GL/GLRenderer.h
     GL/GLResourceManager.cpp

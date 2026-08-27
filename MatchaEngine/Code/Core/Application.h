@@ -55,8 +55,13 @@ protected:
         return self.m_Context;
     }
 
+    virtual void OnUpdate();
+    virtual void OnRender();
+    virtual void OnEvent(const Event& event);
+
 private:
     void Update();
+    void Render();
     void PollEvents();
     void LogContext();
 

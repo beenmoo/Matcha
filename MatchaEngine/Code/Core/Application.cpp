@@ -55,6 +55,7 @@ void Application::Run()
     {
         PollEvents();
         Update();
+        Render();
     }
 }
 
@@ -63,11 +64,32 @@ void Application::Quit()
     m_IsRunning = false;
 }
 
+void Application::OnUpdate()
+{
+}
+
+void Application::OnRender()
+{
+}
+
+void Application::OnEvent(const Event& event)
+{
+}
+
 void Application::Update()
 {
     m_Input.Update();
     m_Time.Update();
     m_ResourceManager->ReloadModifiedShaders();
+
+    OnUpdate();
+}
+
+void Application::Render()
+{
+    m_Renderer->Clear();
+    OnRender();
+    m_Renderer->Flush();
     m_Window.SwapBuffers();
 }
 
@@ -87,6 +109,8 @@ void Application::PollEvents()
 
         m_Input.ProcessEvents(*evt);
         m_Window.ProcessEvents(*evt);
+
+        OnEvent(*evt);
     }
 }
 
