@@ -7,6 +7,10 @@
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
 
+#ifdef MT_ENABLE_QT_BACKEND
+#include <QtGlobal>
+#endif
+
 namespace Matcha
 {
 Application::Application(const ApplicationSpecification& spec)
@@ -143,5 +147,10 @@ void Application::LogContext()
     int sdlVersion = SDL_GetVersion();
 
     MT_CORE_INFO("SDL v{}.{}.{}", SDL_VERSIONNUM_MAJOR(sdlVersion), SDL_VERSIONNUM_MINOR(sdlVersion), SDL_VERSIONNUM_MICRO(sdlVersion));
+
+#ifdef MT_ENABLE_QT_BACKEND
+    if (m_AppSpec.m_WindowBackend == WindowBackend::Qt)
+        MT_CORE_INFO("Qt v{0} (compiled with v{1})", qVersion(), QT_VERSION_STR);
+#endif
 }
 }  // namespace Matcha

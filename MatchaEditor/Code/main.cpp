@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     Matcha::Application::ApplicationSpecification spec;
-    spec.m_Title = "Hazelnut";
+    spec.m_Title = "Matcha Editor";
     spec.m_WindowBackend = Matcha::WindowBackend::Qt;
     spec.m_CommandLineArgs = {argc, argv};
 
