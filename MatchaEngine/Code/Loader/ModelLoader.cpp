@@ -9,6 +9,7 @@
 #include "Scene/Component/MeshComponent.h"
 #include "Scene/Component/TransformComponent.h"
 #include "Scene/Scene.h"
+#include "Utility/Profiler.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -21,9 +22,10 @@ namespace Matcha
 {
 namespace
 {
-void ApplyNodeTransform(Entity entity,
-                        const aiMatrix4x4& matrix)
+void ApplyNodeTransform(Entity entity, const aiMatrix4x4& matrix)
 {
+    MT_PROFILE_FUNCTION();
+
     aiVector3D scale;
     aiQuaternion rotation;
     aiVector3D position;
@@ -40,6 +42,8 @@ void ApplyNodeTransform(Entity entity,
 // to keep every imported mesh on this one fixed layout.
 MeshHandle CreateMeshFromAiMesh(ResourceManager& resourceManager, const aiMesh* mesh)
 {
+    MT_PROFILE_FUNCTION();
+
     std::vector<float> vertices;
     vertices.reserve(static_cast<size_t>(mesh->mNumVertices) * 8);
 
@@ -88,7 +92,13 @@ MeshHandle CreateMeshFromAiMesh(ResourceManager& resourceManager, const aiMesh* 
             indices.push_back(face.mIndices[j]);
     }
 
-    return resourceManager.CreateMesh(vertices, {ShaderDataType::Float3, ShaderDataType::Float3, ShaderDataType::Float2}, indices);
+    MeshHandle handle;
+    {
+        MT_PROFILE_SCOPE("ResourceManager::CreateMesh (GL upload)");
+        handle = resourceManager.CreateMesh(vertices, {ShaderDataType::Float3, ShaderDataType::Float3, ShaderDataType::Float2}, indices);
+    }
+
+    return handle;
 }
 
 MaterialComponent CreateMaterialFromAiMaterial(ResourceManager& resourceManager,
@@ -97,6 +107,8 @@ MaterialComponent CreateMaterialFromAiMaterial(ResourceManager& resourceManager,
                                                const std::filesystem::path& modelDirectory,
                                                ShaderHandle shader)
 {
+    MT_PROFILE_FUNCTION();
+
     MaterialComponent material;
     material.shader = shader;
 
@@ -120,7 +132,10 @@ MaterialComponent CreateMaterialFromAiMaterial(ResourceManager& resourceManager,
             // Embedded textures are referenced as "*0", "*1", etc, not a file path - not
             // supported yet, so skip rather than trying (and failing) to open one as a file.
             if (!path.empty() && path[0] != '*')
+            {
+                MT_PROFILE_SCOPE("ResourceManager::CreateTexture (decode+upload)");
                 material.texture = resourceManager.CreateTexture((modelDirectory / path).string());
+            }
         }
     }
 
@@ -135,6 +150,8 @@ Entity ImportNode(Scene& scene,
                   ShaderHandle shader,
                   const std::filesystem::path& modelDirectory)
 {
+    MT_PROFILE_FUNCTION();
+
     Entity nodeEntity = scene.CreateEntity();
     ApplyNodeTransform(nodeEntity, node->mTransformation);
     SetParent(nodeEntity, parent);
@@ -164,19 +181,33 @@ Entity ModelLoader::LoadModel(Scene& scene,
                               ShaderHandle shader,
                               const std::string& path)
 {
+    Profiler::Get().BeginSession("ModelLoad", "profile_results.json");
+
     Assimp::Importer importer;
 
-    const aiScene* aiScene =
-        importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
+    const aiScene* aiScene;
+    {
+        MT_PROFILE_SCOPE("Assimp::Importer::ReadFile");
+        aiScene = importer.ReadFile(
+            path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
+    }
 
     if (!aiScene || (aiScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || !aiScene->mRootNode)
     {
         MT_CORE_ERROR("Failed to load model '{0}': {1}", path, importer.GetErrorString());
+        Profiler::Get().EndSession();
         return Entity();
     }
 
     std::filesystem::path modelDirectory = std::filesystem::path(path).parent_path();
 
-    return ImportNode(scene, resourceManager, aiScene, aiScene->mRootNode, Entity(), shader, modelDirectory);
+    Entity root = ImportNode(scene, resourceManager, aiScene, aiScene->mRootNode, Entity(), shader, modelDirectory);
+
+    // Ends the session (and flushes the JSON file) before returning, so every scope timer above
+    // has already been destroyed and written its entry by this point - see profile_results.json,
+    // open it in chrome://tracing or https://ui.perfetto.dev.
+    Profiler::Get().EndSession();
+
+    return root;
 }
 }  // namespace Matcha

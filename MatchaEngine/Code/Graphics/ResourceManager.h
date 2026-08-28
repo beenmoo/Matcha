@@ -56,6 +56,12 @@ private:
     std::unordered_map<uint32_t, std::unique_ptr<Texture>> m_Textures;
     std::unordered_map<uint32_t, std::unique_ptr<Mesh>> m_Meshes;
 
+    // CreateTexture(path) dedupes by normalized path: a texture used by many meshes (materials
+    // sharing the same source image, as glTF imports commonly do) is decoded and uploaded once,
+    // not once per caller. Only covers the path-based overload - CreateTexture(width, height)
+    // (procedural textures) has no natural key to dedupe on.
+    std::unordered_map<std::string, TextureHandle> m_TexturePathToHandle;
+
     // Shader hot-reload: efsw notifies on a background thread, so changed paths are only
     // recorded here and the actual reload happens on the main thread via ReloadModifiedShaders().
     FileWatcher m_FileWatcher;

@@ -21,6 +21,12 @@ target_link_libraries(${TARGET_NAME} PUBLIC EnTT::EnTT)
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 target_compile_definitions(${TARGET_NAME} PRIVATE $<$<CONFIG:Debug>:MT_DEBUG=1>)
 
+if (BUILD_PROFILING)
+    # Deliberately not tied to MT_DEBUG/Config: profiling needs to answer "is this actually slow"
+    # in Release too, not just Debug (where Debug-STL overhead alone can dominate).
+    target_compile_definitions(${TARGET_NAME} PRIVATE MT_ENABLE_PROFILING)
+endif()
+
 file(GLOB_RECURSE SHADER_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Shaders/*.vert"
     "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Shaders/*.frag")

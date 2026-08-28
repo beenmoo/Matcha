@@ -94,8 +94,14 @@ void ResourceManager::WatchShaderPaths(uint32_t shaderID, const std::initializer
 
 TextureHandle ResourceManager::CreateTexture(std::string_view path)
 {
+    std::string normalizedPath = std::filesystem::path(path).lexically_normal().string();
+
+    if (auto it = m_TexturePathToHandle.find(normalizedPath); it != m_TexturePathToHandle.end())
+        return it->second;
+
     TextureHandle handle(m_NextTextureID++);
     m_Textures.emplace(handle.GetID(), Texture::Create(path));
+    m_TexturePathToHandle.emplace(normalizedPath, handle);
 
     return handle;
 }
@@ -111,6 +117,8 @@ TextureHandle ResourceManager::CreateTexture(uint32_t width, uint32_t height)
 void ResourceManager::DestroyTexture(TextureHandle handle)
 {
     m_Textures.erase(handle.GetID());
+
+    std::erase_if(m_TexturePathToHandle, [handle](const auto& entry) { return entry.second == handle; });
 }
 
 MeshHandle ResourceManager::CreateMesh(std::span<const float> vertices,

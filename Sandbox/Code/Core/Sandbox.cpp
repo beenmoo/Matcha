@@ -85,18 +85,18 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     material.shader = shader;
     material.albedoColor = Vector4(0.9f, 0.5f, 0.2f, 1.0f);
 
-    // Entity backpack = ModelLoader::LoadModel(scene, resourceManager, shader, "Assets/Models/survival_guitar_backpack/scene.gltf");
+     Entity backpack = ModelLoader::LoadModel(scene, resourceManager, shader, "Assets/Models/survival_guitar_backpack/scene.gltf");
 
-    // if (backpack.IsValid())
-    // {
-    //     // This particular export was authored in centimeters (a common Blender/Sketchfab glTF
-    //     // export quirk) rather than glTF's spec-mandated meters, so its geometry is ~100x too
-    //     // large/far from the origin at face value. Asset-specific, not something ModelLoader
-    //     // should compensate for generally.
-    //     Transform& transform = backpack.GetComponent<TransformComponent>().transform;
-    //     transform.SetScale(0.001f, 0.001f, 0.001f);
-    //     transform.SetPosition(1.5f, 0.0f, 0.0f);
-    // }
+     if (backpack.IsValid())
+     {
+         // This particular export was authored in centimeters (a common Blender/Sketchfab glTF
+         // export quirk) rather than glTF's spec-mandated meters, so its geometry is ~100x too
+         // large/far from the origin at face value. Asset-specific, not something ModelLoader
+         // should compensate for generally.
+         Transform& transform = backpack.GetComponent<TransformComponent>().transform;
+         transform.SetScale(0.001f, 0.001f, 0.001f);
+         transform.SetPosition(1.5f, 0.0f, 0.0f);
+     }
 
     m_Camera = scene.CreateEntity();
     m_Camera.AddComponent<TransformComponent>().transform.SetPosition(0.0f, 0.0f, 3.0f);

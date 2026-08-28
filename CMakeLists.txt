@@ -18,6 +18,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(BUILD_TESTS "Build the tests" ON)
 option(BUILD_EDITOR "Build the Matcha Editor" ON)
 option(BUILD_QT_BACKEND "Build the Qt Window/Input backend into MatchaEngine" ${BUILD_EDITOR})
+option(BUILD_PROFILING "Enable MT_PROFILE_SCOPE/MT_PROFILE_FUNCTION instrumentation" ON)
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
