@@ -2,8 +2,6 @@
 
 #include <Matcha.h>
 
-namespace Matcha
-{
 class Sandbox : public Application
 {
 public:
@@ -16,4 +14,3 @@ protected:
 private:
     Entity m_Cube;
 };
-}  // namespace Matcha

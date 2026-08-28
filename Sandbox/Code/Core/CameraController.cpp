@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-namespace Matcha
-{
 void CameraController::OnUpdate()
 {
     Input& input = GetContext().GetInput();
@@ -55,4 +53,3 @@ void CameraController::OnUpdate()
     if (movement != Vector3(0.0f))
         cameraTransform.Translate(Normalize(movement) * moveSpeed * GetContext().GetTime().GetDeltaTime());
 }
-}  // namespace Matcha

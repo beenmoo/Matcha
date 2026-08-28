@@ -2,8 +2,6 @@
 
 #include <Matcha.h>
 
-namespace Matcha
-{
 class CameraController : public ScriptableEntity
 {
 protected:
@@ -18,4 +16,3 @@ private:
     float m_Yaw = 0.0f;
     float m_Pitch = 0.0f;
 };
-}  // namespace Matcha

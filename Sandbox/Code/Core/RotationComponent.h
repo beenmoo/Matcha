@@ -2,8 +2,6 @@
 
 #include <Matcha.h>
 
-namespace Matcha
-{
 class RotationComponent : public ScriptableEntity
 {
 protected:
@@ -12,4 +10,3 @@ protected:
 private:
     float degreesPerSecond = 45.0f;
 };
-}  // namespace Matcha
