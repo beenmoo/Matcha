@@ -36,6 +36,8 @@ void Renderer::Flush()
         shader->Bind();
         shader->SetMat4("u_WorldMatrix", renderData.transform);
         shader->SetFloat4("u_AlbedoColor", renderData.albedoColor);
+        shader->SetInt("u_HasAlbedoMap", renderData.texture.IsValid());
+        shader->SetInt("u_AlbedoMap", 0);
 
         if (renderData.texture.IsValid())
         {

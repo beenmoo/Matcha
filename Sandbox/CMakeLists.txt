@@ -9,6 +9,15 @@ target_include_directories(${TARGET_NAME} PRIVATE Code)
 
 matcha_copy_engine_assets(${TARGET_NAME})
 
+# Copies Sandbox's own Assets (test models, etc.) into the same output Assets/ directory that
+# matcha_copy_engine_assets() populates with the engine's shaders.
+add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/Assets"
+        "$<TARGET_FILE_DIR:${TARGET_NAME}>/Assets"
+    COMMENT "Copying Sandbox assets to ${TARGET_NAME} output directory"
+    VERBATIM)
+
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 
 file(GLOB_RECURSE SHADER_SOURCES

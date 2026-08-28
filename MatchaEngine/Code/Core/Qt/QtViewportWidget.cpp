@@ -5,6 +5,7 @@
 
 #include <glad/glad.h>
 
+#include <QCursor>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QOpenGLContext>
@@ -61,6 +62,26 @@ void QtViewportWidget::SetEventDispatch(std::function<void(const Event&)> dispat
 void QtViewportWidget::SetInput(QtInput* input)
 {
     m_Input = input;
+}
+
+void QtViewportWidget::SetCursorLocked(bool locked)
+{
+    m_CursorLocked = locked;
+
+    if (locked)
+    {
+        setCursor(Qt::BlankCursor);
+
+        QPoint center = rect().center();
+        QCursor::setPos(mapToGlobal(center));
+
+        m_LastMousePosition = center;
+        m_HasLastMousePosition = true;
+    }
+    else
+    {
+        unsetCursor();
+    }
 }
 
 void QtViewportWidget::initializeGL()
@@ -141,10 +162,27 @@ void QtViewportWidget::mouseMoveEvent(QMouseEvent* event)
     {
         QPoint delta = position - m_LastMousePosition;
 
-        m_EventDispatch(Event{.type = EventType::MouseMoved, .x = static_cast<float>(delta.x()), .y = static_cast<float>(delta.y())});
+        if (delta.x() != 0 || delta.y() != 0)
+            m_EventDispatch(Event{.type = EventType::MouseMoved, .x = static_cast<float>(delta.x()), .y = static_cast<float>(delta.y())});
     }
 
-    m_LastMousePosition = position;
+    if (m_CursorLocked)
+    {
+        // Warp back to center after every move so there's always room left to move into - the
+        // resulting synthetic move event Qt delivers for the warp itself computes a (0,0) delta
+        // against the m_LastMousePosition set here, so it's a correctly-filtered no-op above.
+        QPoint center = rect().center();
+
+        if (position != center)
+            QCursor::setPos(mapToGlobal(center));
+
+        m_LastMousePosition = center;
+    }
+    else
+    {
+        m_LastMousePosition = position;
+    }
+
     m_HasLastMousePosition = true;
 
     QOpenGLWidget::mouseMoveEvent(event);

@@ -124,6 +124,23 @@ TEST(Vector3Tests, CompoundAssignment)
     EXPECT_EQ(v, Vector3(2.0f, 4.0f, 6.0f));
 }
 
+TEST(Vector3Tests, LengthAndNormalize)
+{
+    Vector3 v(3.0f, 0.0f, 4.0f);
+
+    EXPECT_FLOAT_EQ(Length(v), 5.0f);
+
+    Vector3 normalized = Normalize(v);
+    EXPECT_NEAR(Length(normalized), 1.0f, 1e-6f);
+    EXPECT_NEAR(normalized.x, 0.6f, 1e-6f);
+    EXPECT_NEAR(normalized.z, 0.8f, 1e-6f);
+}
+
+TEST(Vector3Tests, NormalizeOfZeroVectorReturnsZero)
+{
+    EXPECT_EQ(Normalize(Vector3(0.0f)), Vector3(0.0f));
+}
+
 TEST(Vector4Tests, ComponentConstructorAndAddition)
 {
     Vector4 a(1.0f, 2.0f, 3.0f, 4.0f);

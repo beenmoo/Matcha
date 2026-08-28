@@ -7,6 +7,8 @@
 
 namespace Matcha
 {
+class QtViewportWidget;
+
 class QtInput final : public Input
 {
 public:
@@ -38,6 +40,10 @@ public:
     void PushMouseButtonDown(MouseButton button);
     void PushMouseButtonUp(MouseButton button);
 
+    // Wired up by QtWindow at construction time, since SetCursorLockState needs the viewport
+    // widget to actually hide/warp the cursor (Qt has no built-in relative mouse mode).
+    void SetViewportWidget(QtViewportWidget* viewportWidget);
+
 private:
     [[nodiscard]] static size_t ToIndex(MouseButton button);
 
@@ -54,5 +60,6 @@ private:
     Vector2Int m_JoystickAxis = Vector2Int(0);
 
     CursorLockState m_CursorLockState = CursorLockState::None;
+    QtViewportWidget* m_ViewportWidget = nullptr;
 };
 }  // namespace Matcha

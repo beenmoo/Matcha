@@ -12,7 +12,12 @@ QtWindow::QtWindow(const WindowSpecification& spec, Input* input)
     m_ViewportWidget = new QtViewportWidget();
     m_ViewportWidget->resize(spec.m_Width, spec.m_Height);
     m_ViewportWidget->setWindowTitle(QString::fromStdString(spec.m_Title));
-    m_ViewportWidget->SetInput(dynamic_cast<QtInput*>(input));
+
+    if (auto* qtInput = dynamic_cast<QtInput*>(input))
+    {
+        m_ViewportWidget->SetInput(qtInput);
+        qtInput->SetViewportWidget(m_ViewportWidget);
+    }
 }
 
 void QtWindow::Resize(int width, int height)

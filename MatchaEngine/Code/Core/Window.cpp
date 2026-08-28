@@ -13,7 +13,7 @@ std::unique_ptr<Window> Window::Create(WindowBackend backend, const WindowSpecif
     switch (backend)
     {
     case WindowBackend::SDL:
-        return std::make_unique<SDLWindow>(spec);
+        return std::make_unique<SDLWindow>(spec, input);
 #ifdef MT_ENABLE_QT_BACKEND
     case WindowBackend::Qt:
         return std::make_unique<QtWindow>(spec, input);

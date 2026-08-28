@@ -1,4 +1,5 @@
 #include "QtInput.h"
+#include "QtViewportWidget.h"
 
 #include <utility>
 
@@ -98,7 +99,9 @@ const Vector2Int& QtInput::GetMouseScrollDelta() const
 void QtInput::SetCursorLockState(CursorLockState state)
 {
     m_CursorLockState = state;
-    // TODO: Qt cursor grab/hide - mirrors SDLInput::SetCursorLockState, also currently a stub.
+
+    if (m_ViewportWidget)
+        m_ViewportWidget->SetCursorLocked(state == CursorLockState::Locked);
 }
 
 Input::CursorLockState QtInput::GetCursorLockState() const
@@ -124,5 +127,10 @@ void QtInput::PushMouseButtonDown(MouseButton button)
 void QtInput::PushMouseButtonUp(MouseButton button)
 {
     m_MouseButtonState[ToIndex(button)] = false;
+}
+
+void QtInput::SetViewportWidget(QtViewportWidget* viewportWidget)
+{
+    m_ViewportWidget = viewportWidget;
 }
 }  // namespace Matcha

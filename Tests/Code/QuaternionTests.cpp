@@ -5,18 +5,8 @@
 
 #include <gtest/gtest.h>
 
-#include <cmath>
-
 using namespace Matcha;
 using namespace MatchaTests;
-
-namespace
-{
-float Length(const Vector3& v)
-{
-    return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-}
-}  // namespace
 
 TEST(QuaternionTests, DefaultConstructorIsIdentity)
 {

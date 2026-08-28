@@ -103,6 +103,12 @@ void GLShader::SetFloat4(std::string_view name, const Vector4& value)
     glProgramUniform4f(m_Handle, location, value.x, value.y, value.z, value.w);
 }
 
+void GLShader::SetInt(std::string_view name, int value)
+{
+    GLint location = glGetUniformLocation(m_Handle, std::string(name).c_str());
+    glProgramUniform1i(m_Handle, location, value);
+}
+
 GLuint GLShader::GetHandle() const
 {
     return m_Handle;

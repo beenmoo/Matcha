@@ -132,19 +132,17 @@ void SDLInput::SetCursorLockState(CursorLockState state)
 {
     m_CursorLockState = state;
 
-    switch (state)
-    {
-    case CursorLockState::Locked:
-        // SDL_SetWindowRelativeMouseMode(true);
-        break;
-    default:
-        // SDL_SetWindowRelativeMouseMode(false);
-        break;
-    }
+    if (m_NativeWindow)
+        SDL_SetWindowRelativeMouseMode(m_NativeWindow, state == CursorLockState::Locked);
 }
 
 Input::CursorLockState SDLInput::GetCursorLockState() const
 {
     return m_CursorLockState;
+}
+
+void SDLInput::SetNativeWindow(SDL_Window* window)
+{
+    m_NativeWindow = window;
 }
 }  // namespace Matcha

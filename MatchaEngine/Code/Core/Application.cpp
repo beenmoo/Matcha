@@ -58,6 +58,12 @@ void Application::Quit()
 
 void Application::Tick()
 {
+    // Must run before PollEvents(): Input::Update() resets per-frame deltas (mouse axis, scroll)
+    // to zero before re-accumulating them from this frame's events. Running it after PollEvents()
+    // (as part of Update(), where it used to live) would wipe out the deltas PollEvents() just
+    // set, before OnUpdate() ever got to read them.
+    m_Input->Update();
+
     PollEvents();
     Update();
     Render();
@@ -77,7 +83,6 @@ void Application::OnEvent(const Event& event)
 
 void Application::Update()
 {
-    m_Input->Update();
     m_Time.Update();
     m_ResourceManager.ReloadModifiedShaders();
     ScriptSystem::Update(m_Scene);

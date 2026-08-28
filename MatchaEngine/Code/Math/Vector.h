@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 
 namespace Matcha
@@ -151,6 +152,19 @@ struct Vector3
 [[nodiscard]] constexpr Vector3 operator-(const Vector3& v)
 {
     return Vector3(-v.x, -v.y, -v.z);
+}
+
+[[nodiscard]] inline float Length(const Vector3& v)
+{
+    return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+// Returns v unchanged if it's zero-length, rather than dividing by zero.
+[[nodiscard]] inline Vector3 Normalize(const Vector3& v)
+{
+    float length = Length(v);
+
+    return length > 0.0f ? v * (1.0f / length) : v;
 }
 
 struct Vector3Int

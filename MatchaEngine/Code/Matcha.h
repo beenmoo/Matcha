@@ -24,6 +24,8 @@
 #include "Graphics/VertexArray.h"
 #include "Graphics/VertexBuffer.h"
 
+#include "Loader/ModelLoader.h"
+
 #include "Math/Matrix.h"
 #include "Math/Quaternion.h"
 #include "Math/Transform.h"

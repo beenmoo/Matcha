@@ -114,17 +114,22 @@ const Vector3& Transform::GetScale() const
 
 Vector3 Transform::GetForward() const
 {
-    return Inverse(m_Rotation) * Vector3(0.0f, 0.0f, -1.0f);
+    // m_Rotation directly, not its inverse - matches GetLocalMatrix()/ToMat4(), which use
+    // m_Rotation as the object's local-to-world orientation. Using Inverse(m_Rotation) here
+    // rotated these vectors in the opposite rotational sense from the object's actual visual
+    // orientation the moment any real rotation was applied (identity-only tests never caught it,
+    // since Inverse(q)*v is still orthonormal and unit-length - just pointing the wrong way).
+    return m_Rotation * Vector3(0.0f, 0.0f, -1.0f);
 }
 
 Vector3 Transform::GetRight() const
 {
-    return Inverse(m_Rotation) * Vector3(1.0f, 0.0f, 0.0f);
+    return m_Rotation * Vector3(1.0f, 0.0f, 0.0f);
 }
 
 Vector3 Transform::GetUp() const
 {
-    return Inverse(m_Rotation) * Vector3(0.0f, 1.0f, 0.0f);
+    return m_Rotation * Vector3(0.0f, 1.0f, 0.0f);
 }
 
 Matrix4 Transform::GetLocalMatrix() const

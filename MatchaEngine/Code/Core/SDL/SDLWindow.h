@@ -9,7 +9,7 @@ namespace Matcha
 class SDLWindow final : public Window
 {
 public:
-    explicit SDLWindow(const WindowSpecification& spec);
+    explicit SDLWindow(const WindowSpecification& spec, Input* input);
     ~SDLWindow() override;
 
     SDLWindow(const SDLWindow&) = delete;

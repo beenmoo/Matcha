@@ -22,6 +22,11 @@ public:
     void SetEventDispatch(std::function<void(const Event&)> dispatch);
     void SetInput(QtInput* input);
 
+    // Qt has no built-in relative mouse mode (unlike SDL's SDL_SetWindowRelativeMouseMode): this
+    // hides the cursor and, on every subsequent move, warps it back to the widget's center after
+    // computing the delta - keeps mouse-look working indefinitely without running out of screen.
+    void SetCursorLocked(bool locked);
+
 protected:
     void initializeGL() override;
     void resizeGL(int width, int height) override;
@@ -42,5 +47,6 @@ private:
 
     QPoint m_LastMousePosition;
     bool m_HasLastMousePosition = false;
+    bool m_CursorLocked = false;
 };
 }  // namespace Matcha

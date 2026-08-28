@@ -1,5 +1,6 @@
 #include "SDLWindow.h"
 #include "Core/Assert.h"
+#include "SDLInput.h"
 
 #include <glad/glad.h>
 #include <optional>
@@ -28,10 +29,13 @@ std::optional<Event> TranslateEvent(const SDL_Event& sdlEvent)
 }
 }  // namespace
 
-SDLWindow::SDLWindow(const WindowSpecification& spec)
+SDLWindow::SDLWindow(const WindowSpecification& spec, Input* input)
     : m_WindowSpec(spec)
 {
     InitContext();
+
+    if (auto* sdlInput = dynamic_cast<SDLInput*>(input))
+        sdlInput->SetNativeWindow(m_NativeWindow);
 }
 
 SDLWindow::~SDLWindow()

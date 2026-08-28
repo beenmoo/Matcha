@@ -2,6 +2,8 @@
 
 #include "Core/Input.h"
 
+struct SDL_Window;
+
 namespace Matcha
 {
 class SDLInput final : public Input
@@ -34,6 +36,10 @@ public:
     void SetCursorLockState(CursorLockState state) override;
     [[nodiscard]] CursorLockState GetCursorLockState() const override;
 
+    // SDL-specific: wired up by SDLWindow at construction time, since SetCursorLockState needs
+    // the native window to actually call SDL_SetWindowRelativeMouseMode on.
+    void SetNativeWindow(SDL_Window* window);
+
 private:
     [[nodiscard]] static uint32_t ToMouseButtonMask(MouseButton button);
 
@@ -49,5 +55,6 @@ private:
     Vector2Int m_JoystickAxis = Vector2Int(0);
 
     CursorLockState m_CursorLockState = CursorLockState::None;
+    SDL_Window* m_NativeWindow = nullptr;
 };
 }  // namespace Matcha

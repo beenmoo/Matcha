@@ -77,6 +77,32 @@ TEST(TransformTests, RotatePreservesOrthonormalBasis)
     EXPECT_NEAR(dot(up, up), 1.0f, kEpsilon);
 }
 
+TEST(TransformTests, GetForwardMatchesActualOrientationAfterRotation)
+{
+    Transform t;
+    // Transform::Rotate takes degrees, not radians.
+    t.Rotate(Vector3(0.0f, 1.0f, 0.0f), 90.0f);
+
+    // Cross-checked against the model matrix's own recovered rotation - a path independent of
+    // GetForward()'s own implementation - so this actually verifies GetForward() points the way
+    // the object is visually oriented, not just that it stays orthonormal (RotatePreservesOrthonormalBasis
+    // above would pass even if GetForward()/GetRight()/GetUp() all used Inverse(m_Rotation), which
+    // is precisely the bug this test catches: that variant is still a valid orthonormal basis,
+    // just rotated the wrong way relative to how GetLocalMatrix() actually renders the object).
+    Vector3 scale;
+    Quaternion recoveredRotation;
+    Vector3 translation;
+    Vector3 skew;
+    Vector4 perspective;
+
+    bool success = Decompose(t.GetLocalMatrix(), scale, recoveredRotation, translation, skew, perspective);
+
+    EXPECT_TRUE(success);
+    ExpectVectorNear(t.GetForward(), recoveredRotation * Vector3(0.0f, 0.0f, -1.0f));
+    ExpectVectorNear(t.GetRight(), recoveredRotation * Vector3(1.0f, 0.0f, 0.0f));
+    ExpectVectorNear(t.GetUp(), recoveredRotation * Vector3(0.0f, 1.0f, 0.0f));
+}
+
 TEST(TransformTests, RotationEulerRoundTrip)
 {
     Transform t;

@@ -27,6 +27,7 @@ public:
 
     void SetMat4(std::string_view name, const Matrix4& value) override;
     void SetFloat4(std::string_view name, const Vector4& value) override;
+    void SetInt(std::string_view name, int value) override;
 
     [[nodiscard]] uint32_t GetHandle() const override;
 
