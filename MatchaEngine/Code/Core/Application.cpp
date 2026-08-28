@@ -85,7 +85,7 @@ void Application::Update()
 {
     m_Time.Update();
     m_ResourceManager.ReloadModifiedShaders();
-    ScriptSystem::Update(m_Scene);
+    ScriptSystem::Update(m_Scene, m_Context);
 
     OnUpdate();
 }

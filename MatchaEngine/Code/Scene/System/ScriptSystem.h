@@ -4,11 +4,13 @@
 
 namespace Matcha
 {
+class EngineContext;
+
 class ScriptSystem
 {
 public:
     ScriptSystem() = delete;
 
-    static void Update(Scene& scene);
+    static void Update(Scene& scene, EngineContext& context);
 };
-}
+}  // namespace Matcha

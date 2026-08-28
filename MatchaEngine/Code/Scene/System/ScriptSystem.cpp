@@ -1,10 +1,11 @@
 #include "ScriptSystem.h"
+#include "Core/EngineContext.h"
 #include "Scene/Component/NativeScriptComponent.h"
 #include "Scene/ScriptableEntity.h"
 
 namespace Matcha
 {
-void ScriptSystem::Update(Scene& scene)
+void ScriptSystem::Update(Scene& scene, EngineContext& context)
 {
     auto view = scene.View<NativeScriptComponent>();
 
@@ -17,9 +18,10 @@ void ScriptSystem::Update(Scene& scene)
         {
             nsc.instance = nsc.instantiateScript();
             nsc.instance->m_Entity = entity;
+            nsc.instance->m_Context = &context;
         }
 
-        nsc.instance->Update();
+        nsc.instance->OnUpdate();
     }
 }
-}
+}  // namespace Matcha
