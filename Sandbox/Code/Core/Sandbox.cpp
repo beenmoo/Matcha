@@ -1,5 +1,6 @@
 #include "Sandbox.h"
 #include "CameraController.h"
+#include "Flashlight.h"
 #include "RotationComponent.h"
 #include "Primitives.h"
 
@@ -48,7 +49,10 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     Entity camera = scene.CreateEntity();
     camera.AddComponent<TransformComponent>().transform.SetPosition(0.0f, 0.0f, 3.0f);
     camera.AddComponent<CameraComponent>().aspectRatio = window.GetAspectRatio();
-    camera.AddComponent<NativeScriptComponent>().Bind<CameraController>();
+
+    NativeScriptComponent& cameraScripts = camera.AddComponent<NativeScriptComponent>();
+    cameraScripts.Bind<CameraController>();
+    cameraScripts.Bind<Flashlight>();
 
     // Points down and off to one side - rotating this entity is what aims the light, same as
     // rotating the camera entity aims the camera (LightSystem reads Transform::GetForward()).
@@ -58,8 +62,9 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     auto& lightComp = light.AddComponent<LightComponent>();
     lightComp.intensity = 2.0f;
 
-    // The spot light itself now lives on CameraController - it creates and drives its own
-    // flashlight entity (see CameraController::OnCreate/OnUpdate) so it always follows the camera.
+    // The spot light itself lives on the Flashlight script bound to the camera above - it creates
+    // and drives its own light entity (see Flashlight::OnCreate/OnUpdate) so it always follows
+    // wherever the camera is.
 }
 
 void Sandbox::OnUpdate()

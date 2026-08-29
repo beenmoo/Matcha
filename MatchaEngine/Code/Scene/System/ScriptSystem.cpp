@@ -14,15 +14,18 @@ void ScriptSystem::Update(Scene& scene, EngineContext& context)
         Entity entity(handle, &scene);
         NativeScriptComponent& nsc = entity.GetComponent<NativeScriptComponent>();
 
-        if (!nsc.instance)
+        for (auto& binding : nsc.bindings)
         {
-            nsc.instance = nsc.instantiateScript();
-            nsc.instance->m_Entity = entity;
-            nsc.instance->m_Context = &context;
-            nsc.instance->OnCreate();
-        }
+            if (!binding.instance)
+            {
+                binding.instance = binding.instantiateScript();
+                binding.instance->m_Entity = entity;
+                binding.instance->m_Context = &context;
+                binding.instance->OnCreate();
+            }
 
-        nsc.instance->OnUpdate();
+            binding.instance->OnUpdate();
+        }
     }
 }
 }  // namespace Matcha

@@ -2,22 +2,6 @@
 
 #include <algorithm>
 
-void CameraController::OnCreate()
-{
-    Scene& scene = GetContext().GetScene();
-
-    m_Flashlight = scene.CreateEntity();
-    m_Flashlight.AddComponent<TransformComponent>();
-
-    LightComponent& light = m_Flashlight.AddComponent<LightComponent>();
-    light.type = LightType::Spot;
-    light.color = Vector3(0.6f, 0.8f, 1.0f);
-    light.intensity = 5.0f;
-    light.range = 6.0f;
-    light.innerConeAngle = 12.5f;
-    light.outerConeAngle = 20.0f;
-}
-
 void CameraController::OnUpdate()
 {
     Input& input = GetContext().GetInput();
@@ -68,9 +52,4 @@ void CameraController::OnUpdate()
 
     if (movement != Vector3(0.0f))
         cameraTransform.Translate(Normalize(movement) * moveSpeed * GetContext().GetTime().GetDeltaTime());
-
-    // Flashlight: follows the camera exactly, so it always points wherever the camera looks.
-    Transform& flashlightTransform = m_Flashlight.GetComponent<TransformComponent>().transform;
-    flashlightTransform.SetPosition(cameraTransform.GetPosition());
-    flashlightTransform.SetRotation(cameraTransform.GetRotation());
 }
