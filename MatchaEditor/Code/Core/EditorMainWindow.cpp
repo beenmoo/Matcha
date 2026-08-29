@@ -66,11 +66,12 @@ EditorMainWindow::EditorMainWindow(Matcha::Scene& scene, Matcha::QtViewportWidge
     menuBar->addMenu("View");
     setMenuBar(menuBar);
 
-    // Inspector stays a stub for now - populated once the editor has per-entity property UI.
     SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(scene, this);
     addDockWidget(Qt::LeftDockWidgetArea, sceneHierarchyPanel);
-    InspectorPanel* inspectorPanel = new InspectorPanel(this);
+    InspectorPanel* inspectorPanel = new InspectorPanel(scene, this);
     addDockWidget(Qt::RightDockWidgetArea, inspectorPanel);
+    connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);
+
     ConsolePanel* consolePanel = new ConsolePanel(this);
     addDockWidget(Qt::BottomDockWidgetArea, consolePanel);
 
@@ -90,4 +91,4 @@ EditorMainWindow::~EditorMainWindow()
     DetachSink(m_ConsoleSink, MT_CORE_LOGGER);
     DetachSink(m_ConsoleSink, MT_CLIENT_LOGGER);
 }
-}  // namespace Matcha
+}  // namespace MatchaEditor

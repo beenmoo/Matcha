@@ -211,7 +211,7 @@ TEST(HierarchyComponentTests, DestroyEntityRecursiveFinalNotificationSeesFullyCl
     SetParent(b, parent);
 
     std::vector<std::vector<Entity>> observedRootsPerNotification;
-    scene.SetOnSceneChanged([&scene, &observedRootsPerNotification]
+    scene.AddOnSceneChanged([&scene, &observedRootsPerNotification]
                              { observedRootsPerNotification.push_back(scene.GetRootEntities()); });
 
     DestroyEntityRecursive(scene, parent);

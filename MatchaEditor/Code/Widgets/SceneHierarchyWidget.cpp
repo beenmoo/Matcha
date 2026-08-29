@@ -4,19 +4,22 @@
 #include "Scene/Entity.h"
 #include "Scene/Scene.h"
 
+#include <Matcha.h>
+
 #include <entt/entt.hpp>
 
 #include <QAction>
+#include <QInputDialog>
+#include <QLineEdit>
 #include <QMenu>
+#include <QMouseEvent>
 #include <QSignalBlocker>
+
+#include <algorithm>
+#include <vector>
 
 namespace MatchaEditor
 {
-using Matcha::Entity;
-using Matcha::HierarchyComponent;
-using Matcha::Scene;
-using Matcha::TagComponent;
-
 namespace
 {
 quint32 HandleToVariant(entt::entity handle)
@@ -36,29 +39,35 @@ SceneHierarchyWidget::SceneHierarchyWidget(Scene& scene, QWidget* parent)
 {
     setHeaderHidden(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
-    setSelectionMode(QAbstractItemView::SingleSelection);
+    setSelectionMode(QAbstractItemView::ExtendedSelection);
 
     connect(this, &QTreeWidget::customContextMenuRequested, this, &SceneHierarchyWidget::ShowContextMenu);
     connect(this, &QTreeWidget::itemChanged, this, &SceneHierarchyWidget::RenameItem);
 
-    m_Scene.SetOnSceneChanged([this] { Refresh(); });
+    // Not fired by Refresh()'s own reselection - that happens under a QSignalBlocker, so
+    // rebuilding the tree around the same still-selected set doesn't spuriously renotify.
+    connect(this, &QTreeWidget::itemSelectionChanged, this, [this] { emit SelectionChanged(GetSelectedEntities()); });
+
+    m_Scene.AddOnSceneChanged([this] { Refresh(); });
 
     Refresh();
 }
 
-Entity SceneHierarchyWidget::GetSelectedEntity() const
+std::vector<Entity> SceneHierarchyWidget::GetSelectedEntities() const
 {
-    QTreeWidgetItem* item = currentItem();
-    if (!item)
-        return Entity();
+    std::vector<Entity> entities;
 
-    return Entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Scene);
+    for (QTreeWidgetItem* item : selectedItems())
+        entities.emplace_back(VariantToHandle(item->data(0, Qt::UserRole)), &m_Scene);
+
+    return entities;
 }
 
 void SceneHierarchyWidget::Refresh()
 {
-    QTreeWidgetItem* current = currentItem();
-    quint32 selectedHandle = current ? current->data(0, Qt::UserRole).toUInt() : 0;
+    QList<quint32> previouslySelected;
+    for (QTreeWidgetItem* item : selectedItems())
+        previouslySelected.push_back(item->data(0, Qt::UserRole).toUInt());
 
     // Rebuilding programmatically sets item text, which would otherwise fire itemChanged and
     // route through RenameItem as if the user had typed it.
@@ -70,8 +79,9 @@ void SceneHierarchyWidget::Refresh()
     for (Entity root : m_Scene.GetRootEntities())
         AddEntityItem(nullptr, root.GetHandle());
 
-    if (current && m_ItemsByHandle.contains(selectedHandle))
-        setCurrentItem(m_ItemsByHandle[selectedHandle]);
+    for (quint32 handle : previouslySelected)
+        if (m_ItemsByHandle.contains(handle))
+            m_ItemsByHandle[handle]->setSelected(true);
 }
 
 void SceneHierarchyWidget::AddEntityItem(QTreeWidgetItem* parentItem, entt::entity handle)
@@ -101,10 +111,11 @@ void SceneHierarchyWidget::AddEntityItem(QTreeWidgetItem* parentItem, entt::enti
 void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 {
     QTreeWidgetItem* item = itemAt(pos);
+    QList<QTreeWidgetItem*> selected = selectedItems();
 
     QMenu menu(this);
     QAction* createAction = menu.addAction(item ? "Create Child Entity" : "Create Empty Entity");
-    QAction* deleteAction = item ? menu.addAction("Delete") : nullptr;
+    QAction* deleteAction = !selected.isEmpty() ? menu.addAction(selected.size() > 1 ? "Delete Selected" : "Delete") : nullptr;
     QAction* renameAction = item ? menu.addAction("Rename") : nullptr;
 
     QAction* chosen = menu.exec(viewport()->mapToGlobal(pos));
@@ -124,12 +135,58 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
     }
     else if (chosen == deleteAction)
     {
-        DestroyEntityRecursive(m_Scene, Entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Scene));
+        // Collected up front: DestroyEntityRecursive() notifies (Refresh()ing this tree, which
+        // deletes every QTreeWidgetItem) after each top-level deletion, so nothing below this
+        // point can keep reading from `selected`/`item`.
+        std::vector<entt::entity> handles;
+        handles.reserve(selected.size());
+        for (QTreeWidgetItem* selectedItem : selected)
+            handles.push_back(VariantToHandle(selectedItem->data(0, Qt::UserRole)));
+
+        for (entt::entity handle : handles)
+        {
+            Entity entity(handle, &m_Scene);
+            if (!entity.IsValid())
+                continue;  // already gone - destroyed below as part of a selected ancestor's subtree
+
+            // Skip if a selected ancestor will destroy this one anyway as part of its own
+            // subtree - deleting it here too would double-destroy an already-dead handle.
+            bool hasSelectedAncestor = false;
+            if (entity.HasComponent<HierarchyComponent>())
+            {
+                entt::entity ancestor = entity.GetComponent<HierarchyComponent>().parent;
+                while (ancestor != entt::null)
+                {
+                    if (std::find(handles.begin(), handles.end(), ancestor) != handles.end())
+                    {
+                        hasSelectedAncestor = true;
+                        break;
+                    }
+                    ancestor = entity.WithHandle(ancestor).GetComponent<HierarchyComponent>().parent;
+                }
+            }
+
+            if (!hasSelectedAncestor)
+                DestroyEntityRecursive(m_Scene, entity);
+        }
     }
     else if (chosen == renameAction)
     {
-        editItem(item, 0);
+        if (selected.size() > 1)
+            RenameSelected(selected);
+        else
+            editItem(item, 0);
     }
+}
+
+void SceneHierarchyWidget::mousePressEvent(QMouseEvent* event)
+{
+    // Clicking empty space (no item under the cursor) deselects everything, rather than leaving
+    // whatever was selected before untouched - matches the behavior of most tree/list editors.
+    if (!itemAt(event->pos()))
+        clearSelection();
+
+    QTreeWidget::mousePressEvent(event);
 }
 
 void SceneHierarchyWidget::RenameItem(QTreeWidgetItem* item, int column)
@@ -140,5 +197,19 @@ void SceneHierarchyWidget::RenameItem(QTreeWidgetItem* item, int column)
     Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Scene);
     if (entity.IsValid() && entity.HasComponent<TagComponent>())
         entity.GetComponent<TagComponent>().name = item->text(0).toStdString();
+}
+
+// editItem() only ever drives one native inline editor at a time, and per-row inline editors
+// turned out fiddly to make read correctly against the tree's own selection styling - so renaming
+// several entities at once just asks for one name up front and applies it to all of them.
+void SceneHierarchyWidget::RenameSelected(const QList<QTreeWidgetItem*>& items)
+{
+    bool ok = false;
+    QString name = QInputDialog::getText(this, "Rename Entities", "Name:", QLineEdit::Normal, items.front()->text(0), &ok);
+    if (!ok || name.isEmpty())
+        return;
+
+    for (QTreeWidgetItem* item : items)
+        item->setText(0, name);  // fires itemChanged -> RenameItem() applies it to the entity
 }
 }  // namespace MatchaEditor

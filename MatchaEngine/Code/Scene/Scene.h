@@ -28,9 +28,9 @@ public:
     // it's what tree-building UI (the Scene Hierarchy panel) needs to find its starting points.
     [[nodiscard]] std::vector<Entity> GetRootEntities();
 
-    // Single-slot callback, same shape as Window::SetContextReadyCallback/SetTickCallback - only
-    // one subscriber (the Scene Hierarchy panel) is expected to ever exist for this.
-    void SetOnSceneChanged(std::function<void()> callback);
+    // Multi-subscriber: both the Scene Hierarchy panel (rebuilds its tree) and the Inspector
+    // panel (re-checks whether its selected entity is still valid) observe this.
+    void AddOnSceneChanged(std::function<void()> callback);
     void NotifyChanged();
 
     template <typename... Components>
@@ -43,7 +43,7 @@ private:
     friend class Entity;
 
     entt::registry m_Registry;
-    std::function<void()> m_OnSceneChanged;
+    std::vector<std::function<void()>> m_OnSceneChanged;
 };
 
 // Entity's members that need Scene to be a complete type are defined here rather than in

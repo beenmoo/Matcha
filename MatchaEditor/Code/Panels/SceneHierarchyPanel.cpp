@@ -3,12 +3,13 @@
 
 namespace MatchaEditor
 {
-SceneHierarchyPanel::SceneHierarchyPanel(Matcha::Scene& scene, QWidget* parent)
+SceneHierarchyPanel::SceneHierarchyPanel(Scene& scene, QWidget* parent)
     : QDockWidget("Scene Hierarchy Panel", parent)
 {
     setObjectName("SceneHierarchyPanel");
 
     m_TreeWidget = new SceneHierarchyWidget(scene, this);
+    connect(m_TreeWidget, &SceneHierarchyWidget::SelectionChanged, this, &SceneHierarchyPanel::SelectionChanged);
 
     setWidget(m_TreeWidget);
 }

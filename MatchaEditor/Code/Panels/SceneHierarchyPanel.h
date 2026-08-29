@@ -1,11 +1,10 @@
 #pragma once
 
+#include <Matcha.h>
 #include <QDockWidget>
+#include <vector>
 
-namespace Matcha
-{
-class Scene;
-}  // namespace Matcha
+class Matcha::Scene;
 
 namespace MatchaEditor
 {
@@ -15,8 +14,10 @@ class SceneHierarchyPanel : public QDockWidget
 {
     Q_OBJECT
 public:
-    explicit SceneHierarchyPanel(Matcha::Scene& scene, QWidget* parent = nullptr);
-    ~SceneHierarchyPanel() = default;
+    explicit SceneHierarchyPanel(Scene& scene, QWidget* parent = nullptr);
+
+signals:
+    void SelectionChanged(std::vector<Entity> entities);
 
 private:
     SceneHierarchyWidget* m_TreeWidget;

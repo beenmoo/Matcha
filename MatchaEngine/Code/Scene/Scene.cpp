@@ -58,14 +58,14 @@ std::vector<Entity> Scene::GetRootEntities()
     return roots;
 }
 
-void Scene::SetOnSceneChanged(std::function<void()> callback)
+void Scene::AddOnSceneChanged(std::function<void()> callback)
 {
-    m_OnSceneChanged = std::move(callback);
+    m_OnSceneChanged.push_back(std::move(callback));
 }
 
 void Scene::NotifyChanged()
 {
-    if (m_OnSceneChanged)
-        m_OnSceneChanged();
+    for (auto& callback : m_OnSceneChanged)
+        callback();
 }
 }  // namespace Matcha
