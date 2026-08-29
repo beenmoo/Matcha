@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace Matcha::Utils
+namespace Matcha
 {
 [[nodiscard]] std::expected<void, std::string> CreateProgram(const std::unordered_map<GLenum, std::pair<std::string, std::string>>& sources, GLuint handle);
 
@@ -21,4 +21,4 @@ namespace Matcha::Utils
 [[nodiscard]] uint32_t ShaderDataTypeSize(ShaderDataType type);
 
 [[nodiscard]] GLenum ShaderDataTypeToGLDataType(ShaderDataType type);
-}  // namespace Matcha::Utils
+}  // namespace Matcha

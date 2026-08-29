@@ -68,6 +68,8 @@ inline void SetParent(Entity child, Entity newParent)
         parentNode.firstChild = child.GetHandle();
         ++parentNode.childrenCount;
     }
+
+    child.GetScene()->NotifyChanged();
 }
 
 namespace detail
@@ -93,7 +95,11 @@ inline void DestroySubtree(Scene& scene, Entity entity)
         }
     }
 
-    scene.DestroyEntity(entity);
+    // Silent: ancestors still up the stack hold HierarchyComponent links into entities being
+    // destroyed here, so notifying now would let an observer (e.g. the Scene Hierarchy panel)
+    // walk into a dangling handle before the whole subtree finishes coming down. The caller
+    // (DestroyEntityRecursive) notifies once, after everything below is actually gone.
+    scene.DestroyEntity(entity, false);
 }
 }  // namespace detail
 
@@ -106,5 +112,7 @@ inline void DestroyEntityRecursive(Scene& scene, Entity entity)
         SetParent(entity, Entity());
 
     detail::DestroySubtree(scene, entity);
+
+    scene.NotifyChanged();
 }
 }  // namespace Matcha

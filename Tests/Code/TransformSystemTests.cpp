@@ -31,7 +31,7 @@ TEST(TransformSystemTests, RootWithNoHierarchyWorldMatrixMatchesLocal)
 {
     Scene scene;
     Entity entity = scene.CreateEntity();
-    entity.AddComponent<TransformComponent>().transform.SetPosition(1.0f, 2.0f, 3.0f);
+    entity.GetComponent<TransformComponent>().transform.SetPosition(1.0f, 2.0f, 3.0f);
 
     TransformSystem::Update(scene);
 
@@ -42,7 +42,7 @@ TEST(TransformSystemTests, RootWithHierarchyWorldMatrixMatchesLocal)
 {
     Scene scene;
     Entity root = scene.CreateEntity();
-    root.AddComponent<TransformComponent>().transform.SetPosition(5.0f, 0.0f, 0.0f);
+    root.GetComponent<TransformComponent>().transform.SetPosition(5.0f, 0.0f, 0.0f);
     root.AddComponent<HierarchyComponent>();
 
     TransformSystem::Update(scene);
@@ -56,8 +56,8 @@ TEST(TransformSystemTests, ChildWorldMatrixComposesParentTranslation)
     Entity parent = scene.CreateEntity();
     Entity child = scene.CreateEntity();
 
-    parent.AddComponent<TransformComponent>().transform.SetPosition(5.0f, 0.0f, 0.0f);
-    child.AddComponent<TransformComponent>().transform.SetPosition(1.0f, 0.0f, 0.0f);
+    parent.GetComponent<TransformComponent>().transform.SetPosition(5.0f, 0.0f, 0.0f);
+    child.GetComponent<TransformComponent>().transform.SetPosition(1.0f, 0.0f, 0.0f);
     SetParent(child, parent);
 
     TransformSystem::Update(scene);
@@ -72,9 +72,9 @@ TEST(TransformSystemTests, GrandchildWorldMatrixComposesThreeLevels)
     Entity parent = scene.CreateEntity();
     Entity child = scene.CreateEntity();
 
-    grandparent.AddComponent<TransformComponent>().transform.SetPosition(1.0f, 0.0f, 0.0f);
-    parent.AddComponent<TransformComponent>().transform.SetPosition(0.0f, 1.0f, 0.0f);
-    child.AddComponent<TransformComponent>().transform.SetPosition(0.0f, 0.0f, 1.0f);
+    grandparent.GetComponent<TransformComponent>().transform.SetPosition(1.0f, 0.0f, 0.0f);
+    parent.GetComponent<TransformComponent>().transform.SetPosition(0.0f, 1.0f, 0.0f);
+    child.GetComponent<TransformComponent>().transform.SetPosition(0.0f, 0.0f, 1.0f);
 
     SetParent(parent, grandparent);
     SetParent(child, parent);
@@ -90,8 +90,8 @@ TEST(TransformSystemTests, ParentScalePropagatesToChildWorldPosition)
     Entity parent = scene.CreateEntity();
     Entity child = scene.CreateEntity();
 
-    parent.AddComponent<TransformComponent>().transform.SetScale(2.0f, 2.0f, 2.0f);
-    child.AddComponent<TransformComponent>().transform.SetPosition(1.0f, 0.0f, 0.0f);
+    parent.GetComponent<TransformComponent>().transform.SetScale(2.0f, 2.0f, 2.0f);
+    child.GetComponent<TransformComponent>().transform.SetPosition(1.0f, 0.0f, 0.0f);
     SetParent(child, parent);
 
     TransformSystem::Update(scene);
@@ -105,8 +105,8 @@ TEST(TransformSystemTests, UpdateIsIdempotentAndDoesNotMutateLocalTransform)
     Entity parent = scene.CreateEntity();
     Entity child = scene.CreateEntity();
 
-    parent.AddComponent<TransformComponent>().transform.SetPosition(5.0f, 0.0f, 0.0f);
-    child.AddComponent<TransformComponent>().transform.SetPosition(1.0f, 0.0f, 0.0f);
+    parent.GetComponent<TransformComponent>().transform.SetPosition(5.0f, 0.0f, 0.0f);
+    child.GetComponent<TransformComponent>().transform.SetPosition(1.0f, 0.0f, 0.0f);
     SetParent(child, parent);
 
     TransformSystem::Update(scene);

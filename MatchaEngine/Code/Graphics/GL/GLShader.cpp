@@ -24,7 +24,7 @@ GLShader::GLShader(
         }
     }
 
-    if (auto result = Utils::CreateProgram(m_Sources, m_Handle); !result)
+    if (auto result = CreateProgram(m_Sources, m_Handle); !result)
         MT_CORE_ERROR("Failed to create shader: {0}", result.error());
 }
 
@@ -62,7 +62,7 @@ bool GLShader::Reload()
 
     GLuint newHandle = glCreateProgram();
 
-    auto result = Utils::CreateProgram(m_Sources, newHandle);
+    auto result = CreateProgram(m_Sources, newHandle);
 
     if (!result)
     {
@@ -145,7 +145,7 @@ std::expected<void, std::string> GLShader::ParseFile(const std::string& path)
     if (!filePath.has_extension())
         return std::unexpected(std::format("Shader file does not have an extension: {}", path));
 
-    GLenum shaderType = Utils::ShaderTypeFromString(filePath.extension().string());
+    GLenum shaderType = ShaderTypeFromString(filePath.extension().string());
 
     if (shaderType == GL_NONE)
         return std::unexpected(std::format("Shader type does not exist: {}", filePath.extension().string()));

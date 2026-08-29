@@ -39,6 +39,11 @@ public:
         return m_Handle;
     }
 
+    [[nodiscard]] Scene* GetScene() const
+    {
+        return m_Scene;
+    }
+
     // Wraps a raw handle (e.g. one pulled out of a component) as an Entity in this same scene.
     [[nodiscard]] Entity WithHandle(entt::entity handle) const
     {

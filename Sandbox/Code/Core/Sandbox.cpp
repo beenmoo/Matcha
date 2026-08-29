@@ -25,7 +25,6 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
         cubePrimitive.indices);
 
     m_Cube = scene.CreateEntity();
-    m_Cube.AddComponent<TransformComponent>();
     m_Cube.AddComponent<MeshComponent>().mesh = mesh;
     m_Cube.AddComponent<NativeScriptComponent>().Bind<RotationComponent>();
 
@@ -47,7 +46,7 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     }
 
     Entity camera = scene.CreateEntity();
-    camera.AddComponent<TransformComponent>().transform.SetPosition(0.0f, 0.0f, 3.0f);
+    camera.GetComponent<TransformComponent>().transform.SetPosition(0.0f, 0.0f, 3.0f);
     camera.AddComponent<CameraComponent>().aspectRatio = window.GetAspectRatio();
 
     NativeScriptComponent& cameraScripts = camera.AddComponent<NativeScriptComponent>();
@@ -57,10 +56,12 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     // Points down and off to one side - rotating this entity is what aims the light, same as
     // rotating the camera entity aims the camera (LightSystem reads Transform::GetForward()).
     Entity light = scene.CreateEntity();
-    light.AddComponent<TransformComponent>().transform.SetRotation(
+    light.GetComponent<TransformComponent>().transform.SetRotation(
         AngleAxis(Radians(-30.0f), Vector3(0.0f, 1.0f, 0.0f)) * AngleAxis(Radians(-50.0f), Vector3(1.0f, 0.0f, 0.0f)));
     auto& lightComp = light.AddComponent<LightComponent>();
     lightComp.intensity = 2.0f;
+
+    MT_INFO("Entity Name: {}", backpack.GetComponent<TagComponent>().name);
 
     // The spot light itself lives on the Flashlight script bound to the camera above - it creates
     // and drives its own light entity (see Flashlight::OnCreate/OnUpdate) so it always follows

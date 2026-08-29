@@ -1,6 +1,11 @@
 #pragma once
 
 #include "Entity.h"
+#include "Utility/UUID.h"
+
+#include <functional>
+#include <string>
+#include <vector>
 
 namespace Matcha
 {
@@ -9,8 +14,24 @@ class Scene
 public:
     Scene() = default;
 
-    [[nodiscard]] Entity CreateEntity();
-    void DestroyEntity(Entity entity);
+    [[nodiscard]] Entity CreateEntity(std::string name = "");
+    [[nodiscard]] Entity CreateEntity(UUID id, std::string name = "");
+
+    // notify=false is for internal use by HierarchyComponent.h's recursive subtree destruction,
+    // which destroys several entities in a row while ancestor HierarchyComponents still hold
+    // dangling links into the entities being torn down - notifying mid-teardown would let a
+    // scene-changed observer (the Scene Hierarchy panel) walk into one of those dangling links.
+    void DestroyEntity(Entity entity, bool notify = true);
+
+    // Every entity with no parent (no HierarchyComponent, or one with parent == entt::null).
+    // Unlike View<Components...>(), which filters by component set, this walks every live entity -
+    // it's what tree-building UI (the Scene Hierarchy panel) needs to find its starting points.
+    [[nodiscard]] std::vector<Entity> GetRootEntities();
+
+    // Single-slot callback, same shape as Window::SetContextReadyCallback/SetTickCallback - only
+    // one subscriber (the Scene Hierarchy panel) is expected to ever exist for this.
+    void SetOnSceneChanged(std::function<void()> callback);
+    void NotifyChanged();
 
     template <typename... Components>
     [[nodiscard]] auto View()
@@ -22,6 +43,7 @@ private:
     friend class Entity;
 
     entt::registry m_Registry;
+    std::function<void()> m_OnSceneChanged;
 };
 
 // Entity's members that need Scene to be a complete type are defined here rather than in

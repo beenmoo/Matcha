@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     spec.m_WindowBackend = Matcha::WindowBackend::Qt;
     spec.m_CommandLineArgs = {argc, argv};
 
-    Matcha::Editor editor(spec);
+    MatchaEditor::Editor editor(spec);
     editor.Show();
 
     return qapp.exec();

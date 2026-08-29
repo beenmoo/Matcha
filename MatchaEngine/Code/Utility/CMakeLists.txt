@@ -3,4 +3,6 @@ target_sources(${TARGET_NAME} PRIVATE
     FileWatcher.cpp
     Profiler.h
     Profiler.cpp
+    UUID.h
+    UUID.cpp
 )

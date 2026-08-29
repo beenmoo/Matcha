@@ -9,6 +9,10 @@ add_subdirectory(Code/Math)
 add_subdirectory(Code/Scene)
 add_subdirectory(Code/Utility)
 
+# Umbrella public header, lives directly in Code/ rather than one of the subdirectories
+# above, so it needs its own target_sources() call to appear in the solution/filters.
+target_sources(${TARGET_NAME} PRIVATE Code/Matcha.h)
+
 target_include_directories(${TARGET_NAME} PUBLIC Code)
 target_include_directories(${TARGET_NAME} PRIVATE ${Stb_INCLUDE_DIR})
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
@@ -19,7 +23,10 @@ target_link_libraries(${TARGET_NAME} PRIVATE SDL3::SDL3 efsw::efsw glm::glm spdl
 target_link_libraries(${TARGET_NAME} PUBLIC EnTT::EnTT)
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
-target_compile_definitions(${TARGET_NAME} PRIVATE $<$<CONFIG:Debug>:MT_DEBUG=1>)
+# PUBLIC: MT_DEBUG gates the MT_INFO/MT_TRACE/etc. logging macros in Logger.h, which
+# consumers (Sandbox, MatchaEditor, Tests) invoke directly in their own source - PRIVATE
+# would leave the macros silently expanding to nothing outside MatchaEngine's own .cpp files.
+target_compile_definitions(${TARGET_NAME} PUBLIC $<$<CONFIG:Debug>:MT_DEBUG=1>)
 
 if (BUILD_PROFILING)
     # Deliberately not tied to MT_DEBUG/Config: profiling needs to answer "is this actually slow"
@@ -57,9 +64,14 @@ endfunction()
 if (MSVC)
     file(GLOB_RECURSE CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
     file(GLOB_RECURSE HEADER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+    file(GLOB_RECURSE CMAKE_LISTS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Source Files" FILES ${CPP_SOURCES})
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Header Files" FILES ${HEADER_SOURCES})
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Shaders" PREFIX "Shaders" FILES ${SHADER_SOURCES})
+    source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "CMake Files" FILES ${CMAKE_LISTS_SOURCES})
+
+    target_sources(${TARGET_NAME} PRIVATE ${CMAKE_LISTS_SOURCES})
+    set_source_files_properties(${CMAKE_LISTS_SOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()
 
 set_target_properties(

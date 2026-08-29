@@ -16,6 +16,7 @@
 #include <assimp/scene.h>
 
 #include <filesystem>
+#include <string>
 #include <vector>
 
 namespace Matcha
@@ -31,7 +32,7 @@ void ApplyNodeTransform(Entity entity, const aiMatrix4x4& matrix)
     aiVector3D position;
     matrix.Decompose(scale, rotation, position);
 
-    Transform& transform = entity.AddComponent<TransformComponent>().transform;
+    Transform& transform = entity.GetComponent<TransformComponent>().transform;
     transform.SetPosition(position.x, position.y, position.z);
     transform.SetRotation(Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
     transform.SetScale(scale.x, scale.y, scale.z);
@@ -152,16 +153,18 @@ Entity ImportNode(Scene& scene,
 {
     MT_PROFILE_FUNCTION();
 
-    Entity nodeEntity = scene.CreateEntity();
+    std::string nodeName = node->mName.C_Str();
+
+    Entity nodeEntity = scene.CreateEntity(nodeName.empty() ? "Node" : nodeName);
     ApplyNodeTransform(nodeEntity, node->mTransformation);
     SetParent(nodeEntity, parent);
 
     for (unsigned int i = 0; i < node->mNumMeshes; ++i)
     {
         const aiMesh* mesh = aiScene->mMeshes[node->mMeshes[i]];
+        std::string meshName = mesh->mName.C_Str();
 
-        Entity meshEntity = scene.CreateEntity();
-        meshEntity.AddComponent<TransformComponent>();
+        Entity meshEntity = scene.CreateEntity(meshName.empty() ? "Mesh" : meshName);
         SetParent(meshEntity, nodeEntity);
 
         meshEntity.AddComponent<MeshComponent>().mesh = CreateMeshFromAiMesh(resourceManager, mesh);

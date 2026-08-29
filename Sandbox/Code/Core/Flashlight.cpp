@@ -5,7 +5,6 @@ void Flashlight::OnCreate()
     Scene& scene = GetContext().GetScene();
 
     m_Light = scene.CreateEntity();
-    m_Light.AddComponent<TransformComponent>();
 
     LightComponent& light = m_Light.AddComponent<LightComponent>();
     light.type = LightType::Spot;

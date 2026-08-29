@@ -3,8 +3,15 @@ set(TARGET_NAME MatchaEditor)
 add_executable(${TARGET_NAME} Code/main.cpp)
 
 add_subdirectory(Code/Core)
+add_subdirectory(Code/Panels)
+add_subdirectory(Code/Widgets)
 
-target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets)
+# spdlog::spdlog (not just MatchaEngine, which only links it PRIVATE) is needed directly here:
+# ConsoleSink.cpp includes spdlog headers itself (to subclass base_sink), and without spdlog's
+# own target propagating its INTERFACE_COMPILE_DEFINITIONS (SPDLOG_COMPILED_LIB/SPDLOG_SHARED_LIB,
+# since vcpkg builds it as spdlogd.dll here) those headers fall back to embedding full symbol
+# definitions in this target's objects, which then collide with the DLL's exported ones at link time.
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets spdlog::spdlog)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 
 matcha_copy_engine_assets(${TARGET_NAME})
@@ -41,9 +48,14 @@ set_source_files_properties(${SHADER_SOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)
 if (MSVC)
     file(GLOB_RECURSE CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
     file(GLOB_RECURSE HEADER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+    file(GLOB_RECURSE CMAKE_LISTS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Source Files" FILES ${CPP_SOURCES})
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Header Files" FILES ${HEADER_SOURCES})
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Shaders" PREFIX "Shaders" FILES ${SHADER_SOURCES})
+    source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "CMake Files" FILES ${CMAKE_LISTS_SOURCES})
+
+    target_sources(${TARGET_NAME} PRIVATE ${CMAKE_LISTS_SOURCES})
+    set_source_files_properties(${CMAKE_LISTS_SOURCES} PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()
 
 set_target_properties(

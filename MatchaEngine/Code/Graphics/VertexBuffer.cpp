@@ -8,7 +8,7 @@ namespace Matcha
 {
 BufferLayout::BufferElement::BufferElement(ShaderDataType type, bool normalized)
     : type(type),
-      size(Utils::ShaderDataTypeSize(type)),
+      size(ShaderDataTypeSize(type)),
       normalized(normalized)
 {
 }

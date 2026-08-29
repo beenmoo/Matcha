@@ -48,7 +48,7 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
                 glVertexArrayAttribFormat(m_Handle,
                                           attribIndex,
                                           count,
-                                          Utils::ShaderDataTypeToGLDataType(layoutElement.type),
+                                          ShaderDataTypeToGLDataType(layoutElement.type),
                                           layoutElement.normalized,
                                           static_cast<GLuint>(layoutElement.offset + sizeof(GLfloat) * count * index));
                 glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);
@@ -63,7 +63,7 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
             glVertexArrayAttribFormat(m_Handle,
                                       attribIndex,
                                       layoutElement.GetComponentCount(),
-                                      Utils::ShaderDataTypeToGLDataType(layoutElement.type),
+                                      ShaderDataTypeToGLDataType(layoutElement.type),
                                       layoutElement.normalized,
                                       static_cast<GLuint>(layoutElement.offset));
             glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);

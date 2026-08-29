@@ -6,7 +6,7 @@
 
 class QTimer;
 
-namespace Matcha
+namespace MatchaEditor
 {
 class EditorMainWindow;
 

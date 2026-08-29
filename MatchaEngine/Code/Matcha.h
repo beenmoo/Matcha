@@ -41,6 +41,7 @@
 #include "Scene/Component/MeshComponent.h"
 #include "Scene/Component/TransformComponent.h"
 #include "Scene/Component/NativeScriptComponent.h"
+#include "Scene/Component/TagComponent.h"
 #include "Scene/System/CameraSystem.h"
 #include "Scene/System/LightSystem.h"
 #include "Scene/System/RenderSystem.h"

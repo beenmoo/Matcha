@@ -3,7 +3,7 @@
 
 #include <format>
 
-namespace Matcha::Utils
+namespace Matcha
 {
 std::vector<char> GetShaderErrorInfo(int32_t id, GLenum statusType)
 {
@@ -160,4 +160,4 @@ GLenum ShaderDataTypeToGLDataType(ShaderDataType type)
 
     return 0;
 }
-}  // namespace Matcha::Utils
+}  // namespace Matcha
