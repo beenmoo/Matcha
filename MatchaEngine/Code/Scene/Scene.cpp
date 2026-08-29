@@ -42,6 +42,13 @@ std::vector<Entity> Scene::GetRootEntities()
 
     for (auto handle : m_Registry.storage<entt::entity>())
     {
+        // storage<entt::entity>() iterates every identifier slot ever created, including
+        // tombstones left behind by destroy() (kept around for version/recycling purposes) - a
+        // destroyed entity has no components left, so without this check it would also satisfy
+        // "no HierarchyComponent" and get misreported as a root.
+        if (!m_Registry.valid(handle))
+            continue;
+
         Entity entity(handle, this);
 
         if (!entity.HasComponent<HierarchyComponent>() || entity.GetComponent<HierarchyComponent>().parent == entt::null)

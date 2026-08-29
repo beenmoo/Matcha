@@ -2,6 +2,7 @@
 #include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Scene.h"
 
+#include <entt/entt.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -197,6 +198,28 @@ TEST(HierarchyComponentTests, DestroyEntityRecursiveDestroysWholeSubtree)
     EXPECT_FALSE(root.IsValid());
     EXPECT_FALSE(child.IsValid());
     EXPECT_FALSE(grandchild.IsValid());
+}
+
+TEST(HierarchyComponentTests, DestroyEntityRecursiveFinalNotificationSeesFullyClearedSubtree)
+{
+    Scene scene;
+    Entity parent = scene.CreateEntity();
+    Entity a = scene.CreateEntity();
+    Entity b = scene.CreateEntity();
+
+    SetParent(a, parent);
+    SetParent(b, parent);
+
+    std::vector<std::vector<Entity>> observedRootsPerNotification;
+    scene.SetOnSceneChanged([&scene, &observedRootsPerNotification]
+                             { observedRootsPerNotification.push_back(scene.GetRootEntities()); });
+
+    DestroyEntityRecursive(scene, parent);
+
+    ASSERT_FALSE(observedRootsPerNotification.empty());
+    EXPECT_TRUE(observedRootsPerNotification.back().empty())
+        << "final notification should observe an empty scene, but saw " << observedRootsPerNotification.back().size()
+        << " root(s) - " << observedRootsPerNotification.size() << " notification(s) fired total";
 }
 
 TEST(HierarchyComponentTests, DestroyEntityRecursiveLeavesSiblingSubtreeIntact)
