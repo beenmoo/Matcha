@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace Matcha
@@ -79,8 +80,10 @@ public:
     void SetCameraPosition(const Vector3& position);
 
     // Uploads up to MAX_LIGHTS entries to the LightBlock uniform buffer's light array (binding 1),
-    // plus the light count. Extra entries past MAX_LIGHTS are silently dropped.
-    void SetLights(const std::vector<LightData>& lights);
+    // plus the light count. Extra entries past MAX_LIGHTS are silently dropped. Takes a span
+    // rather than a vector so callers building a fixed-size list (LightSystem: capped at
+    // MAX_LIGHTS already) aren't forced into a per-frame heap allocation just to call this.
+    void SetLights(std::span<const LightData> lights);
 
     // Flat scene-wide fill light, uploaded to the same LightBlock's header. Not physically tied to
     // any specific light source.

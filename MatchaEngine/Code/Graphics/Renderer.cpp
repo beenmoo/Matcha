@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "Core/Assert.h"
+#include "Graphics/Shader.h"
 
 #include <algorithm>
 
@@ -49,17 +50,32 @@ void Renderer::Submit(const RenderData& renderData)
 
 void Renderer::Flush()
 {
+    // Sorted by shader then texture, so equal-handle runs are contiguous - Bind() calls below only
+    // fire on an actual change instead of redundantly on every single draw.
     SortRenderData();
+
+    ShaderHandle boundShaderHandle;
+    TextureHandle boundTextureHandle;
+    Shader* shader = nullptr;
 
     for (const auto& renderData : m_RenderData)
     {
         auto* mesh = m_ResourceManager.GetMesh(renderData.mesh);
-        auto* shader = m_ResourceManager.GetShader(renderData.shader);
-
         MT_ASSERT(mesh, "Submitted RenderData references an unknown mesh handle!");
-        MT_ASSERT(shader, "Submitted RenderData references an unknown shader handle!");
 
-        shader->Bind();
+        if (renderData.shader != boundShaderHandle)
+        {
+            shader = m_ResourceManager.GetShader(renderData.shader);
+            MT_ASSERT(shader, "Submitted RenderData references an unknown shader handle!");
+
+            shader->Bind();
+            boundShaderHandle = renderData.shader;
+
+            // A new shader's currently-bound texture unit is unknown (never tracked per-shader),
+            // so force the texture Bind() below to fire again even if the handle happens to match.
+            boundTextureHandle = TextureHandle();
+        }
+
         shader->SetMat4("u_WorldMatrix", renderData.transform);
         shader->SetFloat4("u_AlbedoColor", renderData.albedoColor);
         shader->SetInt("u_AlbedoMap", 0);
@@ -67,11 +83,15 @@ void Renderer::Flush()
         shader->SetFloat("u_Shininess", renderData.shininess);
 
         TextureHandle textureHandle = renderData.texture.IsValid() ? renderData.texture : m_DefaultWhiteTexture;
-        auto* texture = m_ResourceManager.GetTexture(textureHandle);
 
-        MT_ASSERT(texture, "Submitted RenderData references an unknown texture handle!");
+        if (textureHandle != boundTextureHandle)
+        {
+            auto* texture = m_ResourceManager.GetTexture(textureHandle);
+            MT_ASSERT(texture, "Submitted RenderData references an unknown texture handle!");
 
-        texture->Bind(0);
+            texture->Bind(0);
+            boundTextureHandle = textureHandle;
+        }
 
         m_RendererAPI.DrawIndexed(*mesh->vertexArray, mesh->indexBuffer->GetCount());
     }
@@ -100,7 +120,7 @@ void Renderer::SetCameraPosition(const Vector3& position)
     m_CameraUniformBuffer->SetData(&padded, sizeof(Vector4), sizeof(Matrix4));
 }
 
-void Renderer::SetLights(const std::vector<LightData>& lights)
+void Renderer::SetLights(std::span<const LightData> lights)
 {
     int32_t count = static_cast<int32_t>(std::min(lights.size(), static_cast<size_t>(MAX_LIGHTS)));
 
