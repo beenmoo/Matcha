@@ -5,6 +5,7 @@
 class CameraController : public ScriptableEntity
 {
 protected:
+    void OnCreate() override;
     void OnUpdate() override;
 
 private:
@@ -15,4 +16,9 @@ private:
     // same as recomputing yaw*pitch fresh from the total angles.
     float m_Yaw = 0.0f;
     float m_Pitch = 0.0f;
+
+    // Created in OnCreate() and synced to the camera's transform every OnUpdate() - there's no
+    // parent/child relationship, just a plain entity whose transform gets overwritten each frame,
+    // so it always matches wherever the camera currently is/looks.
+    Entity m_Flashlight;
 };

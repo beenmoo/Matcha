@@ -25,7 +25,11 @@ public:
 
     bool Reload() override;
 
+    GLint GetUniformLocation(const std::string& name);
+
     void SetMat4(std::string_view name, const Matrix4& value) override;
+    void SetFloat(std::string_view name, float value) override;
+    void SetFloat3(std::string_view name, const Vector3& value) override;
     void SetFloat4(std::string_view name, const Vector4& value) override;
     void SetInt(std::string_view name, int value) override;
 
@@ -37,5 +41,6 @@ private:
 private:
     GLuint m_Handle;
     std::unordered_map<GLenum, std::pair<std::string, std::string>> m_Sources;
+    std::unordered_map<std::string, GLint> m_LocationCache;
 };
 }  // namespace Matcha

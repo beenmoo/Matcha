@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "Scene/System/CameraSystem.h"
+#include "Scene/System/LightSystem.h"
 #include "Scene/System/RenderSystem.h"
 #include "Scene/System/TransformSystem.h"
 #include "Scene/System/ScriptSystem.h"
@@ -100,6 +101,7 @@ void Application::Render()
 
     TransformSystem::Update(m_Scene);
     CameraSystem::Update(m_Scene);
+    LightSystem::Update(m_Scene, m_Renderer);
     RenderSystem::Update(m_Scene, m_Renderer);
 
     OnRender();

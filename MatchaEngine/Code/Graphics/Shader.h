@@ -22,6 +22,8 @@ public:
     virtual bool Reload() = 0;
 
     virtual void SetMat4(std::string_view name, const Matrix4& value) = 0;
+    virtual void SetFloat(std::string_view name, float value) = 0;
+    virtual void SetFloat3(std::string_view name, const Vector3& value) = 0;
     virtual void SetFloat4(std::string_view name, const Vector4& value) = 0;
     virtual void SetInt(std::string_view name, int value) = 0;
 

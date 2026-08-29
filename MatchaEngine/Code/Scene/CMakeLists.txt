@@ -7,6 +7,7 @@ target_sources(${TARGET_NAME} PRIVATE
     Component/MeshComponent.h
     Component/TransformComponent.h
     Component/NativeScriptComponent.h
+    Component/LightComponent.h
     Scene.cpp
     Scene.h
     System/CameraSystem.cpp
@@ -17,4 +18,6 @@ target_sources(${TARGET_NAME} PRIVATE
     System/TransformSystem.h
     System/ScriptSystem.cpp
     System/ScriptSystem.h
+    System/LightSystem.cpp
+    System/LightSystem.h
     )

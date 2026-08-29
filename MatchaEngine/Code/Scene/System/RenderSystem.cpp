@@ -19,6 +19,7 @@ void RenderSystem::Update(Scene& scene, Renderer& renderer)
 
         Matrix4 viewProjection = camera.projection * Inverse(transform.worldMatrix);
         renderer.SetViewProjection(viewProjection);
+        renderer.SetCameraPosition(GetTranslation(transform.worldMatrix));
 
         Draw(scene, renderer);
         return;
@@ -37,6 +38,8 @@ void RenderSystem::Draw(Scene& scene, Renderer& renderer)
         renderData.texture = material.texture;
         renderData.transform = transform.worldMatrix;
         renderData.albedoColor = material.albedoColor;
+        renderData.specularStrength = material.specularStrength;
+        renderData.shininess = material.shininess;
 
         renderer.Submit(renderData);
     }

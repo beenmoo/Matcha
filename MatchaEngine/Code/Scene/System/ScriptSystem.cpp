@@ -19,6 +19,7 @@ void ScriptSystem::Update(Scene& scene, EngineContext& context)
             nsc.instance = nsc.instantiateScript();
             nsc.instance->m_Entity = entity;
             nsc.instance->m_Context = &context;
+            nsc.instance->OnCreate();
         }
 
         nsc.instance->OnUpdate();

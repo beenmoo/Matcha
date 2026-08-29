@@ -49,6 +49,17 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     camera.AddComponent<TransformComponent>().transform.SetPosition(0.0f, 0.0f, 3.0f);
     camera.AddComponent<CameraComponent>().aspectRatio = window.GetAspectRatio();
     camera.AddComponent<NativeScriptComponent>().Bind<CameraController>();
+
+    // Points down and off to one side - rotating this entity is what aims the light, same as
+    // rotating the camera entity aims the camera (LightSystem reads Transform::GetForward()).
+    Entity light = scene.CreateEntity();
+    light.AddComponent<TransformComponent>().transform.SetRotation(
+        AngleAxis(Radians(-30.0f), Vector3(0.0f, 1.0f, 0.0f)) * AngleAxis(Radians(-50.0f), Vector3(1.0f, 0.0f, 0.0f)));
+    auto& lightComp = light.AddComponent<LightComponent>();
+    lightComp.intensity = 2.0f;
+
+    // The spot light itself now lives on CameraController - it creates and drives its own
+    // flashlight entity (see CameraController::OnCreate/OnUpdate) so it always follows the camera.
 }
 
 void Sandbox::OnUpdate()

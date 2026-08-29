@@ -29,6 +29,7 @@ private:
 
 [[nodiscard]] Matrix4 Translate(const Matrix4& m, const Vector3& translation);
 [[nodiscard]] Matrix4 Scale(const Matrix4& m, const Vector3& scale);
+[[nodiscard]] Vector3 GetTranslation(const Matrix4& m);
 [[nodiscard]] bool Decompose(const Matrix4& m, Vector3& scale, Quaternion& rotation, Vector3& translation, Vector3& skew, Vector4& perspective);
 
 // fovDegrees is the full vertical field of view, in degrees.

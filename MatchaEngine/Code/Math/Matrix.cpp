@@ -59,6 +59,11 @@ Matrix4 Scale(const Matrix4& m, const Vector3& scale)
     return Matrix4(&result[0][0]);
 }
 
+Vector3 GetTranslation(const Matrix4& m)
+{
+    return FromGLM(glm::vec3(ToGLM(m)[3]));
+}
+
 bool Decompose(const Matrix4& m, Vector3& scale, Quaternion& rotation, Vector3& translation, Vector3& skew, Vector4& perspective)
 {
     glm::vec3 glmScale;
