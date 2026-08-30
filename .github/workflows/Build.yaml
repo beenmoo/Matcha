@@ -20,12 +20,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       CCACHE_SLOPPINESS: pch_defines,time_macros
-      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg_cache,readwrite"
+      # Instructs vcpkg to directly stream and fetch compiled packages to/from GitHub's Cache API
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: true
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -56,13 +63,6 @@ jobs:
         with:
           key: ${{ matrix.os }}
           max-size: 500M
-      - name: Cache vcpkg packages
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/vcpkg_cache
-          key: vcpkg-${{ matrix.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
-          restore-keys: |
-            vcpkg-${{ matrix.os }}-
       - name: Configure
         run: >
           cmake --preset "${{ matrix.preset }}" -DBUILD_TESTS=ON
@@ -70,17 +70,36 @@ jobs:
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        run: cmake --build ${{ matrix.build-dir }} --config Release
+        run: cmake --build ${{ matrix.build-dir }} --config Debug
       - name: Build (Linux)
         if: runner.os == 'Linux'
         run: cmake --build ${{ matrix.build-dir }}
       - name: ccache stats
         run: ccache -s
+      - name: Diagnose test discovery (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Write-Output "--- Tests/*.cmake ---"
+          Get-ChildItem Build/VS/Tests/*.cmake | Select-Object Name
+          Write-Output "--- Tests/Bin/Debug ---"
+          Get-ChildItem Build/VS/Tests/Bin/Debug
+          Write-Output "--- Running Tests.exe --gtest_list_tests directly ---"
+          & Build/VS/Tests/Bin/Debug/Tests.exe --gtest_list_tests
+          Write-Output "EXITCODE: $LASTEXITCODE"
+      - name: Diagnose test discovery (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "--- Tests/*.cmake ---"
+          ls -la Build/Clang/Tests/*.cmake || true
+          echo "--- Tests/Bin ---"
+          ls -la Build/Clang/Tests/Bin || true
+          echo "--- Running Tests directly ---"
+          Build/Clang/Tests/Bin/Tests --gtest_list_tests || echo "EXITCODE:$?"
       - name: Run Tests (Windows)
         if: runner.os == 'Windows'
         run: |
           cd ${{ matrix.build-dir }}
-          ctest -C Release --output-on-failure
+          ctest -C Debug --output-on-failure
       - name: Run Tests (Linux)
         if: runner.os == 'Linux'
         run: |
