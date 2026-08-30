@@ -28,7 +28,7 @@ find_package(imgui CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(efsw CONFIG REQUIRED)
-find_package(entt CONFIG REQUIRED)
+find_package(EnTT CONFIG REQUIRED)
 
 if (BUILD_QT_BACKEND)
     # Must precede add_subdirectory(MatchaEngine): qt_standard_project_setup() sets
