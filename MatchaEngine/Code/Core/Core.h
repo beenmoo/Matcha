@@ -7,7 +7,7 @@
 #define MT_DEBUG_BREAK __debugbreak()
 #elif defined(MT_PLATFORM_LINUX)
 #include <signal.h>
-#define MT_DEBUG_BREAK raise(SIGTRAP)
+#define MT_DEBUG_BREAK ::raise(SIGTRAP)
 #else
 #error "Platform doesn't support debugbreak yet!"
 #endif
