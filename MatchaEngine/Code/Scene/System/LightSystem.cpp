@@ -1,5 +1,6 @@
 #include "LightSystem.h"
 #include "Graphics/Renderer.h"
+#include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Component/LightComponent.h"
 #include "Scene/Component/TransformComponent.h"
 #include "Scene/Scene.h"
@@ -26,6 +27,9 @@ void LightSystem::Update(Scene& scene, Renderer& renderer)
     {
         if (lightCount >= MAX_LIGHTS)
             break;
+
+        if (!IsActiveInHierarchy(Entity(handle, &scene)))
+            continue;
 
         LightData& data = lights[lightCount++];
         data.position = transform.transform.GetPosition();

@@ -7,7 +7,7 @@
 namespace Matcha
 {
 class QtViewportWidget;
-class Scene;
+class EngineContext;
 }  // namespace Matcha
 
 namespace MatchaEditor
@@ -19,7 +19,7 @@ class EditorMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit EditorMainWindow(Matcha::Scene& scene, Matcha::QtViewportWidget* viewport, QWidget* parent = nullptr);
+    explicit EditorMainWindow(Matcha::EngineContext& context, Matcha::QtViewportWidget* viewport, QWidget* parent = nullptr);
     ~EditorMainWindow() override;
 
 private:

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Scene/Component/TagComponent.h"
 #include "Scene/Entity.h"
 #include "Scene/Scene.h"
 
@@ -70,6 +71,30 @@ inline void SetParent(Entity child, Entity newParent)
     }
 
     child.GetScene()->NotifyChanged();
+}
+
+// True unless `entity` or any ancestor (walking up via HierarchyComponent::parent) has
+// TagComponent::isActive set false - i.e. "activeInHierarchy", not just the entity's own flag,
+// since disabling a parent is expected to disable its whole subtree. An entity with no
+// TagComponent at all counts as active, matching the "no TagComponent = default" precedent used
+// elsewhere (e.g. the Scene Hierarchy panel's fallback label).
+//
+// Systems that iterate hierarchy order top-down already (TransformSystem's cascade) don't need
+// this - checking each child's own isActive as it's reached already propagates inactivity to
+// descendants "for free", without redundantly re-walking ancestors already known to be active.
+// This is for systems that iterate flat (RenderSystem, LightSystem, CameraSystem, ScriptSystem),
+// which have no such ordering guarantee.
+inline bool IsActiveInHierarchy(Entity entity)
+{
+    while (entity.IsValid())
+    {
+        if (entity.HasComponent<TagComponent>() && !entity.GetComponent<TagComponent>().isActive)
+            return false;
+
+        entity = entity.HasComponent<HierarchyComponent>() ? entity.WithHandle(entity.GetComponent<HierarchyComponent>().parent) : Entity();
+    }
+
+    return true;
 }
 
 namespace detail

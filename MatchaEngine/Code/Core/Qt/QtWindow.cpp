@@ -15,6 +15,7 @@ QtWindow::QtWindow(const WindowSpecification& spec, Input* input)
 
     if (auto* qtInput = dynamic_cast<QtInput*>(input))
     {
+        m_Input = qtInput;
         m_ViewportWidget->SetInput(qtInput);
         qtInput->SetViewportWidget(m_ViewportWidget);
     }
@@ -42,9 +43,16 @@ void QtWindow::SetEventDispatch(std::function<void(const Event&)> dispatch)
 
 void QtWindow::PumpEvents()
 {
-    // No-op: Qt already delivered input via the viewport widget's own callbacks (using the same
-    // dispatch registered above) before this is ever called - resize/mouse-move/scroll events are
-    // dispatched directly from resizeGL()/mouseMoveEvent()/wheelEvent().
+    // Resize/mouse-move/scroll events are otherwise dispatched directly from Qt's own
+    // resizeGL()/mouseMoveEvent()/wheelEvent() callbacks, whenever Qt delivers them. The two
+    // calls below are for the things that specifically need to happen at this point in
+    // Application::Tick() - right after Input::Update() shifts current into prev, before
+    // Update()/OnUpdate() read GetKeyDown()/GetMouseButtonDown()/the mouse-look delta - see
+    // QtInput::ApplyPendingInput() and QtViewportWidget::PollCursorLock() for why.
+    if (m_Input)
+        m_Input->ApplyPendingInput();
+
+    m_ViewportWidget->PollCursorLock();
 }
 
 void QtWindow::SetContextReadyCallback(std::function<void()> callback)
@@ -55,6 +63,11 @@ void QtWindow::SetContextReadyCallback(std::function<void()> callback)
 void QtWindow::SetTickCallback(std::function<void()> callback)
 {
     m_ViewportWidget->SetTickCallback(std::move(callback));
+}
+
+void QtWindow::MakeContextCurrent()
+{
+    m_ViewportWidget->makeCurrent();
 }
 
 bool QtWindow::IsMinimized() const

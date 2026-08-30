@@ -6,4 +6,14 @@ target_sources(${TARGET_NAME} PRIVATE
 	Vec3ControlWidget.cpp
 	Vec3ControlWidget.h
 	ComponentBoxWidget.cpp
-	ComponentBoxWidget.h)
+	ComponentBoxWidget.h
+	StringFieldWidget.cpp
+	StringFieldWidget.h
+	BoolFieldWidget.cpp
+	BoolFieldWidget.h
+	FloatFieldWidget.cpp
+	FloatFieldWidget.h
+	EnumFieldWidget.cpp
+	EnumFieldWidget.h
+	Vec4ControlWidget.cpp
+	Vec4ControlWidget.h)

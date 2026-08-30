@@ -110,6 +110,38 @@ void QtViewportWidget::paintGL()
         m_TickCallback();
 }
 
+void QtViewportWidget::PollCursorLock()
+{
+    // Deliberately not computed from mouseMoveEvent() deltas while locked: Qt coalesces rapid
+    // consecutive QEvent::MouseMove events by default, and a real move immediately followed by
+    // the synthetic move our own re-centering warp generates can merge into one delivered event
+    // reporting only the final (already-recentered) position - making every per-event delta read
+    // as zero regardless of how far the mouse actually moved. Polling the OS cursor position
+    // directly once per frame sidesteps that entirely: whatever Qt did or didn't coalesce along
+    // the way, this reads the real current offset from center.
+    //
+    // Called from QtWindow::PumpEvents(), which Application::Tick() invokes right after
+    // Input::Update() resets the mouse axis and before Update()/OnUpdate() read it via
+    // GetAxis() - not from paintGL() (which runs Tick() itself, Input::Update() included), or
+    // the delta dispatched here would be wiped by that same frame's Update() before anything
+    // ever saw it.
+    if (!m_CursorLocked)
+        return;
+
+    QPoint center = rect().center();
+    QPoint globalCenter = mapToGlobal(center);
+    QPoint delta = QCursor::pos() - globalCenter;
+
+    if (m_EventDispatch && (delta.x() != 0 || delta.y() != 0))
+    {
+        m_EventDispatch(Event{.type = EventType::MouseMoved, .x = static_cast<float>(delta.x()), .y = static_cast<float>(delta.y())});
+        QCursor::setPos(globalCenter);
+    }
+
+    m_LastMousePosition = center;
+    m_HasLastMousePosition = true;
+}
+
 void QtViewportWidget::keyPressEvent(QKeyEvent* event)
 {
     if (event->isAutoRepeat())
@@ -156,34 +188,23 @@ void QtViewportWidget::mouseReleaseEvent(QMouseEvent* event)
 
 void QtViewportWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    QPoint position = event->pos();
-
-    if (m_HasLastMousePosition && m_EventDispatch)
+    // While locked, the delta is computed once per frame in paintGL() instead (see there for
+    // why) - this only tracks/dispatches the unlocked case here.
+    if (!m_CursorLocked)
     {
-        QPoint delta = position - m_LastMousePosition;
+        QPoint position = event->pos();
 
-        if (delta.x() != 0 || delta.y() != 0)
-            m_EventDispatch(Event{.type = EventType::MouseMoved, .x = static_cast<float>(delta.x()), .y = static_cast<float>(delta.y())});
-    }
+        if (m_HasLastMousePosition && m_EventDispatch)
+        {
+            QPoint delta = position - m_LastMousePosition;
 
-    if (m_CursorLocked)
-    {
-        // Warp back to center after every move so there's always room left to move into - the
-        // resulting synthetic move event Qt delivers for the warp itself computes a (0,0) delta
-        // against the m_LastMousePosition set here, so it's a correctly-filtered no-op above.
-        QPoint center = rect().center();
+            if (delta.x() != 0 || delta.y() != 0)
+                m_EventDispatch(Event{.type = EventType::MouseMoved, .x = static_cast<float>(delta.x()), .y = static_cast<float>(delta.y())});
+        }
 
-        if (position != center)
-            QCursor::setPos(mapToGlobal(center));
-
-        m_LastMousePosition = center;
-    }
-    else
-    {
         m_LastMousePosition = position;
+        m_HasLastMousePosition = true;
     }
-
-    m_HasLastMousePosition = true;
 
     QOpenGLWidget::mouseMoveEvent(event);
 }

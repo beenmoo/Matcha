@@ -14,7 +14,7 @@ Editor::Editor(const Application::ApplicationSpecification& spec)
 
     MT_ASSERT(qtWindow, "Editor requires ApplicationSpecification::m_WindowBackend == WindowBackend::Qt");
 
-    m_MainWindow = std::make_unique<EditorMainWindow>(GetContext().GetScene(), qtWindow->GetViewportWidget());
+    m_MainWindow = std::make_unique<EditorMainWindow>(GetContext(), qtWindow->GetViewportWidget());
 
     m_TickTimer = std::make_unique<QTimer>();
     QObject::connect(m_TickTimer.get(), &QTimer::timeout, [qtWindow] { qtWindow->GetViewportWidget()->update(); });

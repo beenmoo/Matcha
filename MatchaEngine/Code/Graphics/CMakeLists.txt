@@ -23,6 +23,7 @@ target_sources(${TARGET_NAME} PRIVATE
     IndexBuffer.cpp
     IndexBuffer.h
     Mesh.h
+    Primitives.h
     Renderer.cpp
     Renderer.h
     RendererAPI.cpp

@@ -1,4 +1,4 @@
-#include "Vec3ControlWidget.h"
+#include "Vec4ControlWidget.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -7,20 +7,18 @@
 
 namespace MatchaEditor
 {
-Vec3ControlWidget::Vec3ControlWidget(const QString& label, const Vector3& initialValue, QWidget* parent)
+Vec4ControlWidget::Vec4ControlWidget(const QString& label, const Vector4& initialValue, QWidget* parent)
     : QWidget(parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(2, 2, 2, 2);
-    layout->setSpacing(4);  // Keep elements close together
+    layout->setSpacing(4);
 
-    // Main property label (e.g., "Position") on the left
     QLabel* mainLabel = new QLabel(label, this);
-    mainLabel->setFixedWidth(65);  // Fixed width so X/Y/Z line up across rows!
+    mainLabel->setFixedWidth(65);  // Fixed width so X/Y/Z/W line up across rows!
     mainLabel->setStyleSheet("color: #b0b0b0; font-size: 11px;");
     layout->addWidget(mainLabel);
 
-    // Lambda helper to create a single Axis sub-layout (e.g., "X" + SpinBox)
     auto createAxisWidget = [this](double val, const QString& axisName, const QString& textColor, QDoubleSpinBox*& outSpinBox) {
         QHBoxLayout* axisLayout = new QHBoxLayout();
         axisLayout->setSpacing(2);
@@ -33,8 +31,8 @@ Vec3ControlWidget::Vec3ControlWidget(const QString& label, const Vector3& initia
         outSpinBox = new QDoubleSpinBox(this);
         outSpinBox->setRange(-999999.0, 999999.0);
         outSpinBox->setValue(val);
-        outSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);  // Hides default ugly arrows!
-        outSpinBox->setFixedHeight(20);                             // Sleek and thin like Unity
+        outSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
+        outSpinBox->setFixedHeight(20);
         outSpinBox->setStyleSheet(
             "QDoubleSpinBox {"
             "   background-color: #222222;"
@@ -45,29 +43,29 @@ Vec3ControlWidget::Vec3ControlWidget(const QString& label, const Vector3& initia
             "}");
 
         connect(outSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-                this, &Vec3ControlWidget::OnValuesChanged);
+                this, &Vec4ControlWidget::OnValuesChanged);
 
         axisLayout->addWidget(outSpinBox);
 
-        // Wrap the sub-layout in a temporary container widget so we can add it to the main layout
         QWidget* container = new QWidget(this);
         container->setLayout(axisLayout);
         return container;
     };
 
-    // Unity-accurate axis colors (Red for X, Green for Y, Blue for Z)
     layout->addWidget(createAxisWidget(initialValue.x, "X", "#ff5555", m_XSpinBox));
     layout->addWidget(createAxisWidget(initialValue.y, "Y", "#55ff55", m_YSpinBox));
     layout->addWidget(createAxisWidget(initialValue.z, "Z", "#5555ff", m_ZSpinBox));
+    layout->addWidget(createAxisWidget(initialValue.w, "W", "#cccccc", m_WSpinBox));
 
     setLayout(layout);
 }
-void Vec3ControlWidget::OnValuesChanged()
+void Vec4ControlWidget::OnValuesChanged()
 {
-    emit ValueChanged(Vector3(static_cast<float>(m_XSpinBox->value()), static_cast<float>(m_YSpinBox->value()), static_cast<float>(m_ZSpinBox->value())));
+    emit ValueChanged(Vector4(static_cast<float>(m_XSpinBox->value()), static_cast<float>(m_YSpinBox->value()),
+                              static_cast<float>(m_ZSpinBox->value()), static_cast<float>(m_WSpinBox->value())));
 }
 
-void Vec3ControlWidget::SetValue(const Vector3& value)
+void Vec4ControlWidget::SetValue(const Vector4& value)
 {
     if (!m_XSpinBox->hasFocus())
     {
@@ -83,6 +81,11 @@ void Vec3ControlWidget::SetValue(const Vector3& value)
     {
         const QSignalBlocker blocker(m_ZSpinBox);
         m_ZSpinBox->setValue(value.z);
+    }
+    if (!m_WSpinBox->hasFocus())
+    {
+        const QSignalBlocker blocker(m_WSpinBox);
+        m_WSpinBox->setValue(value.w);
     }
 }
 }  // namespace MatchaEditor

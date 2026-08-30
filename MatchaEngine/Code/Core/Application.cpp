@@ -27,6 +27,10 @@ Application::Application(const ApplicationSpecification& spec)
     // then instead - see Window::SetContextReadyCallback.
     m_Window->SetContextReadyCallback([this] { InitGraphics(); });
 
+    // Only exercised under Qt: Run()'s while-loop drives Tick() directly for SDL, but Qt owns
+    // its own event loop, so paintGL() (see QtViewportWidget) calls this instead, once per repaint.
+    m_Window->SetTickCallback([this] { Tick(); });
+
     // Registered once, persistently: SDL uses it inside each PumpEvents() call, Qt invokes it
     // from the viewport widget's own event callbacks, which can fire at any time.
     m_Window->SetEventDispatch([this](const Event& evt) {

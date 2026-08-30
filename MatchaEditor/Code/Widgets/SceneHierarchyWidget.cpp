@@ -33,9 +33,10 @@ entt::entity VariantToHandle(const QVariant& variant)
 }
 }  // namespace
 
-SceneHierarchyWidget::SceneHierarchyWidget(Scene& scene, QWidget* parent)
+SceneHierarchyWidget::SceneHierarchyWidget(EngineContext& context, QWidget* parent)
     : QTreeWidget(parent),
-      m_Scene(scene)
+      m_Context(context),
+      m_Scene(context.GetScene())
 {
     setHeaderHidden(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -108,6 +109,54 @@ void SceneHierarchyWidget::AddEntityItem(QTreeWidgetItem* parentItem, entt::enti
     }
 }
 
+Entity SceneHierarchyWidget::CreateCubeEntity()
+{
+    ResourceManager& resourceManager = m_Context.GetResourceManager();
+
+    if (!m_CubeShader.IsValid() || !m_CubeMesh.IsValid())
+    {
+        // Resource creation below issues GL calls (shader compilation, buffer uploads) - only
+        // guaranteed to have the viewport's context current inside the render loop, so make it
+        // current explicitly here. Cached in m_CubeShader/m_CubeMesh above so this only runs once
+        // per editor session - every subsequent cube reuses the same shader/mesh handles.
+        m_Context.GetWindow().MakeContextCurrent();
+
+        m_CubeShader = resourceManager.CreateShader(
+            "StandardMesh", {"Assets/Shaders/StandardMesh.vert", "Assets/Shaders/StandardMesh.frag"});
+
+        CubePrimitive cubePrimitive;
+        m_CubeMesh = resourceManager.CreateMesh(cubePrimitive.vertices,
+                                                {ShaderDataType::Float3, ShaderDataType::Float3, ShaderDataType::Float2},
+                                                cubePrimitive.indices);
+    }
+
+    Entity entity = m_Scene.CreateEntity("Cube");
+    entity.AddComponent<MeshComponent>().mesh = m_CubeMesh;
+
+    MaterialComponent& material = entity.AddComponent<MaterialComponent>();
+    material.shader = m_CubeShader;
+    material.albedoColor = Vector4(0.8f, 0.8f, 0.8f, 1.0f);
+
+    return entity;
+}
+
+Entity SceneHierarchyWidget::CreateCameraEntity()
+{
+    Entity entity = m_Scene.CreateEntity("Camera");
+    entity.AddComponent<CameraComponent>().aspectRatio = m_Context.GetWindow().GetAspectRatio();
+    entity.AddComponent<NativeScriptComponent>().Bind<CameraController>();
+
+    return entity;
+}
+
+Entity SceneHierarchyWidget::CreateLightEntity()
+{
+    Entity entity = m_Scene.CreateEntity("Light");
+    entity.AddComponent<LightComponent>();
+
+    return entity;
+}
+
 void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 {
     QTreeWidgetItem* item = itemAt(pos);
@@ -115,6 +164,9 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 
     QMenu menu(this);
     QAction* createAction = menu.addAction(item ? "Create Child Entity" : "Create Empty Entity");
+    QAction* createCubeAction = menu.addAction("Create Cube");
+    QAction* createCameraAction = menu.addAction("Create Camera");
+    QAction* createLightAction = menu.addAction("Create Light");
     QAction* deleteAction = !selected.isEmpty() ? menu.addAction(selected.size() > 1 ? "Delete Selected" : "Delete") : nullptr;
     QAction* renameAction = item ? menu.addAction("Rename") : nullptr;
 
@@ -130,6 +182,36 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
         entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
 
         Entity created = m_Scene.CreateEntity("Entity");
+        if (parentHandle != entt::null)
+            SetParent(created, Entity(parentHandle, &m_Scene));
+    }
+    else if (chosen == createCubeAction)
+    {
+        // Same reasoning as createAction above: capture the parent's handle before creating the
+        // entity, since that notifies (and thus Refresh()es, deleting `item`) synchronously.
+        entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
+
+        Entity created = CreateCubeEntity();
+        if (parentHandle != entt::null)
+            SetParent(created, Entity(parentHandle, &m_Scene));
+    }
+    else if (chosen == createCameraAction)
+    {
+        // Same reasoning as createAction above: capture the parent's handle before creating the
+        // entity, since that notifies (and thus Refresh()es, deleting `item`) synchronously.
+        entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
+
+        Entity created = CreateCameraEntity();
+        if (parentHandle != entt::null)
+            SetParent(created, Entity(parentHandle, &m_Scene));
+    }
+    else if (chosen == createLightAction)
+    {
+        // Same reasoning as createAction above: capture the parent's handle before creating the
+        // entity, since that notifies (and thus Refresh()es, deleting `item`) synchronously.
+        entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
+
+        Entity created = CreateLightEntity();
         if (parentHandle != entt::null)
             SetParent(created, Entity(parentHandle, &m_Scene));
     }

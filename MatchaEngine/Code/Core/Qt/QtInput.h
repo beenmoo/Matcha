@@ -34,11 +34,19 @@ public:
     // Qt-specific: only QtViewportWidget calls these, from its own overridden key/mouse event
     // handlers. Qt delivers input via callbacks rather than the global-state polling SDLInput
     // uses, and Event (Core/Event.h) carries no key/button data to route through ProcessEvents
-    // the way mouse-axis/scroll do.
+    // the way mouse-axis/scroll do. Only ever touch m_Pending*State (see ApplyPendingInput()).
     void PushKeyDown(KeyCode code);
     void PushKeyUp(KeyCode code);
     void PushMouseButtonDown(MouseButton button);
     void PushMouseButtonUp(MouseButton button);
+
+    // Copies m_Pending*State (live - Push*() writes land here the instant Qt delivers an event,
+    // whenever that is) into m_KeyboardState/m_MouseButtonState (settled - only ever changes
+    // here, once per frame). Called from QtWindow::PumpEvents(), which Application::Tick() invokes
+    // right after Input::Update() shifts current into prev and before Update()/OnUpdate() read
+    // GetKeyDown()/GetMouseButtonDown() - see the .cpp for why applying pushes immediately instead
+    // (the previous behavior) made those edges undetectable.
+    void ApplyPendingInput();
 
     // Wired up by QtWindow at construction time, since SetCursorLockState needs the viewport
     // widget to actually hide/warp the cursor (Qt has no built-in relative mouse mode).
@@ -48,10 +56,12 @@ private:
     [[nodiscard]] static size_t ToIndex(MouseButton button);
 
 private:
+    std::array<bool, static_cast<size_t>(KeyCode::NUM_SCANCODES)> m_PendingKeyboardState{};
     std::array<bool, static_cast<size_t>(KeyCode::NUM_SCANCODES)> m_KeyboardState{};
     std::array<bool, static_cast<size_t>(KeyCode::NUM_SCANCODES)> m_PrevKeyboardState{};
 
     static constexpr size_t kMouseButtonCount = 5;
+    std::array<bool, kMouseButtonCount> m_PendingMouseButtonState{};
     std::array<bool, kMouseButtonCount> m_MouseButtonState{};
     std::array<bool, kMouseButtonCount> m_PrevMouseButtonState{};
 

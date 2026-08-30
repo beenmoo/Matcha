@@ -23,7 +23,7 @@ class SceneHierarchyWidget : public QTreeWidget
     Q_OBJECT
 
 public:
-    explicit SceneHierarchyWidget(Scene& scene, QWidget* parent = nullptr);
+    explicit SceneHierarchyWidget(EngineContext& context, QWidget* parent = nullptr);
 
     [[nodiscard]] std::vector<Entity> GetSelectedEntities() const;
 
@@ -40,7 +40,19 @@ private:
     void RenameItem(QTreeWidgetItem* item, int column);
     void RenameSelected(const QList<QTreeWidgetItem*>& items);
 
+    // Lazily creates (once) and reuses a single cube mesh/shader pair for every "Create Cube" -
+    // resource creation issues GL calls, which need the viewport's context current. That's only
+    // guaranteed automatically inside the render loop, so this makes it current itself first.
+    Entity CreateCubeEntity();
+    Entity CreateCameraEntity();
+    Entity CreateLightEntity();
+
+private:
+    EngineContext& m_Context;
     Scene& m_Scene;
+
+    ShaderHandle m_CubeShader;
+    MeshHandle m_CubeMesh;
 
     // Rebuilt every Refresh() - lets a structural change elsewhere (e.g. a new mesh import)
     // reselect whatever was selected before, without the panel having to track it itself.

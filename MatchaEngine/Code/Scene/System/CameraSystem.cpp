@@ -2,6 +2,7 @@
 
 #include "Math/Matrix.h"
 #include "Scene/Component/CameraComponent.h"
+#include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Scene.h"
 
 namespace Matcha
@@ -12,6 +13,9 @@ void CameraSystem::Update(Scene& scene)
 
     for (auto handle : view)
     {
+        if (!IsActiveInHierarchy(Entity(handle, &scene)))
+            continue;
+
         CameraComponent& camera = view.get<CameraComponent>(handle);
 
         if (camera.projectionType == CameraProjectionType::Perspective)

@@ -51,7 +51,7 @@ QIcon MakePlaceholderIcon()
 }
 }  // namespace
 
-EditorMainWindow::EditorMainWindow(Matcha::Scene& scene, Matcha::QtViewportWidget* viewport, QWidget* parent)
+EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtViewportWidget* viewport, QWidget* parent)
     : QMainWindow(parent)
 {
     setWindowTitle("Matcha Editor");
@@ -66,9 +66,9 @@ EditorMainWindow::EditorMainWindow(Matcha::Scene& scene, Matcha::QtViewportWidge
     menuBar->addMenu("View");
     setMenuBar(menuBar);
 
-    SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(scene, this);
+    SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(context, this);
     addDockWidget(Qt::LeftDockWidgetArea, sceneHierarchyPanel);
-    InspectorPanel* inspectorPanel = new InspectorPanel(scene, this);
+    InspectorPanel* inspectorPanel = new InspectorPanel(context.GetScene(), this);
     addDockWidget(Qt::RightDockWidgetArea, inspectorPanel);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);
 

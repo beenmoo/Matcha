@@ -1,8 +1,6 @@
 #include "Sandbox.h"
-#include "CameraController.h"
 #include "Flashlight.h"
 #include "RotationComponent.h"
-#include "Primitives.h"
 
 #include <Matcha.h>
 #include <Utility/Profiler.h>

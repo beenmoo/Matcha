@@ -22,6 +22,7 @@ public:
     void PumpEvents() override;
     void SetContextReadyCallback(std::function<void()> callback) override;
     void SetTickCallback(std::function<void()> callback) override;
+    void MakeContextCurrent() override;
 
     [[nodiscard]] bool IsMinimized() const override;
 

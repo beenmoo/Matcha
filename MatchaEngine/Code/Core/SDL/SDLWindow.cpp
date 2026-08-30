@@ -87,6 +87,11 @@ void SDLWindow::SetTickCallback(std::function<void()> callback)
     // Unused: Run()'s own blocking loop calls Application::Tick() directly for SDL.
 }
 
+void SDLWindow::MakeContextCurrent()
+{
+    // Already current on this thread for the process's whole lifetime - nothing to do.
+}
+
 void SDLWindow::Resize(int width, int height)
 {
     SDL_SetWindowSize(m_NativeWindow, width, height);

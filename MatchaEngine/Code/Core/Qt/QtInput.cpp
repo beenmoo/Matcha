@@ -83,22 +83,38 @@ Input::CursorLockState QtInput::GetCursorLockState() const
 
 void QtInput::PushKeyDown(KeyCode code)
 {
-    m_KeyboardState[std::to_underlying(code)] = true;
+    m_PendingKeyboardState[std::to_underlying(code)] = true;
 }
 
 void QtInput::PushKeyUp(KeyCode code)
 {
-    m_KeyboardState[std::to_underlying(code)] = false;
+    m_PendingKeyboardState[std::to_underlying(code)] = false;
 }
 
 void QtInput::PushMouseButtonDown(MouseButton button)
 {
-    m_MouseButtonState[ToIndex(button)] = true;
+    m_PendingMouseButtonState[ToIndex(button)] = true;
 }
 
 void QtInput::PushMouseButtonUp(MouseButton button)
 {
-    m_MouseButtonState[ToIndex(button)] = false;
+    m_PendingMouseButtonState[ToIndex(button)] = false;
+}
+
+void QtInput::ApplyPendingInput()
+{
+    // Qt calls PushKeyDown()/PushMouseButtonDown() etc. the instant it delivers the underlying
+    // event - asynchronously, whenever that happens to be relative to the Tick() cycle, not
+    // synchronized to any particular point in it. If those wrote straight into
+    // m_KeyboardState/m_MouseButtonState (the previous behavior), a button held across multiple
+    // frames would already show as "current" by the time Update() ran its prev = current shift,
+    // every single frame - so prev and current were always equal by the time GetKeyDown()/
+    // GetMouseButtonDown() read them, and the down/up edge could never be observed. Landing
+    // pushes in m_Pending*State instead, then only copying pending -> current here (called from
+    // QtWindow::PumpEvents(), right after Update()'s shift), reproduces SDL's ordering: prev
+    // captures the state as of before this frame's events, current captures state as of after.
+    m_KeyboardState = m_PendingKeyboardState;
+    m_MouseButtonState = m_PendingMouseButtonState;
 }
 
 void QtInput::SetViewportWidget(QtViewportWidget* viewportWidget)

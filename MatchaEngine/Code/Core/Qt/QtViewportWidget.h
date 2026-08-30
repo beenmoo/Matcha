@@ -27,6 +27,11 @@ public:
     // computing the delta - keeps mouse-look working indefinitely without running out of screen.
     void SetCursorLocked(bool locked);
 
+    // Called by QtWindow::PumpEvents() once per frame, at the point Application::Tick() polls
+    // for input - a no-op unless the cursor is locked. See the .cpp for why this can't just be
+    // computed from mouseMoveEvent() deltas.
+    void PollCursorLock();
+
 protected:
     void initializeGL() override;
     void resizeGL(int width, int height) override;

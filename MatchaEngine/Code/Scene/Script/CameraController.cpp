@@ -1,7 +1,17 @@
 #include "CameraController.h"
+#include "Core/EngineContext.h"
+#include "Core/Input.h"
+#include "Core/KeyCodes.h"
+#include "Core/Time.h"
+#include "Math/Quaternion.h"
+#include "Math/Transform.h"
+#include "Math/Vector.h"
+#include "Scene/Component/TransformComponent.h"
 
 #include <algorithm>
 
+namespace Matcha
+{
 void CameraController::OnUpdate()
 {
     Input& input = GetContext().GetInput();
@@ -53,3 +63,4 @@ void CameraController::OnUpdate()
     if (movement != Vector3(0.0f))
         cameraTransform.Translate(Normalize(movement) * moveSpeed * GetContext().GetTime().GetDeltaTime());
 }
+}  // namespace Matcha

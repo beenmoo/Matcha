@@ -5,6 +5,7 @@ add_executable(${TARGET_NAME} Code/main.cpp)
 add_subdirectory(Code/Core)
 add_subdirectory(Code/Panels)
 add_subdirectory(Code/Widgets)
+add_subdirectory(Code/Utility)
 
 # spdlog::spdlog (not just MatchaEngine, which only links it PRIVATE) is needed directly here:
 # ConsoleSink.cpp includes spdlog headers itself (to subclass base_sink), and without spdlog's
@@ -15,6 +16,15 @@ target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::Open
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 
 matcha_copy_engine_assets(${TARGET_NAME})
+
+# Copies MatchaEditor's own Assets (editor-only shaders, icons, etc.) into the same output
+# Assets/ directory that matcha_copy_engine_assets() populates with the engine's shaders.
+add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/Assets"
+        "$<TARGET_FILE_DIR:${TARGET_NAME}>/Assets"
+    COMMENT "Copying MatchaEditor assets to ${TARGET_NAME} output directory"
+    VERBATIM)
 
 if (WIN32)
     qt_generate_deploy_app_script(
