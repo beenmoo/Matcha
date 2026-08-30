@@ -76,32 +76,13 @@ jobs:
         run: cmake --build ${{ matrix.build-dir }}
       - name: ccache stats
         run: ccache -s
-      - name: Diagnose test discovery (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          Write-Output "--- Tests/*.cmake ---"
-          Get-ChildItem Build/VS/Tests/*.cmake | Select-Object Name
-          Write-Output "--- Tests/Bin/Debug ---"
-          Get-ChildItem Build/VS/Tests/Bin/Debug
-          Write-Output "--- Running Tests.exe --gtest_list_tests directly ---"
-          & Build/VS/Tests/Bin/Debug/Tests.exe --gtest_list_tests
-          Write-Output "EXITCODE: $LASTEXITCODE"
-      - name: Diagnose test discovery (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          echo "--- Tests/*.cmake ---"
-          ls -la Build/Clang/Tests/*.cmake || true
-          echo "--- Tests/Bin ---"
-          ls -la Build/Clang/Tests/Bin || true
-          echo "--- Running Tests directly ---"
-          Build/Clang/Tests/Bin/Tests --gtest_list_tests || echo "EXITCODE:$?"
       - name: Run Tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          cd ${{ matrix.build-dir }}
+          cd ${{ matrix.build-dir }}/Tests
           ctest -C Debug --output-on-failure
       - name: Run Tests (Linux)
         if: runner.os == 'Linux'
         run: |
-          cd ${{ matrix.build-dir }}
+          cd ${{ matrix.build-dir }}/Tests
           ctest --output-on-failure
