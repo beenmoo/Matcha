@@ -7,8 +7,7 @@
       "architecture": "x64",
       "binaryDir": "${sourceDir}/Build/VS",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/Triplets"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
       },
       "condition": {
         "type": "equals",
@@ -25,8 +24,7 @@
         "CMAKE_CXX_COMPILER": "clang++-19",
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/Triplets"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "condition": {
         "type": "equals",

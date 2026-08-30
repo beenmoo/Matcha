@@ -20,19 +20,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       CCACHE_SLOPPINESS: pch_defines,time_macros
-      # Instructs vcpkg to directly stream and fetch compiled packages to/from GitHub's Cache API
-      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg_cache,readwrite"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -63,6 +56,13 @@ jobs:
         with:
           key: ${{ matrix.os }}
           max-size: 500M
+      - name: Cache vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ matrix.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          restore-keys: |
+            vcpkg-${{ matrix.os }}-
       - name: Configure
         run: >
           cmake --preset "${{ matrix.preset }}" -DBUILD_TESTS=ON
