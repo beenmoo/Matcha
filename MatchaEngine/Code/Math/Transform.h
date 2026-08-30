@@ -53,6 +53,9 @@ public:
     Transform& operator*=(const Transform& rhs);
 
 private:
+    void ApplyRotation(const Quaternion& rotation, Space space);
+
+private:
     Vector3 m_Position;
     Quaternion m_Rotation;
     Vector3 m_Scale;

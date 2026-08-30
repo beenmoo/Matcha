@@ -38,12 +38,15 @@ Application::Application(const ApplicationSpecification& spec)
 
         OnEvent(evt);
     });
+
+    RegisterSystems();
 }
 
-Application::~Application()
-{
-    SDL_Quit();
-}
+// SDL_Quit() lives in SDLWindow's destructor, not here: it's only ever paired with the SDL_Init()
+// SDLWindow::InitContext() calls, and under the Qt backend SDL_Init() is never called at all (Qt
+// builds its own QtWindow/QtInput instead) - calling SDL_Quit() unconditionally here would shut
+// down a subsystem this process may never have initialized.
+Application::~Application() = default;
 
 void Application::Run()
 {
@@ -90,7 +93,9 @@ void Application::Update()
 {
     m_Time.Update();
     m_ResourceManager.ReloadModifiedShaders();
-    ScriptSystem::Update(m_Scene, m_Context);
+
+    for (auto& system : m_UpdateSystems)
+        system();
 
     OnUpdate();
 }
@@ -99,14 +104,24 @@ void Application::Render()
 {
     m_Renderer.Clear();
 
-    TransformSystem::Update(m_Scene);
-    CameraSystem::Update(m_Scene);
-    LightSystem::Update(m_Scene, m_Renderer);
-    RenderSystem::Update(m_Scene, m_Renderer);
+    for (auto& system : m_RenderSystems)
+        system();
 
     OnRender();
     m_Renderer.Flush();
     m_Window->SwapBuffers();
+}
+
+void Application::RegisterSystems()
+{
+    m_UpdateSystems.push_back([this] { ScriptSystem::Update(m_Scene, m_Context); });
+
+    // Run in this order: Transform before Camera/Light/Render (which read world-space transforms
+    // the cascade just computed), Render last (needs the camera/light state the others set up).
+    m_RenderSystems.push_back([this] { TransformSystem::Update(m_Scene); });
+    m_RenderSystems.push_back([this] { CameraSystem::Update(m_Scene); });
+    m_RenderSystems.push_back([this] { LightSystem::Update(m_Scene, m_Renderer); });
+    m_RenderSystems.push_back([this] { RenderSystem::Update(m_Scene, m_Renderer); });
 }
 
 void Application::PollEvents()

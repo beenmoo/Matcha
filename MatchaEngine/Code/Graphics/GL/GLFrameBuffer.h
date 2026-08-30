@@ -24,6 +24,9 @@ public:
     [[nodiscard]] const FrameBufferSpecification& GetSpecification() const override;
 
 private:
+    void DestroyGLResources();
+
+private:
     GLuint m_Handle = 0;
     GLuint m_ColorAttachmentID = 0;
     GLuint m_DepthAttachmentID = 0;

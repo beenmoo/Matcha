@@ -11,7 +11,9 @@
 #include "Graphics/ResourceManager.h"
 #include "Scene/Scene.h"
 
+#include <functional>
 #include <memory>
+#include <vector>
 
 int main(int argc, char** argv);
 
@@ -74,6 +76,10 @@ private:
     void PollEvents();
     void LogContext();
 
+    // Populates m_UpdateSystems/m_RenderSystems - the one place a new engine System gets wired
+    // into the frame loop, so Update()/Render() themselves never need editing to add one.
+    void RegisterSystems();
+
     // Deferred out of the constructor because the GL context isn't necessarily ready when the
     // constructor returns (Qt: not until QOpenGLWidget::initializeGL() fires, later than
     // construction). Invoked via m_Window's context-ready callback, registered in the
@@ -92,6 +98,10 @@ private:
     Renderer m_Renderer;
     Scene m_Scene;
     EngineContext m_Context;
+
+    // Run in registration order every Update()/Render() - see RegisterSystems().
+    std::vector<std::function<void()>> m_UpdateSystems;
+    std::vector<std::function<void()>> m_RenderSystems;
 
     bool m_IsRunning = false;
 };

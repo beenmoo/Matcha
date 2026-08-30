@@ -8,17 +8,12 @@
 
 namespace Matcha
 {
-ResourceManager::ResourceManager()
-{
-    m_FileWatcher.Watch();
-}
-
 ShaderHandle ResourceManager::CreateShader(std::string_view name, const std::initializer_list<std::string>& paths)
 {
     ShaderHandle handle(m_NextShaderID++);
     m_Shaders.emplace(handle.GetID(), Shader::Create(name, paths));
 
-    WatchShaderPaths(handle.GetID(), paths);
+    m_ShaderHotReloader.Watch(handle.GetID(), paths);
 
     return handle;
 }
@@ -26,22 +21,12 @@ ShaderHandle ResourceManager::CreateShader(std::string_view name, const std::ini
 void ResourceManager::DestroyShader(ShaderHandle handle)
 {
     m_Shaders.erase(handle.GetID());
-
-    std::scoped_lock lock(m_ShaderWatchMutex);
-
-    for (auto& [path, shaderIDs] : m_FileToShaderIDs)
-        std::erase(shaderIDs, handle.GetID());
+    m_ShaderHotReloader.Forget(handle.GetID());
 }
 
 void ResourceManager::ReloadModifiedShaders()
 {
-    std::vector<uint32_t> pending;
-
-    {
-        std::scoped_lock lock(m_ShaderWatchMutex);
-        pending.swap(m_PendingShaderReloads);
-    }
-
+    std::vector<uint32_t> pending = m_ShaderHotReloader.TakePendingReloads();
     std::unordered_set<uint32_t> uniqueIDs(pending.begin(), pending.end());
 
     for (uint32_t id : uniqueIDs)
@@ -50,45 +35,6 @@ void ResourceManager::ReloadModifiedShaders()
 
         if (it != m_Shaders.end())
             it->second->Reload();
-    }
-}
-
-void ResourceManager::WatchShaderPaths(uint32_t shaderID, const std::initializer_list<std::string>& paths)
-{
-    for (const auto& path : paths)
-    {
-        std::filesystem::path filePath(path);
-        std::string directory = filePath.parent_path().string();
-        std::string normalizedPath = filePath.lexically_normal().string();
-
-        {
-            std::scoped_lock lock(m_ShaderWatchMutex);
-            m_FileToShaderIDs[normalizedPath].push_back(shaderID);
-        }
-
-        if (m_WatchedDirectories.contains(directory))
-            continue;
-
-        WatchHandle watchHandle = m_FileWatcher.AddWatch(
-            directory,
-            [this](const std::string& dir, const std::string& filename, FileAction action) {
-                if (action != FileAction::Modified)
-                    return;
-
-                std::string changedPath = (std::filesystem::path(dir) / filename).lexically_normal().string();
-
-                std::scoped_lock lock(m_ShaderWatchMutex);
-
-                auto it = m_FileToShaderIDs.find(changedPath);
-
-                if (it == m_FileToShaderIDs.end())
-                    return;
-
-                m_PendingShaderReloads.insert(m_PendingShaderReloads.end(), it->second.begin(), it->second.end());
-            },
-            false);
-
-        m_WatchedDirectories.emplace(directory, watchHandle);
     }
 }
 

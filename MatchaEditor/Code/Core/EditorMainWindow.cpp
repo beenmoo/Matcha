@@ -72,6 +72,11 @@ EditorMainWindow::EditorMainWindow(Matcha::Scene& scene, Matcha::QtViewportWidge
     addDockWidget(Qt::RightDockWidgetArea, inspectorPanel);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);
 
+    // Left to its own sizeHint, the dock starts about as narrow as its "No entity selected."
+    // label - too cramped once it's showing Transform controls. resizeDocks() sets the initial
+    // split explicitly rather than relying on that hint.
+    resizeDocks({inspectorPanel}, {350}, Qt::Horizontal);
+
     ConsolePanel* consolePanel = new ConsolePanel(this);
     addDockWidget(Qt::BottomDockWidgetArea, consolePanel);
 

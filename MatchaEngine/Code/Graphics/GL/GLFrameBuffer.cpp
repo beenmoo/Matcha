@@ -28,11 +28,16 @@ GLFrameBuffer::GLFrameBuffer(const FrameBufferSpecification& spec)
     Invalidate();
 }
 
-GLFrameBuffer::~GLFrameBuffer()
+void GLFrameBuffer::DestroyGLResources()
 {
     glDeleteFramebuffers(1, &m_Handle);
     glDeleteRenderbuffers(1, &m_DepthAttachmentID);
     glDeleteTextures(1, &m_ColorAttachmentID);
+}
+
+GLFrameBuffer::~GLFrameBuffer()
+{
+    DestroyGLResources();
 }
 
 void GLFrameBuffer::Bind() const
@@ -49,9 +54,7 @@ void GLFrameBuffer::Invalidate()
 {
     if (m_Handle)
     {
-        glDeleteFramebuffers(1, &m_Handle);
-        glDeleteRenderbuffers(1, &m_DepthAttachmentID);
-        glDeleteTextures(1, &m_ColorAttachmentID);
+        DestroyGLResources();
 
         m_Handle = 0;
         m_DepthAttachmentID = 0;

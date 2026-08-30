@@ -23,21 +23,24 @@ void Transform::Translate(float x, float y, float z)
     m_Position.z += z;
 }
 
-void Transform::Rotate(const Vector3& eulers, Space space)
+void Transform::ApplyRotation(const Quaternion& rotation, Space space)
 {
-    const Quaternion rot = Quaternion(Radians(eulers));
-
     switch (space)
     {
     case Space::Self:
-        m_Rotation *= rot;
+        m_Rotation *= rotation;
         break;
     case Space::World:
-        m_Rotation = rot * m_Rotation;
+        m_Rotation = rotation * m_Rotation;
         break;
     default:
         std::unreachable();
     }
+}
+
+void Transform::Rotate(const Vector3& eulers, Space space)
+{
+    ApplyRotation(Quaternion(Radians(eulers)), space);
 }
 
 void Transform::Rotate(float x, float y, float z, Space space)
@@ -47,19 +50,7 @@ void Transform::Rotate(float x, float y, float z, Space space)
 
 void Transform::Rotate(const Vector3& axis, float angle, Space space)
 {
-    const Quaternion rot = AngleAxis(Radians(angle), axis);
-
-    switch (space)
-    {
-    case Space::Self:
-        m_Rotation *= rot;
-        break;
-    case Space::World:
-        m_Rotation = rot * m_Rotation;
-        break;
-    default:
-        std::unreachable();
-    }
+    ApplyRotation(AngleAxis(Radians(angle), axis), space);
 }
 
 void Transform::SetPosition(const Vector3& position)

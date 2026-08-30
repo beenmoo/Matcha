@@ -184,8 +184,6 @@ Entity ModelLoader::LoadModel(Scene& scene,
                               ShaderHandle shader,
                               const std::string& path)
 {
-    Profiler::Get().BeginSession("ModelLoad", "profile_results.json");
-
     Assimp::Importer importer;
 
     const aiScene* aiScene;
@@ -198,19 +196,11 @@ Entity ModelLoader::LoadModel(Scene& scene,
     if (!aiScene || (aiScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || !aiScene->mRootNode)
     {
         MT_CORE_ERROR("Failed to load model '{0}': {1}", path, importer.GetErrorString());
-        Profiler::Get().EndSession();
         return Entity();
     }
 
     std::filesystem::path modelDirectory = std::filesystem::path(path).parent_path();
 
-    Entity root = ImportNode(scene, resourceManager, aiScene, aiScene->mRootNode, Entity(), shader, modelDirectory);
-
-    // Ends the session (and flushes the JSON file) before returning, so every scope timer above
-    // has already been destroyed and written its entry by this point - see profile_results.json,
-    // open it in chrome://tracing or https://ui.perfetto.dev.
-    Profiler::Get().EndSession();
-
-    return root;
+    return ImportNode(scene, resourceManager, aiScene, aiScene->mRootNode, Entity(), shader, modelDirectory);
 }
 }  // namespace Matcha

@@ -23,13 +23,6 @@ public:
     void SetContextReadyCallback(std::function<void()> callback) override;
     void SetTickCallback(std::function<void()> callback) override;
 
-    [[nodiscard]] int GetWidth() const override;
-    [[nodiscard]] int GetHeight() const override;
-    [[nodiscard]] Vector2Int GetCenter() const override;
-    [[nodiscard]] float GetAspectRatio() const override;
-
-    [[nodiscard]] const WindowSpecification& GetWindowSpecification() const override;
-
     [[nodiscard]] bool IsMinimized() const override;
 
 private:
@@ -39,7 +32,6 @@ private:
     SDL_Window* m_NativeWindow = nullptr;
     SDL_GLContext m_GLContext = nullptr;
 
-    WindowSpecification m_WindowSpec;
     std::function<void(const Event&)> m_EventDispatch;
 };
 }  // namespace Matcha

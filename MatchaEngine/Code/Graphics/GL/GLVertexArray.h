@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/ShaderDataType.h"
 #include "Graphics/VertexArray.h"
 
 #include <glad/glad.h>
@@ -21,6 +22,8 @@ public:
 
 private:
     void InitAttributes(GLuint vbIndex);
+    void BindAttribute(GLuint attribIndex, GLuint bufferHandle, GLsizei stride, GLint componentCount, ShaderDataType type,
+                       bool normalized, GLuint offset);
 
 private:
     GLuint m_Handle;

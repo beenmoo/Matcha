@@ -68,11 +68,13 @@ void InspectorPanel::Refresh()
         return;
     }
 
+    auto& tagComponent = m_SelectedEntities.front().GetComponent<TagComponent>();
+
     // 1. Transform Component UI (Clean and encapsulated!)
     // Only shown when every selected entity has one - a control here edits all of them at once,
     // which wouldn't make sense (and would crash on GetComponent) for a mixed selection.
     bool allHaveTransform = std::all_of(m_SelectedEntities.begin(), m_SelectedEntities.end(),
-                                         [](Entity entity) { return entity.HasComponent<TransformComponent>(); });
+                                        [](Entity entity) { return entity.HasComponent<TransformComponent>(); });
 
     if (allHaveTransform)
     {
@@ -83,42 +85,29 @@ void InspectorPanel::Refresh()
 
         auto* box = new ComponentBoxWidget("Transform", m_ContentWidget);
 
-        // Captured by value (not references into any entity's TransformComponent, which entt
-        // can relocate) and re-fetched fresh each time a control emits ValueChanged. Editing a
-        // control applies that value to every selected entity.
-        std::vector<Entity> entities = m_SelectedEntities;
-
-        // Add Position control
-        auto* posControl = new Vec3ControlWidget("Position", transformComponent.transform.GetPosition());
-        connect(posControl, &Vec3ControlWidget::ValueChanged, this,
-                [entities](const Vector3& value) mutable
-                {
-                    for (Entity entity : entities)
-                        entity.GetComponent<TransformComponent>().transform.SetPosition(value);
-                });
-        box->SetContent(posControl);
-
-        // Add Rotation control (edited as Euler angles - the transform stores rotation as a quaternion)
-        auto* rotControl = new Vec3ControlWidget("Rotation", transformComponent.transform.GetRotationEuler());
-        connect(rotControl, &Vec3ControlWidget::ValueChanged, this,
-                [entities](const Vector3& value) mutable
-                {
-                    for (Entity entity : entities)
-                        entity.GetComponent<TransformComponent>().transform.SetRotationEuler(value);
-                });
-        box->SetContent(rotControl);
-
-        // Add Scale control
-        auto* scaleControl = new Vec3ControlWidget("Scale", transformComponent.transform.GetScale());
-        connect(scaleControl, &Vec3ControlWidget::ValueChanged, this,
-                [entities](const Vector3& value) mutable
-                {
-                    for (Entity entity : entities)
-                        entity.GetComponent<TransformComponent>().transform.SetScale(value);
-                });
-        box->SetContent(scaleControl);
+        AddVec3Control(box, "Position", transformComponent.transform.GetPosition(), &Transform::SetPosition);
+        // Edited as Euler angles - the transform stores rotation as a quaternion.
+        AddVec3Control(box, "Rotation", transformComponent.transform.GetRotationEuler(), &Transform::SetRotationEuler);
+        AddVec3Control(box, "Scale", transformComponent.transform.GetScale(), &Transform::SetScale);
 
         m_MainLayout->addWidget(box);
     }
+}
+
+void InspectorPanel::AddVec3Control(ComponentBoxWidget* box, const QString& label, const Vector3& initialValue,
+                                    void (Transform::*setter)(const Vector3&))
+{
+    // Captured by value (not a reference into any entity's TransformComponent, which entt can
+    // relocate) and re-fetched fresh each time the control emits ValueChanged. Editing it applies
+    // the new value to every selected entity.
+    std::vector<Entity> entities = m_SelectedEntities;
+
+    auto* control = new Vec3ControlWidget(label, initialValue);
+    connect(control, &Vec3ControlWidget::ValueChanged, this,
+            [entities, setter](const Vector3& value) mutable {
+                for (Entity entity : entities)
+                    (entity.GetComponent<TransformComponent>().transform.*setter)(value);
+            });
+    box->SetContent(control);
 }
 }  // namespace MatchaEditor

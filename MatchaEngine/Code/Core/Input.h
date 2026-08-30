@@ -54,5 +54,25 @@ public:
     [[nodiscard]] virtual CursorLockState GetCursorLockState() const = 0;
 
     [[nodiscard]] static std::unique_ptr<Input> Create(WindowBackend backend);
+
+protected:
+    // Every backend translates Event's mouse/joystick/scroll payload into these three the same
+    // way - shared here rather than duplicated per backend's ProcessEvents().
+    static void ApplyAxisEvent(const Event& evt, Vector2Int& mouseAxis, Vector2Int& joystickAxis, Vector2Int& mouseScrollDelta);
+
+    // Same prev/current edge-detection formula backs GetKeyDown/GetKeyUp and
+    // GetMouseButtonDown/GetMouseButtonUp in every backend.
+    [[nodiscard]] static bool WentDown(bool previous, bool current)
+    {
+        return !previous && current;
+    }
+
+    [[nodiscard]] static bool WentUp(bool previous, bool current)
+    {
+        return previous && !current;
+    }
+
+    // AxisType -> the matching axis vector - shared GetAxis() body for every backend.
+    [[nodiscard]] static Vector2Int SelectAxis(AxisType type, const Vector2Int& mouseAxis, const Vector2Int& joystickAxis);
 };
 }  // namespace Matcha

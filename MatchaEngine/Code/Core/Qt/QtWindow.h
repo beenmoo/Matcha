@@ -20,13 +20,6 @@ public:
     void SetContextReadyCallback(std::function<void()> callback) override;
     void SetTickCallback(std::function<void()> callback) override;
 
-    [[nodiscard]] int GetWidth() const override;
-    [[nodiscard]] int GetHeight() const override;
-    [[nodiscard]] Vector2Int GetCenter() const override;
-    [[nodiscard]] float GetAspectRatio() const override;
-
-    [[nodiscard]] const WindowSpecification& GetWindowSpecification() const override;
-
     [[nodiscard]] bool IsMinimized() const override;
 
     // Qt-specific escape hatch: the editor needs to embed this into its own QMainWindow layout,
@@ -42,6 +35,5 @@ public:
 
 private:
     QtViewportWidget* m_ViewportWidget = nullptr;
-    WindowSpecification m_WindowSpec;
 };
 }  // namespace Matcha

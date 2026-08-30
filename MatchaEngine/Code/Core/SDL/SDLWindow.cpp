@@ -30,7 +30,7 @@ std::optional<Event> TranslateEvent(const SDL_Event& sdlEvent)
 }  // namespace
 
 SDLWindow::SDLWindow(const WindowSpecification& spec, Input* input)
-    : m_WindowSpec(spec)
+    : Window(spec)
 {
     InitContext();
 
@@ -45,20 +45,15 @@ SDLWindow::~SDLWindow()
 
     if (m_NativeWindow)
         SDL_DestroyWindow(m_NativeWindow);
+
+    // Paired with the SDL_Init() in InitContext() - owned here (not Application) since this is
+    // the only place that ever calls SDL_Init() in the first place.
+    SDL_Quit();
 }
 
 void SDLWindow::ProcessEvents(const Event& evt)
 {
-    switch (evt.type)
-    {
-    case EventType::WindowResized:
-        m_WindowSpec.m_Width = evt.width;
-        m_WindowSpec.m_Height = evt.height;
-        glViewport(0, 0, m_WindowSpec.m_Width, m_WindowSpec.m_Height);
-        break;
-    default:
-        break;
-    }
+    HandleResizeEvent(evt);
 }
 
 void SDLWindow::SetEventDispatch(std::function<void(const Event&)> dispatch)
@@ -100,31 +95,6 @@ void SDLWindow::Resize(int width, int height)
 void SDLWindow::SwapBuffers()
 {
     SDL_GL_SwapWindow(m_NativeWindow);
-}
-
-int SDLWindow::GetWidth() const
-{
-    return m_WindowSpec.m_Width;
-}
-
-int SDLWindow::GetHeight() const
-{
-    return m_WindowSpec.m_Height;
-}
-
-Vector2Int SDLWindow::GetCenter() const
-{
-    return Vector2Int(m_WindowSpec.m_Width / 2, m_WindowSpec.m_Height / 2);
-}
-
-float SDLWindow::GetAspectRatio() const
-{
-    return static_cast<float>(m_WindowSpec.m_Width) / m_WindowSpec.m_Height;
-}
-
-const Window::WindowSpecification& SDLWindow::GetWindowSpecification() const
-{
-    return m_WindowSpec;
 }
 
 bool SDLWindow::IsMinimized() const

@@ -25,6 +25,15 @@ void GLVertexArray::Unbind() const
     glBindVertexArray(0);
 }
 
+void GLVertexArray::BindAttribute(GLuint attribIndex, GLuint bufferHandle, GLsizei stride, GLint componentCount, ShaderDataType type,
+                                  bool normalized, GLuint offset)
+{
+    glVertexArrayVertexBuffer(m_Handle, attribIndex, bufferHandle, 0, stride);
+    glVertexArrayAttribFormat(m_Handle, attribIndex, componentCount, ShaderDataTypeToGLDataType(type), normalized, offset);
+    glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);
+    glEnableVertexArrayAttrib(m_Handle, attribIndex);
+}
+
 void GLVertexArray::InitAttributes(const GLuint vbIndex)
 {
     MT_ASSERT(vbIndex < m_VertexBuffers.size(), "Index out of range!");
@@ -44,30 +53,16 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
 
             for (GLuint index = 0; index < count; ++index)
             {
-                glVertexArrayVertexBuffer(m_Handle, attribIndex, buffer->GetHandle(), 0, layout->GetStride());
-                glVertexArrayAttribFormat(m_Handle,
-                                          attribIndex,
-                                          count,
-                                          ShaderDataTypeToGLDataType(layoutElement.type),
-                                          layoutElement.normalized,
-                                          static_cast<GLuint>(layoutElement.offset + sizeof(GLfloat) * count * index));
-                glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);
-                glEnableVertexArrayAttrib(m_Handle, attribIndex);
+                BindAttribute(attribIndex, buffer->GetHandle(), layout->GetStride(), count, layoutElement.type, layoutElement.normalized,
+                              static_cast<GLuint>(layoutElement.offset + sizeof(GLfloat) * count * index));
 
                 ++attribIndex;
             }
         }
         else
         {
-            glVertexArrayVertexBuffer(m_Handle, attribIndex, buffer->GetHandle(), 0, layout->GetStride());
-            glVertexArrayAttribFormat(m_Handle,
-                                      attribIndex,
-                                      layoutElement.GetComponentCount(),
-                                      ShaderDataTypeToGLDataType(layoutElement.type),
-                                      layoutElement.normalized,
-                                      static_cast<GLuint>(layoutElement.offset));
-            glVertexArrayAttribBinding(m_Handle, attribIndex, attribIndex);
-            glEnableVertexArrayAttrib(m_Handle, attribIndex);
+            BindAttribute(attribIndex, buffer->GetHandle(), layout->GetStride(), layoutElement.GetComponentCount(), layoutElement.type,
+                          layoutElement.normalized, static_cast<GLuint>(layoutElement.offset));
 
             ++attribIndex;
         }

@@ -33,6 +33,8 @@ target_sources(${TARGET_NAME} PRIVATE
     Shader.cpp
     Shader.h
     ShaderDataType.h
+    ShaderHotReloader.cpp
+    ShaderHotReloader.h
     Texture.cpp
     Texture.h
     UniformBuffer.cpp

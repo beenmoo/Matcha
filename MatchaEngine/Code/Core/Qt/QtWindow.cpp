@@ -7,7 +7,7 @@
 namespace Matcha
 {
 QtWindow::QtWindow(const WindowSpecification& spec, Input* input)
-    : m_WindowSpec(spec)
+    : Window(spec)
 {
     m_ViewportWidget = new QtViewportWidget();
     m_ViewportWidget->resize(spec.m_Width, spec.m_Height);
@@ -32,16 +32,7 @@ void QtWindow::SwapBuffers()
 
 void QtWindow::ProcessEvents(const Event& evt)
 {
-    switch (evt.type)
-    {
-    case EventType::WindowResized:
-        m_WindowSpec.m_Width = evt.width;
-        m_WindowSpec.m_Height = evt.height;
-        glViewport(0, 0, m_WindowSpec.m_Width, m_WindowSpec.m_Height);
-        break;
-    default:
-        break;
-    }
+    HandleResizeEvent(evt);
 }
 
 void QtWindow::SetEventDispatch(std::function<void(const Event&)> dispatch)
@@ -64,31 +55,6 @@ void QtWindow::SetContextReadyCallback(std::function<void()> callback)
 void QtWindow::SetTickCallback(std::function<void()> callback)
 {
     m_ViewportWidget->SetTickCallback(std::move(callback));
-}
-
-int QtWindow::GetWidth() const
-{
-    return m_WindowSpec.m_Width;
-}
-
-int QtWindow::GetHeight() const
-{
-    return m_WindowSpec.m_Height;
-}
-
-Vector2Int QtWindow::GetCenter() const
-{
-    return Vector2Int(m_WindowSpec.m_Width / 2, m_WindowSpec.m_Height / 2);
-}
-
-float QtWindow::GetAspectRatio() const
-{
-    return static_cast<float>(m_WindowSpec.m_Width) / m_WindowSpec.m_Height;
-}
-
-const Window::WindowSpecification& QtWindow::GetWindowSpecification() const
-{
-    return m_WindowSpec;
 }
 
 bool QtWindow::IsMinimized() const

@@ -6,6 +6,18 @@
 
 namespace Matcha
 {
+void GLTexture::CreateGLTexture(GLenum internalFormat)
+{
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_Handle);
+    glTextureStorage2D(m_Handle, 1, internalFormat, m_Width, m_Height);
+
+    glTextureParameteri(m_Handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(m_Handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
+}
+
 GLTexture::GLTexture(uint32_t width, uint32_t height)
     : m_Width(width),
       m_Height(height)
@@ -13,14 +25,7 @@ GLTexture::GLTexture(uint32_t width, uint32_t height)
     m_InternalFormat = GL_RGBA8;
     m_DataFormat = GL_RGBA;
 
-    glCreateTextures(GL_TEXTURE_2D, 1, &m_Handle);
-    glTextureStorage2D(m_Handle, 1, m_InternalFormat, m_Width, m_Height);
-
-    glTextureParameteri(m_Handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTextureParameteri(m_Handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    CreateGLTexture(m_InternalFormat);
 }
 
 GLTexture::GLTexture(std::string_view path)
@@ -97,14 +102,7 @@ void GLTexture::LoadTextureFromFile(std::string_view path)
 
     MT_ASSERT(internalFormat & dataFormat, "Format not supported!");
 
-    glCreateTextures(GL_TEXTURE_2D, 1, &m_Handle);
-    glTextureStorage2D(m_Handle, 1, internalFormat, m_Width, m_Height);
-
-    glTextureParameteri(m_Handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTextureParameteri(m_Handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_Handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    CreateGLTexture(internalFormat);
 
     glTextureSubImage2D(m_Handle, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
 

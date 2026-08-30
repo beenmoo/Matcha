@@ -7,25 +7,7 @@ namespace Matcha
 {
 void QtInput::ProcessEvents(const Event& evt)
 {
-    switch (evt.type)
-    {
-    case EventType::MouseMoved:
-        m_MouseAxis.x = evt.x;
-        m_MouseAxis.y = evt.y;
-        break;
-    case EventType::JoystickMoved:
-        if (evt.axis == 0)
-            m_JoystickAxis.x = evt.x;
-        else if (evt.axis == 1)
-            m_JoystickAxis.y = evt.x;
-        break;
-    case EventType::MouseScrolled:
-        m_MouseScrollDelta.x = evt.x;
-        m_MouseScrollDelta.y = evt.y;
-        break;
-    default:
-        break;
-    }
+    ApplyAxisEvent(evt, m_MouseAxis, m_JoystickAxis, m_MouseScrollDelta);
 }
 
 void QtInput::Update()
@@ -44,12 +26,12 @@ bool QtInput::GetKey(KeyCode code) const
 
 bool QtInput::GetKeyDown(KeyCode code) const
 {
-    return !m_PrevKeyboardState[std::to_underlying(code)] && m_KeyboardState[std::to_underlying(code)];
+    return WentDown(m_PrevKeyboardState[std::to_underlying(code)], m_KeyboardState[std::to_underlying(code)]);
 }
 
 bool QtInput::GetKeyUp(KeyCode code) const
 {
-    return m_PrevKeyboardState[std::to_underlying(code)] && !m_KeyboardState[std::to_underlying(code)];
+    return WentUp(m_PrevKeyboardState[std::to_underlying(code)], m_KeyboardState[std::to_underlying(code)]);
 }
 
 size_t QtInput::ToIndex(MouseButton button)
@@ -66,29 +48,19 @@ bool QtInput::GetMouseButtonDown(MouseButton button) const
 {
     size_t index = ToIndex(button);
 
-    return !m_PrevMouseButtonState[index] && m_MouseButtonState[index];
+    return WentDown(m_PrevMouseButtonState[index], m_MouseButtonState[index]);
 }
 
 bool QtInput::GetMouseButtonUp(MouseButton button) const
 {
     size_t index = ToIndex(button);
 
-    return m_PrevMouseButtonState[index] && !m_MouseButtonState[index];
+    return WentUp(m_PrevMouseButtonState[index], m_MouseButtonState[index]);
 }
 
 Vector2Int QtInput::GetAxis(AxisType type) const
 {
-    switch (type)
-    {
-    case AxisType::Mouse:
-        return m_MouseAxis;
-    case AxisType::Joystick:
-        return m_JoystickAxis;
-    default:
-        break;
-    }
-
-    return Vector2Int(0);
+    return SelectAxis(type, m_MouseAxis, m_JoystickAxis);
 }
 
 const Vector2Int& QtInput::GetMouseScrollDelta() const

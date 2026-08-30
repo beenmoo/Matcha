@@ -5,6 +5,7 @@
 #include "Primitives.h"
 
 #include <Matcha.h>
+#include <Utility/Profiler.h>
 
 Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     : Application(spec)
@@ -32,7 +33,10 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     material.shader = shader;
     material.albedoColor = Vector4(0.9f, 0.5f, 0.2f, 1.0f);
 
+    // Session owned here, not by ModelLoader itself - see ModelLoader::LoadModel's comment.
+    Profiler::Get().BeginSession("ModelLoad", "profile_results.json");
     Entity backpack = ModelLoader::LoadModel(scene, resourceManager, shader, "Assets/Models/survival_guitar_backpack/scene.gltf");
+    Profiler::Get().EndSession();
 
     if (backpack.IsValid())
     {

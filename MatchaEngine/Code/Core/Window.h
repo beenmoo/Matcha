@@ -33,6 +33,11 @@ public:
     using WindowSpecification = Matcha::WindowSpecification;
 
 public:
+    explicit Window(const WindowSpecification& spec)
+        : m_WindowSpec(spec)
+    {
+    }
+
     virtual ~Window() = default;
 
     virtual void Resize(int width, int height) = 0;
@@ -62,12 +67,32 @@ public:
     // that's the one place GL calls are guaranteed to target the widget's own framebuffer.
     virtual void SetTickCallback(std::function<void()> callback) = 0;
 
-    [[nodiscard]] virtual int GetWidth() const = 0;
-    [[nodiscard]] virtual int GetHeight() const = 0;
-    [[nodiscard]] virtual Vector2Int GetCenter() const = 0;
-    [[nodiscard]] virtual float GetAspectRatio() const = 0;
+    // Every backend stores its live size/title/etc in m_WindowSpec below and calls
+    // HandleResizeEvent() from its own ProcessEvents() override, so these never need overriding.
+    [[nodiscard]] int GetWidth() const
+    {
+        return m_WindowSpec.m_Width;
+    }
 
-    [[nodiscard]] virtual const WindowSpecification& GetWindowSpecification() const = 0;
+    [[nodiscard]] int GetHeight() const
+    {
+        return m_WindowSpec.m_Height;
+    }
+
+    [[nodiscard]] Vector2Int GetCenter() const
+    {
+        return Vector2Int(m_WindowSpec.m_Width / 2, m_WindowSpec.m_Height / 2);
+    }
+
+    [[nodiscard]] float GetAspectRatio() const
+    {
+        return static_cast<float>(m_WindowSpec.m_Width) / m_WindowSpec.m_Height;
+    }
+
+    [[nodiscard]] const WindowSpecification& GetWindowSpecification() const
+    {
+        return m_WindowSpec;
+    }
 
     [[nodiscard]] virtual bool IsMinimized() const = 0;
 
@@ -75,5 +100,13 @@ public:
     // the same Input instance Application owns - ignored by the SDL backend (SDLInput polls
     // global state instead of receiving pushed events).
     [[nodiscard]] static std::unique_ptr<Window> Create(WindowBackend backend, const WindowSpecification& spec = WindowSpecification(), Input* input = nullptr);
+
+protected:
+    // Applies a WindowResized event's new size to m_WindowSpec and updates the GL viewport -
+    // shared by every backend's ProcessEvents() override.
+    void HandleResizeEvent(const Event& evt);
+
+protected:
+    WindowSpecification m_WindowSpec;
 };
 }  // namespace Matcha

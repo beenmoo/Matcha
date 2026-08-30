@@ -26,6 +26,7 @@ public:
 
 private:
     void LoadTextureFromFile(std::string_view path);
+    void CreateGLTexture(GLenum internalFormat);
 
 private:
     uint32_t m_Handle;

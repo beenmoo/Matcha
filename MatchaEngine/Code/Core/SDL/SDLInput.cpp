@@ -22,25 +22,7 @@ SDLInput::~SDLInput()
 
 void SDLInput::ProcessEvents(const Event& evt)
 {
-    switch (evt.type)
-    {
-    case EventType::MouseMoved:
-        m_MouseData.m_MouseAxis.x = evt.x;
-        m_MouseData.m_MouseAxis.y = evt.y;
-        break;
-    case EventType::JoystickMoved:
-        if (evt.axis == 0)
-            m_JoystickAxis.x = evt.x;
-        else if (evt.axis == 1)
-            m_JoystickAxis.y = evt.x;
-        break;
-    case EventType::MouseScrolled:
-        m_MouseData.m_MouseScrollDelta.x = evt.x;
-        m_MouseData.m_MouseScrollDelta.y = evt.y;
-        break;
-    default:
-        break;
-    }
+    ApplyAxisEvent(evt, m_MouseData.m_MouseAxis, m_JoystickAxis, m_MouseData.m_MouseScrollDelta);
 }
 
 void SDLInput::Update()
@@ -60,12 +42,12 @@ bool SDLInput::GetKey(KeyCode code) const
 
 bool SDLInput::GetKeyDown(KeyCode code) const
 {
-    return !m_PrevKeyboardState[std::to_underlying(code)] && m_KeyboardState[std::to_underlying(code)];
+    return WentDown(m_PrevKeyboardState[std::to_underlying(code)], m_KeyboardState[std::to_underlying(code)]);
 }
 
 bool SDLInput::GetKeyUp(KeyCode code) const
 {
-    return m_PrevKeyboardState[std::to_underlying(code)] && !m_KeyboardState[std::to_underlying(code)];
+    return WentUp(m_PrevKeyboardState[std::to_underlying(code)], m_KeyboardState[std::to_underlying(code)]);
 }
 
 uint32_t SDLInput::ToMouseButtonMask(MouseButton button)
@@ -98,29 +80,19 @@ bool SDLInput::GetMouseButtonDown(MouseButton button) const
 {
     uint32_t mask = ToMouseButtonMask(button);
 
-    return !(m_PrevMouseState & mask) && (m_MouseState & mask);
+    return WentDown(m_PrevMouseState & mask, m_MouseState & mask);
 }
 
 bool SDLInput::GetMouseButtonUp(MouseButton button) const
 {
     uint32_t mask = ToMouseButtonMask(button);
 
-    return (m_PrevMouseState & mask) && !(m_MouseState & mask);
+    return WentUp(m_PrevMouseState & mask, m_MouseState & mask);
 }
 
 Vector2Int SDLInput::GetAxis(AxisType type) const
 {
-    switch (type)
-    {
-    case AxisType::Mouse:
-        return m_MouseData.m_MouseAxis;
-    case AxisType::Joystick:
-        return m_JoystickAxis;
-    default:
-        break;
-    }
-
-    return Vector2Int(0);
+    return SelectAxis(type, m_MouseData.m_MouseAxis, m_JoystickAxis);
 }
 
 const Vector2Int& SDLInput::GetMouseScrollDelta() const
