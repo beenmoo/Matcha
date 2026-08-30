@@ -38,10 +38,15 @@ jobs:
       - name: Install Linux build tools
         if: runner.os == 'Linux'
         run: >
-          sudo apt-get update && sudo apt-get install -y ninja-build clang
+          sudo apt-get update && sudo apt-get install -y ninja-build
           autoconf autoconf-archive automake libtool m4 pkg-config gettext
           '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev
           libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libegl1-mesa-dev
+      - name: Install Clang 19
+        if: runner.os == 'Linux'
+        run: >
+          wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh &&
+          sudo ./llvm.sh 19
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
