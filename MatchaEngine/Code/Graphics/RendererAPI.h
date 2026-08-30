@@ -30,6 +30,8 @@ public:
     virtual void DrawIndexed(const VertexArray& vertexArray, uint32_t indexCount = 0) = 0;
 
     [[nodiscard]] static std::unique_ptr<RendererAPI> Create(API api);
+
+    [[nodiscard]] static std::string ToString(RendererAPI::API api);
 };
 
 [[nodiscard]] RendererAPI::API GetRendererAPI();

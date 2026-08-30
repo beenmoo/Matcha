@@ -34,10 +34,13 @@ struct ApplicationCommandLineArgs
 
 struct ApplicationSpecification
 {
-    std::string m_Title = "Application";
-    std::string m_WorkingDirectory;
-    ApplicationCommandLineArgs m_CommandLineArgs;
-    WindowBackend m_WindowBackend = WindowBackend::SDL;
+    std::string title = "Application";
+    std::string workingDirectory;
+    ApplicationCommandLineArgs commandLineArgs;
+    WindowBackend windowBackend = WindowBackend::SDL;
+    RendererAPI::API rendererAPI = GetDefaultRendererAPI();
+
+    RendererAPI::API GetDefaultRendererAPI() const;
 };
 
 class Application

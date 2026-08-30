@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Core.h"
+#include "Core/Debug.h"
 #include "Core/Logger.h"
 
 #ifdef MT_ENABLE_ASSERTS

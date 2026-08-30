@@ -34,4 +34,20 @@ std::unique_ptr<RendererAPI> RendererAPI::Create(API api)
 
     return nullptr;
 }
+
+std::string RendererAPI::ToString(RendererAPI::API api)
+{
+    switch (s_API)
+    {
+    case RendererAPI::API::OpenGL:
+        return "OpenGL";
+    case RendererAPI::API::Vulkan:
+        return "Vulkan";
+    case RendererAPI::API::DirectX12:
+        return "DirectX12";
+    default:
+        MT_ASSERT(false, "RendererAPI not yet supported!");
+        return "Unknown";
+    }
+}
 }  // namespace Matcha

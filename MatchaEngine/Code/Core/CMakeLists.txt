@@ -2,7 +2,7 @@ target_sources(${TARGET_NAME} PRIVATE
     Application.cpp
     Application.h
     Assert.h
-    Core.h
+    Debug.h
     EngineContext.cpp
     EngineContext.h
     EntryPoint.h

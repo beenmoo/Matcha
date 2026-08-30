@@ -33,9 +33,9 @@ int main(int argc, char** argv)
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     Matcha::Application::ApplicationSpecification spec;
-    spec.m_Title = "Matcha Editor";
-    spec.m_WindowBackend = Matcha::WindowBackend::Qt;
-    spec.m_CommandLineArgs = {argc, argv};
+    spec.title = "Matcha Editor";
+    spec.windowBackend = Matcha::WindowBackend::Qt;
+    spec.commandLineArgs = {argc, argv};
 
     MatchaEditor::Editor editor(spec);
     editor.Show();
