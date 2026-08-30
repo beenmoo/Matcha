@@ -40,6 +40,8 @@ jobs:
         run: >
           sudo apt-get update && sudo apt-get install -y ninja-build clang
           autoconf autoconf-archive automake libtool m4 pkg-config gettext
+          '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev
+          libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libegl1-mesa-dev
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
