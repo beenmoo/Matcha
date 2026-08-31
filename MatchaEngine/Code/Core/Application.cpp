@@ -31,7 +31,7 @@ Application::Application(const ApplicationSpecification& spec)
       m_Window(Window::Create(spec.windowBackend, WindowSpecification{.m_Title = spec.title}, m_Input.get())),
       m_RendererAPI(RendererAPI::Create(spec.rendererAPI)),
       m_Renderer(*m_RendererAPI, m_ResourceManager),
-      m_Context(*this, *m_Input, m_Time, *m_Window, *m_RendererAPI, m_Renderer, m_ResourceManager, m_Scene)
+      m_Context(*this, *m_Input, m_Time, *m_Window, m_Renderer, m_ResourceManager, m_Scene)
 {
     // Must happen before anything can call Texture::Create()/Shader::Create()/etc. - those
     // dispatch to GetActiveRendererAPI(), which asserts if this hasn't run yet.
@@ -108,6 +108,11 @@ void Application::OnEvent(const Event& event)
 {
 }
 
+void Application::RenderCamera()
+{
+    RenderSystem::Update(m_Scene, m_Renderer);
+}
+
 void Application::Update()
 {
     m_Time.Update();
@@ -126,6 +131,8 @@ void Application::Render()
     for (auto& system : m_RenderSystems)
         system();
 
+    RenderCamera();
+
     OnRender();
     m_Renderer.Flush();
     m_Window->SwapBuffers();
@@ -140,7 +147,6 @@ void Application::RegisterSystems()
     m_RenderSystems.push_back([this] { TransformSystem::Update(m_Scene); });
     m_RenderSystems.push_back([this] { CameraSystem::Update(m_Scene); });
     m_RenderSystems.push_back([this] { LightSystem::Update(m_Scene, m_Renderer); });
-    m_RenderSystems.push_back([this] { RenderSystem::Update(m_Scene, m_Renderer); });
 }
 
 void Application::PollEvents()

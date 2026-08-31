@@ -144,7 +144,6 @@ Entity SceneHierarchyWidget::CreateCameraEntity()
 {
     Entity entity = m_Scene.CreateEntity("Camera");
     entity.AddComponent<CameraComponent>().aspectRatio = m_Context.GetWindow().GetAspectRatio();
-    entity.AddComponent<NativeScriptComponent>().Bind<CameraController>();
 
     return entity;
 }

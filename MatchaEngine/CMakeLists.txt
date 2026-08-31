@@ -16,7 +16,7 @@ target_sources(${TARGET_NAME} PRIVATE Code/Matcha.h)
 target_include_directories(${TARGET_NAME} PUBLIC Code)
 target_include_directories(${TARGET_NAME} PRIVATE ${Stb_INCLUDE_DIR})
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
-target_link_libraries(${TARGET_NAME} PRIVATE SDL3::SDL3 efsw::efsw glm::glm spdlog::spdlog nlohmann_json::nlohmann_json glad assimp::assimp)
+target_link_libraries(${TARGET_NAME} PRIVATE SDL3::SDL3 efsw::efsw glm::glm spdlog::spdlog nlohmann_json::nlohmann_json glad assimp::assimp pybind11::embed)
 # EnTT is PUBLIC (not PRIVATE like the others above): its component API (emplace<T>, get<T>, view<T...>)
 # is template-based, so the definitions must be visible wherever game code adds/queries components,
 # unlike glad/spdlog/glm which are fully hidden behind Matcha's own non-template wrapper APIs.

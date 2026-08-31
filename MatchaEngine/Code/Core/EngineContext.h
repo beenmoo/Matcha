@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Graphics/Renderer.h"
-#include "Graphics/RendererAPI.h"
 #include "Graphics/ResourceManager.h"
 #include "Scene/Scene.h"
 
@@ -22,7 +21,6 @@ public:
                            Input& input,
                            Time& time,
                            Window& window,
-                           RendererAPI& rendererAPI,
                            Renderer& renderer,
                            ResourceManager& resourceManager,
                            Scene& scene);
@@ -52,12 +50,6 @@ public:
     }
 
     template <typename Self>
-    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const RendererAPI&, RendererAPI&> GetRendererAPI(this Self& self)
-    {
-        return self.m_RendererAPI;
-    }
-
-    template <typename Self>
     [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Renderer&, Renderer&> GetRenderer(this Self& self)
     {
         return self.m_Renderer;
@@ -80,7 +72,6 @@ private:
     Input& m_Input;
     Time& m_Time;
     Window& m_Window;
-    RendererAPI& m_RendererAPI;
     Renderer& m_Renderer;
     ResourceManager& m_ResourceManager;
     Scene& m_Scene;

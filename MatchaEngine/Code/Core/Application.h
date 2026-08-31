@@ -73,6 +73,15 @@ protected:
     virtual void OnRender();
     virtual void OnEvent(const Event& event);
 
+    // Called once per frame from Render(), after the Transform/Camera/Light systems and before
+    // OnRender(). Default draws from the scene's own primary CameraComponent entity, via
+    // RenderSystem::Update() - override to draw from a different source instead (e.g. MatchaEditor's
+    // standalone, non-Scene EditorCamera). Deliberately not folded into RegisterSystems()/
+    // m_RenderSystems: that's populated from Application's own constructor, where a virtual call
+    // can never resolve to a derived override (the derived vtable isn't installed yet) - this is
+    // called from Render(), well after construction, where virtual dispatch works normally.
+    virtual void RenderCamera();
+
 private:
     void Update();
     void Render();

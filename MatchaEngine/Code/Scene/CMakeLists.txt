@@ -11,8 +11,6 @@ target_sources(${TARGET_NAME} PRIVATE
     Component/TagComponent.h
     Scene.cpp
     Scene.h
-    Script/CameraController.cpp
-    Script/CameraController.h
     System/CameraSystem.cpp
     System/CameraSystem.h
     System/RenderSystem.cpp

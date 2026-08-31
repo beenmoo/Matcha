@@ -52,7 +52,6 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     camera.AddComponent<CameraComponent>().aspectRatio = window.GetAspectRatio();
 
     NativeScriptComponent& cameraScripts = camera.AddComponent<NativeScriptComponent>();
-    cameraScripts.Bind<CameraController>();
     cameraScripts.Bind<Flashlight>();
 
     // Points down and off to one side - rotating this entity is what aims the light, same as
