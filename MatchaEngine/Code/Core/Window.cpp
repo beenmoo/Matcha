@@ -1,93 +1,38 @@
 #include "Window.h"
 #include "Assert.h"
-#include "Context.h"
+#include "SDL/SDLWindow.h"
+
+#ifdef MT_ENABLE_QT_BACKEND
+#include "Qt/QtWindow.h"
+#endif
 
 #include <glad/glad.h>
-#include <cassert>
 
 namespace Matcha
 {
-    Window::Window(const WindowSpecification& spec) :
-        mWindowSpec(spec)
+void Window::HandleResizeEvent(const Event& evt)
+{
+    if (evt.type != EventType::WindowResized)
+        return;
+
+    m_WindowSpec.m_Width = evt.width;
+    m_WindowSpec.m_Height = evt.height;
+    glViewport(0, 0, m_WindowSpec.m_Width, m_WindowSpec.m_Height);
+}
+
+std::unique_ptr<Window> Window::Create(WindowBackend backend, const WindowSpecification& spec, Input* input)
+{
+    switch (backend)
     {
-        InitContext();
-    }
-
-    void Window::ProcessEvents(const Event& evt)
-    {
-        switch (evt.type)
-        {
-        case SDL_EVENT_WINDOW_RESIZED:
-            mWindowSpec.mWidth = evt.window.data1;
-            mWindowSpec.mHeight = evt.window.data2;
-            glViewport(0, 0, mWindowSpec.mWidth, mWindowSpec.mHeight);
-            break;
-        default:
-            break;
-        }
-    }
-
-    void Window::Resize(int width, int height)
-    {
-        SDL_SetWindowSize(mNativeWindow, width, height);
-    }
-
-    void Window::SwapBuffers()
-    {
-        SDL_GL_SwapWindow(mNativeWindow);
-    }
-
-    int Window::GetWidth() const
-    {
-        return mWindowSpec.mWidth;
-    }
-
-    int Window::GetHeight() const
-    {
-        return mWindowSpec.mHeight;
-    }
-
-    Vector2Int Window::GetCenter() const
-    {
-        return Vector2Int(mWindowSpec.mWidth / 2, mWindowSpec.mHeight / 2);
-    }
-
-    float Window::GetAspectRatio() const
-    {
-        return static_cast<float>(mWindowSpec.mWidth) / mWindowSpec.mHeight;
-    }
-
-    const Window::WindowSpecification& Window::GetWindowSpecification() const
-    {
-        return mWindowSpec;
-    }
-
-    bool Window::IsMinimized() const
-    {
-        return SDL_GetWindowFlags(mNativeWindow) & SDL_WINDOW_MINIMIZED;
-    }
-
-    void Window::InitContext()
-    {
-        if (!SDL_Init(SDL_INIT_VIDEO))
-            MT_CORE_ERROR(SDL_GetError());
-
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-        mNativeWindow = SDL_CreateWindow(GetWindowSpecification().mTitle.c_str(),
-            GetWindowSpecification().mWidth,
-            GetWindowSpecification().mHeight,
-            GetWindowSpecification().mFlags);
-
-        MT_ASSERT(mNativeWindow, SDL_GetError());
-
-        mGLContext = SDL_GL_CreateContext(mNativeWindow);
-        SDL_GL_MakeCurrent(mNativeWindow, mGLContext);
-
-        int status = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
-
-        MT_ASSERT(status, SDL_GetError());
+    case WindowBackend::SDL:
+        return std::make_unique<SDLWindow>(spec, input);
+#ifdef MT_ENABLE_QT_BACKEND
+    case WindowBackend::Qt:
+        return std::make_unique<QtWindow>(spec, input);
+#endif
+    default:
+        MT_ASSERT(false, "Window backend not supported (was MatchaEngine built with BUILD_QT_BACKEND?)");
+        return nullptr;
     }
 }
+}  // namespace Matcha

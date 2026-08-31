@@ -1,3 +1,7 @@
 target_sources(${TARGET_NAME} PRIVATE
+    ConsoleSink.cpp
+    ConsoleSink.h
     Editor.cpp
-    Editor.h)
+    Editor.h
+    EditorMainWindow.cpp
+    EditorMainWindow.h)

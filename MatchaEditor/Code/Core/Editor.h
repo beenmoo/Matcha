@@ -2,12 +2,24 @@
 
 #include <Matcha.h>
 
-namespace Matcha
+#include <memory>
+
+class QTimer;
+
+namespace MatchaEditor
 {
-    class Editor : public Application
-    {
-    public:
-        Editor(const Application::ApplicationSpecification& spec);
-        virtual ~Editor() = default;
-    }; 
-}
+class EditorMainWindow;
+
+class Editor : public Application
+{
+public:
+    Editor(const Application::ApplicationSpecification& spec);
+    ~Editor() override;
+
+    void Show();
+
+private:
+    std::unique_ptr<EditorMainWindow> m_MainWindow;
+    std::unique_ptr<QTimer> m_TickTimer;
+};
+}  // namespace Matcha

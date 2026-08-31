@@ -38,12 +38,19 @@ jobs:
       - name: Install Linux build tools
         if: runner.os == 'Linux'
         run: >
-          sudo apt-get update && sudo apt-get install -y ninja-build clang
-          autoconf automake libtool m4 pkg-config gettext
+          sudo apt-get update && sudo apt-get install -y ninja-build
+          autoconf autoconf-archive automake libtool m4 pkg-config gettext
+          '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev
+          libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libegl1-mesa-dev
+      - name: Install Clang 19
+        if: runner.os == 'Linux'
+        run: >
+          wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh &&
+          sudo ./llvm.sh 19
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: "4.2.0"
+          cmake-version: "4.4.2"
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -63,7 +70,7 @@ jobs:
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        run: cmake --build ${{ matrix.build-dir }} --config Release
+        run: cmake --build ${{ matrix.build-dir }} --config Debug
       - name: Build (Linux)
         if: runner.os == 'Linux'
         run: cmake --build ${{ matrix.build-dir }}
@@ -72,10 +79,10 @@ jobs:
       - name: Run Tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          cd ${{ matrix.build-dir }}
-          ctest -C Release --output-on-failure
+          cd ${{ matrix.build-dir }}/Tests
+          ctest -C Debug --output-on-failure
       - name: Run Tests (Linux)
         if: runner.os == 'Linux'
         run: |
-          cd ${{ matrix.build-dir }}
+          cd ${{ matrix.build-dir }}/Tests
           ctest --output-on-failure

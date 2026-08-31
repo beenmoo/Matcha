@@ -1,0 +1,5 @@
+{
+    "cmake.debugConfig": {
+        "cwd": "${command:cmake.launchTargetDirectory}"
+    }
+}

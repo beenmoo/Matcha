@@ -1,188 +1,64 @@
 #include "Input.h"
+#include "Assert.h"
+#include "SDL/SDLInput.h"
+
+#ifdef MT_ENABLE_QT_BACKEND
+#include "Qt/QtInput.h"
+#endif
 
 namespace Matcha
 {
-    Input::Input()
+void Input::ApplyAxisEvent(const Event& evt, Vector2Int& mouseAxis, Vector2Int& joystickAxis, Vector2Int& mouseScrollDelta)
+{
+    switch (evt.type)
     {
-        mKeyboardState = SDL_GetKeyboardState(&mNumKeys);
-        mPrevKeyboardState = new bool[mNumKeys];
-        memcpy(mPrevKeyboardState, mKeyboardState, mNumKeys);
-
-        mMouseState = SDL_GetMouseState(&mMouseData.mMousePositionX, &mMouseData.mMousePositionY);
-    }
-
-    Input::~Input()
-    {
-        delete[] mPrevKeyboardState;
-    }
-
-    void Input::ProcessEvents(const SDL_Event& evt)
-    {
-        switch (evt.type)
-        {
-        case SDL_EVENT_MOUSE_MOTION:
-            mMouseData.mMouseAxis.x = evt.motion.xrel;
-            mMouseData.mMouseAxis.y = evt.motion.yrel;
-            break;
-        case SDL_EVENT_JOYSTICK_AXIS_MOTION:
-            mJoystickAxis.x = evt.motion.xrel;
-            mJoystickAxis.y = evt.motion.yrel;
-            break;
-        case SDL_EVENT_MOUSE_WHEEL:
-            mMouseData.mMouseScrollDelta.x = evt.wheel.x;
-            mMouseData.mMouseScrollDelta.y = evt.wheel.y;
-            break;
-        default:
-            break;
-        }
-    }
-
-    void Input::Update()
-    {
-        memcpy(mPrevKeyboardState, mKeyboardState, mNumKeys);
-
-        mMouseData.mMouseAxis = Vector2(0.0f);
-        mMouseData.mMouseScrollDelta = Vector2(0.0f);
-        mPrevMouseState = mMouseState;
-        mMouseState = SDL_GetMouseState(&mMouseData.mMousePositionX, &mMouseData.mMousePositionY);
-    }
-
-    bool Input::GetKey(KeyCode code) const
-    {
-        return mKeyboardState[(uint8_t)code];
-    }
-
-    bool Input::GetKeyDown(KeyCode code) const
-    {
-        return !mPrevKeyboardState[(uint8_t)code] && mKeyboardState[(uint8_t)code];
-    }
-
-    bool Input::GetKeyUp(KeyCode code) const
-    {
-        return mPrevKeyboardState[(uint8_t)code] && !mKeyboardState[(uint8_t)code];
-    }
-
-    bool Input::GetMouseButton(MouseButton button) const
-    {
-        uint32_t mask = 0;
-
-        switch (button)
-        {
-        case MouseButton::Left:
-            mask = SDL_BUTTON_LMASK;
-            break;
-        case MouseButton::Middle:
-            mask = SDL_BUTTON_MMASK;
-            break;
-        case MouseButton::Right:
-            mask = SDL_BUTTON_RMASK;
-            break;
-        case MouseButton::Back:
-            mask = SDL_BUTTON_X1MASK;
-            break;
-        case MouseButton::Forward:
-            mask = SDL_BUTTON_X2MASK;
-            break;
-        default:
-            break;
-        }
-
-        return mMouseState & mask;
-    }
-
-    bool Input::GetMouseButtonDown(MouseButton button) const
-    {
-        uint32_t mask = 0;
-
-        switch (button)
-        {
-        case MouseButton::Left:
-            mask = SDL_BUTTON_LMASK;
-            break;
-        case MouseButton::Middle:
-            mask = SDL_BUTTON_MMASK;
-            break;
-        case MouseButton::Right:
-            mask = SDL_BUTTON_RMASK;
-            break;
-        case MouseButton::Back:
-            mask = SDL_BUTTON_X1MASK;
-            break;
-        case MouseButton::Forward:
-            mask = SDL_BUTTON_X2MASK;
-            break;
-        default:
-            break;
-        }
-
-        return !(mPrevMouseState & mask) && (mMouseState & mask);
-    }
-
-    bool Input::GetMouseButtonUp(MouseButton button) const
-    {
-        uint32_t mask = 0;
-
-        switch (button)
-        {
-        case MouseButton::Left:
-            mask = SDL_BUTTON_LMASK;
-            break;
-        case MouseButton::Middle:
-            mask = SDL_BUTTON_MMASK;
-            break;
-        case MouseButton::Right:
-            mask = SDL_BUTTON_RMASK;
-            break;
-        case MouseButton::Back:
-            mask = SDL_BUTTON_X1MASK;
-            break;
-        case MouseButton::Forward:
-            mask = SDL_BUTTON_X2MASK;
-            break;
-        default:
-            break;
-        }
-
-        return (mPrevMouseState & mask) && !(mMouseState & mask);
-    }
-
-    Vector2Int Input::GetAxis(AxisType type) const
-    {
-        switch (type)
-        {
-        case AxisType::Mouse:
-            return mMouseData.mMouseAxis;
-        case AxisType::Joystick:
-            return mJoystickAxis;
-        default:
-            break;
-        }
-
-        return Vector2Int(0);
-    }
-
-    const Vector2Int& Input::GetMouseScrollDelta() const
-    {
-        return mMouseData.mMouseScrollDelta;
-    }
-
-    void Input::SetCursorLockState(CursorLockState state)
-    {
-        mCursorLockState = state;
-
-        switch (state)
-        {
-        case CursorLockState::Locked:
-            //SDL_SetWindowRelativeMouseMode(true);
-            break;
-        default:
-            //SDL_SetWindowRelativeMouseMode(false);
-            break;
-        }
-    }
-    
-    Input::CursorLockState Input::GetCursorLockState() const
-    {
-        return mCursorLockState;
+    case EventType::MouseMoved:
+        mouseAxis.x = evt.x;
+        mouseAxis.y = evt.y;
+        break;
+    case EventType::JoystickMoved:
+        if (evt.axis == 0)
+            joystickAxis.x = evt.x;
+        else if (evt.axis == 1)
+            joystickAxis.y = evt.x;
+        break;
+    case EventType::MouseScrolled:
+        mouseScrollDelta.x = evt.x;
+        mouseScrollDelta.y = evt.y;
+        break;
+    default:
+        break;
     }
 }
+
+Vector2Int Input::SelectAxis(AxisType type, const Vector2Int& mouseAxis, const Vector2Int& joystickAxis)
+{
+    switch (type)
+    {
+    case AxisType::Mouse:
+        return mouseAxis;
+    case AxisType::Joystick:
+        return joystickAxis;
+    default:
+        break;
+    }
+
+    return Vector2Int(0);
+}
+
+std::unique_ptr<Input> Input::Create(WindowBackend backend)
+{
+    switch (backend)
+    {
+    case WindowBackend::SDL:
+        return std::make_unique<SDLInput>();
+#ifdef MT_ENABLE_QT_BACKEND
+    case WindowBackend::Qt:
+        return std::make_unique<QtInput>();
+#endif
+    default:
+        MT_ASSERT(false, "Input backend not supported (was MatchaEngine built with BUILD_QT_BACKEND?)");
+        return nullptr;
+    }
+}
+}  // namespace Matcha

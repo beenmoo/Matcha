@@ -1,19 +1,16 @@
 #include "Time.h"
 
-#include <SDL3/SDL.h>
-
 namespace Matcha
 {
-    void Time::Update()
-    {
-        mLastFrameTime = mElapsedTime;
-        mElapsedTime = SDL_GetPerformanceCounter();
-        mDeltaTime = static_cast<float>((mElapsedTime - mLastFrameTime) * 1000.0f /
-                                        static_cast<float>(SDL_GetPerformanceFrequency())) * 0.001f;
-    }
-    
-    float Time::GetDeltaTime() const
-    {
-        return mDeltaTime;
-    }
+void Time::Update()
+{
+    auto now = std::chrono::steady_clock::now();
+    m_DeltaTime = std::chrono::duration<float>(now - m_LastFrameTime).count();
+    m_LastFrameTime = now;
 }
+
+float Time::GetDeltaTime() const
+{
+    return m_DeltaTime;
+}
+}  // namespace Matcha

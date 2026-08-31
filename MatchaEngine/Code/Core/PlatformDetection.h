@@ -2,12 +2,12 @@
 
 // Platform detection using predefined macros
 #ifdef _WIN32
-	/* Windows x64/x86 */
+/* Windows x64/x86 */
 #ifdef _WIN64
-	/* Windows x64  */
+/* Windows x64  */
 #define MT_PLATFORM_WINDOWS
 #else
-	/* Windows x86 */
+/* Windows x86 */
 #error "x86 Builds are not supported!"
 #endif
 #elif defined(__APPLE__) || defined(__MACH__)
@@ -27,15 +27,15 @@
 #else
 #error "Unknown Apple platform!"
 #endif
- /* We also have to check __ANDROID__ before __linux__
-  * since android is based on the linux kernel
-  * it has __linux__ defined */
+/* We also have to check __ANDROID__ before __linux__
+ * since android is based on the linux kernel
+ * it has __linux__ defined */
 #elif defined(__ANDROID__)
 #define MT_PLATFORM_ANDROID
 #error "Android is not supported!"
 #elif defined(__linux__)
 #define MT_PLATFORM_LINUX
 #else
-	/* Unknown compiler/platform */
+/* Unknown compiler/platform */
 #error "Unknown platform!"
-#endif // End of platform detection
+#endif  // End of platform detection

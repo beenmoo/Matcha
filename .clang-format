@@ -15,7 +15,10 @@ BraceWrapping:
   BeforeElse: true
 ConstructorInitializerIndentWidth: 4
 SpaceBeforeCtorInitializerColon: true
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: Never
 AllowShortFunctionsOnASingleLine: false
+IndentRequiresClause: false
 ColumnLimit: 0
 PointerAlignment: Left
 SpacesBeforeTrailingComments: 2
