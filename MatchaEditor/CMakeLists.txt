@@ -26,6 +26,26 @@ add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
     COMMENT "Copying MatchaEditor assets to ${TARGET_NAME} output directory"
     VERBATIM)
 
+if (UNIX AND NOT APPLE)
+    # vcpkg's x64-linux triplet is static (VCPKG_LIBRARY_LINKAGE static), so Qt's platform
+    # plugins build as static libraries (libqxcb.a/libqwayland.a) instead of loadable .so
+    # modules - there's nothing on disk for Qt's normal runtime plugin-scanning to find, unlike
+    # the WIN32 branch below where the vcpkg triplet is dynamic and qwindows.dll is a real
+    # runtime-loaded plugin. A static build has no plugin loader at all, so the platform plugin
+    # has to be linked directly into the executable and registered at compile time instead.
+    # An explicit INCLUDE list replaces qt_import_plugins()'s default behavior entirely rather
+    # than adding to it, so the GL-integration plugins (needed for QOpenGLWidget to get a real
+    # context under each platform plugin - EGL-over-XCB and EGL-over-Wayland respectively, since
+    # this qtbase build has no GLX) have to be listed explicitly too, not just the platform
+    # plugins themselves.
+    qt_import_plugins(${TARGET_NAME}
+        INCLUDE
+            Qt6::QXcbIntegrationPlugin
+            Qt6::QXcbEglIntegrationPlugin
+            Qt6::QWaylandIntegrationPlugin
+            Qt6::QWaylandEglClientBufferPlugin)
+endif()
+
 if (WIN32)
     qt_generate_deploy_app_script(
         TARGET ${TARGET_NAME}
