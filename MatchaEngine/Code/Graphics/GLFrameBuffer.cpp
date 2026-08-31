@@ -57,10 +57,11 @@ namespace Matcha
 
         glCreateRenderbuffers(1, &mDepthAttachmentID);
         glBindRenderbuffer(GL_RENDERBUFFER, mDepthAttachmentID);
-        glRenderbufferStorage(GL_RENDERBUFFER, 
-                              mSpecification.mDepthFormat, 
+        glRenderbufferStorage(GL_RENDERBUFFER,
+                              mSpecification.mDepthFormat,
                               mSpecification.mWidth, mSpecification.mHeight);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthAttachmentID);
 
         MT_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
 

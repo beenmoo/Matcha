@@ -7,7 +7,7 @@ namespace Matcha
         glCreateBuffers(1, &mObjectID);
         
         Bind();
-        glBufferData(GL_ARRAY_BUFFER, count * sizeof(GLuint), indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(GLuint), indices, GL_STATIC_DRAW);
         Unbind();
 
         for (size_t i = 0; i < count; ++i)
@@ -34,14 +34,14 @@ namespace Matcha
         mIndices.insert(mIndices.end(), indices.begin(), indices.end());
 
         Bind();
-        glBufferData(GL_ARRAY_BUFFER, mIndices.size() * sizeof(GLuint), mIndices.data(), mDrawType);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mIndices.size() * sizeof(GLuint), mIndices.data(), mDrawType);
         Unbind();
     }
 
     void GLIndexBuffer::SetIndices(GLuint* indices, GLuint count)
     {
         Bind();
-        glBufferSubData(GL_ARRAY_BUFFER, 0, count * sizeof(GLuint), indices);
+        glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, count * sizeof(GLuint), indices);
         Unbind();
 
         Clear();
@@ -53,7 +53,7 @@ namespace Matcha
     void GLIndexBuffer::SetIndicesNew(GLuint* indices, GLuint count)
     {
         Bind();
-        glBufferData(GL_ARRAY_BUFFER, count * sizeof(GLuint), indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(GLuint), indices, GL_STATIC_DRAW);
         Unbind();
 
         Clear();

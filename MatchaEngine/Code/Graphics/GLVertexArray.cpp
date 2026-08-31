@@ -83,6 +83,15 @@ namespace Matcha
     
     void GLVertexArray::SetIndexBuffer(const std::shared_ptr<GLIndexBuffer> buffer)
     {
+        Bind();
+
+        if (buffer)
+            buffer->Bind();
+        else
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        Unbind();
+
         mIndexBuffer = buffer;
     }
 }

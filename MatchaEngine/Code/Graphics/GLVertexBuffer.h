@@ -88,8 +88,8 @@ namespace Matcha
 
                 for (auto& e : mElements)
                 {
-                    e.offset += offset;
-                    offset += e.offset;
+                    e.offset = offset;
+                    offset += e.size;
                     mStride += e.size;
                 }
             }
