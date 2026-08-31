@@ -4,4 +4,6 @@ target_sources(${TARGET_NAME} PRIVATE
     RotationComponent.cpp
     RotationComponent.h
     Sandbox.cpp
-    Sandbox.h)
+    Sandbox.h
+    CameraController.cpp
+    CameraController.h)
