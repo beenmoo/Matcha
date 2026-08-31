@@ -1,6 +1,7 @@
 #include "Sandbox.h"
 #include "Flashlight.h"
 #include "RotationComponent.h"
+#include "CameraController.h"
 
 #include <Matcha.h>
 #include <Utility/Profiler.h>
@@ -53,6 +54,7 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
 
     NativeScriptComponent& cameraScripts = camera.AddComponent<NativeScriptComponent>();
     cameraScripts.Bind<Flashlight>();
+    cameraScripts.Bind<CameraController>();
 
     // Points down and off to one side - rotating this entity is what aims the light, same as
     // rotating the camera entity aims the camera (LightSystem reads Transform::GetForward()).

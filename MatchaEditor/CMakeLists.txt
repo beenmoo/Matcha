@@ -14,6 +14,7 @@ add_subdirectory(Code/Utility)
 # definitions in this target's objects, which then collide with the DLL's exported ones at link time.
 target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets spdlog::spdlog)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
+target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
 
 matcha_copy_engine_assets(${TARGET_NAME})
 
