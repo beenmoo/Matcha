@@ -40,7 +40,7 @@ struct ApplicationSpecification
     WindowBackend windowBackend = WindowBackend::SDL;
     RendererAPI::API rendererAPI = GetDefaultRendererAPI();
 
-    RendererAPI::API GetDefaultRendererAPI() const;
+    [[nodiscard]] RendererAPI::API GetDefaultRendererAPI() const;
 };
 
 class Application
@@ -50,7 +50,7 @@ public:
     using ApplicationSpecification = Matcha::ApplicationSpecification;
 
 public:
-    Application(const ApplicationSpecification& spec = ApplicationSpecification());
+    explicit Application(const ApplicationSpecification& spec = ApplicationSpecification());
     virtual ~Application();
 
     // Blocking loop: while (m_IsRunning) Tick(); - what SDL-backed apps (Sandbox, an SDL-mode

@@ -16,9 +16,8 @@ namespace
 // Unlike LightData, this can't be a plain mirrored C++ struct: std140 forces a 12-byte gap
 // between the int and the vec3 that follows it (16-byte alignment) that C++'s own alignof(vec3)
 // (4, not 16) would never insert on its own - so the header is written via hand-placed offsets.
-constexpr uint32_t LightArrayOffset = 48;
+constexpr uint32_t kLightArrayOffset = 48;
 }  // namespace
-
 
 Renderer::Renderer(RendererAPI& rendererAPI, ResourceManager& resourceManager)
     : m_RendererAPI(rendererAPI),
@@ -32,7 +31,7 @@ void Renderer::Init()
     // used - the buffer has to be sized for that padded layout, not the tight C++ one.
     m_CameraUniformBuffer = UniformBuffer::Create(sizeof(Matrix4) + sizeof(Vector4), 0);
 
-    m_LightUniformBuffer = UniformBuffer::Create(LightArrayOffset + MAX_LIGHTS * sizeof(LightData), 1);
+    m_LightUniformBuffer = UniformBuffer::Create(kLightArrayOffset + MAX_LIGHTS * sizeof(LightData), 1);
 
     SetLights({});
     SetAmbient(0.1f, Vector3(1.0f));
@@ -127,7 +126,7 @@ void Renderer::SetLights(std::span<const LightData> lights)
     m_LightUniformBuffer->SetData(&count, sizeof(count), 0);
 
     if (count > 0)
-        m_LightUniformBuffer->SetData(lights.data(), sizeof(LightData) * static_cast<size_t>(count), LightArrayOffset);
+        m_LightUniformBuffer->SetData(lights.data(), sizeof(LightData) * static_cast<size_t>(count), kLightArrayOffset);
 }
 
 void Renderer::SetAmbient(float strength, const Vector3& color)

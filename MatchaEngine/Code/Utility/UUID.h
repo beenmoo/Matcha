@@ -9,7 +9,7 @@ class UUID
 {
 public:
     UUID();
-    UUID(uint64_t uuid);
+    explicit UUID(uint64_t uuid);
     UUID(const UUID&) = default;
 
     // Allow implicit casting to uint64_t for easy use in maps and comparisons

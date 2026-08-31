@@ -13,7 +13,7 @@ class EditorMainWindow;
 class Editor : public Application
 {
 public:
-    Editor(const Application::ApplicationSpecification& spec);
+    explicit Editor(const Application::ApplicationSpecification& spec);
     ~Editor() override;
 
     void Show();

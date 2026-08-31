@@ -1,7 +1,5 @@
 #include "VertexBuffer.h"
-#include "Core/Assert.h"
 #include "GL/GLShaderUtils.h"
-#include "GL/GLVertexBuffer.h"
 #include "RendererAPI.h"
 
 namespace Matcha
@@ -79,17 +77,6 @@ void BufferLayout::CalculateOffsetsAndStride()
 
 std::shared_ptr<VertexBuffer> VertexBuffer::Create(const float* vertices, uint32_t sizeInBytes)
 {
-    switch (GetRendererAPI())
-    {
-    case RendererAPI::API::OpenGL:
-        return std::make_shared<GLVertexBuffer>(vertices, sizeInBytes);
-    case RendererAPI::API::None:
-    case RendererAPI::API::Vulkan:
-    case RendererAPI::API::DirectX12:
-        MT_ASSERT(false, "RendererAPI not yet supported!");
-        return nullptr;
-    }
-
-    return nullptr;
+    return GetActiveRendererAPI().CreateVertexBuffer(vertices, sizeInBytes);
 }
 }  // namespace Matcha

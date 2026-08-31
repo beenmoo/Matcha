@@ -33,6 +33,10 @@ Application::Application(const ApplicationSpecification& spec)
       m_Renderer(*m_RendererAPI, m_ResourceManager),
       m_Context(*this, *m_Input, m_Time, *m_Window, *m_RendererAPI, m_Renderer, m_ResourceManager, m_Scene)
 {
+    // Must happen before anything can call Texture::Create()/Shader::Create()/etc. - those
+    // dispatch to GetActiveRendererAPI(), which asserts if this hasn't run yet.
+    SetActiveRendererAPI(*m_RendererAPI);
+
     // SDL's GL context is current immediately, so this fires synchronously here. Qt's isn't
     // ready until QOpenGLWidget::initializeGL() runs later, so InitGraphics() is deferred until
     // then instead - see Window::SetContextReadyCallback.
@@ -169,7 +173,7 @@ void Application::LogContext()
     const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
 
     MT_CORE_INFO("Renderer Info:");
-    MT_CORE_INFO("  API: {0}", RendererAPI::ToString(GetRendererAPI()));
+    MT_CORE_INFO("  API: {0}", RendererAPI::ToString(m_AppSpec.rendererAPI));
     MT_CORE_INFO("  Vendor: {0}", vendor);
     MT_CORE_INFO("  Renderer: {0}", renderer);
     MT_CORE_INFO("  Version: {0}", version);

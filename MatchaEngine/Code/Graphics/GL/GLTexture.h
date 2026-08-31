@@ -13,8 +13,11 @@ class GLTexture final : public Texture
 {
 public:
     GLTexture(uint32_t width, uint32_t height);
-    GLTexture(std::string_view path);
+    explicit GLTexture(std::string_view path);
     ~GLTexture() override;
+
+    GLTexture(const GLTexture&) = delete;
+    GLTexture& operator=(const GLTexture&) = delete;
 
     void Bind(uint32_t slot = 0) const override;
 

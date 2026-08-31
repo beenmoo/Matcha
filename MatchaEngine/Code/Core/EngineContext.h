@@ -18,14 +18,14 @@ class Window;
 class EngineContext
 {
 public:
-    EngineContext(Application& application,
-                  Input& input,
-                  Time& time,
-                  Window& window,
-                  RendererAPI& rendererAPI,
-                  Renderer& renderer,
-                  ResourceManager& resourceManager,
-                  Scene& scene);
+    explicit EngineContext(Application& application,
+                           Input& input,
+                           Time& time,
+                           Window& window,
+                           RendererAPI& rendererAPI,
+                           Renderer& renderer,
+                           ResourceManager& resourceManager,
+                           Scene& scene);
 
     template <typename Self>
     [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Application&, Application&> GetApplication(this Self& self)
