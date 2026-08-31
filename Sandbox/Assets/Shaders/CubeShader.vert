@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 a_Pos;
 layout (location = 1) in vec3 a_Color;
 
-uniform mat4 u_MVP
+uniform mat4 u_MVP;
 
 out vec3 v_Color;
 
