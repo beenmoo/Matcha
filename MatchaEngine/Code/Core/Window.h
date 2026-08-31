@@ -33,11 +33,7 @@ public:
     using WindowSpecification = Matcha::WindowSpecification;
 
 public:
-    explicit Window(const WindowSpecification& spec)
-        : m_WindowSpec(spec)
-    {
-    }
-
+    explicit Window(const WindowSpecification& spec);
     virtual ~Window() = default;
 
     virtual void Resize(int width, int height) = 0;

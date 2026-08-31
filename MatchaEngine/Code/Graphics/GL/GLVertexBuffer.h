@@ -12,6 +12,9 @@ public:
     GLVertexBuffer(const GLfloat* vertices, GLuint sizeInBytes);
     ~GLVertexBuffer() override;
 
+    GLVertexBuffer(const GLVertexBuffer&) = delete;
+    GLVertexBuffer& operator=(const GLVertexBuffer&) = delete;
+
     void SetLayout(const std::shared_ptr<BufferLayout> layout) override;
     [[nodiscard]] const BufferLayout* GetLayout() const override;
 

@@ -10,6 +10,11 @@
 
 namespace Matcha
 {
+Window::Window(const WindowSpecification& spec)
+    : m_WindowSpec(spec)
+{
+}
+
 void Window::HandleResizeEvent(const Event& evt)
 {
     if (evt.type != EventType::WindowResized)

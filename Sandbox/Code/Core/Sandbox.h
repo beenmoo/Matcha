@@ -5,7 +5,7 @@
 class Sandbox : public Application
 {
 public:
-    Sandbox(const Application::ApplicationSpecification& spec);
+    explicit Sandbox(const Application::ApplicationSpecification& spec);
     virtual ~Sandbox() = default;
 
 protected:

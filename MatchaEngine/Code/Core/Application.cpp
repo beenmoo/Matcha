@@ -4,6 +4,7 @@
 #include "Scene/System/RenderSystem.h"
 #include "Scene/System/TransformSystem.h"
 #include "Scene/System/ScriptSystem.h"
+#include "PlatformDetection.h"
 
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
@@ -14,14 +15,28 @@
 
 namespace Matcha
 {
+RendererAPI::API ApplicationSpecification::GetDefaultRendererAPI() const
+{
+#ifdef MT_PLATFORM_WINDOWS
+    return RendererAPI::API::OpenGL;
+#elifdef MT_PLATFORM_LINUX
+    return RendererAPI::API::OpenGL;
+#endif
+    return RendererAPI::API::None;
+}
+
 Application::Application(const ApplicationSpecification& spec)
     : m_AppSpec(spec),
-      m_Input(Input::Create(spec.m_WindowBackend)),
-      m_Window(Window::Create(spec.m_WindowBackend, WindowSpecification{.m_Title = spec.m_Title}, m_Input.get())),
-      m_RendererAPI(RendererAPI::Create(RendererAPI::API::OpenGL)),
+      m_Input(Input::Create(spec.windowBackend)),
+      m_Window(Window::Create(spec.windowBackend, WindowSpecification{.m_Title = spec.title}, m_Input.get())),
+      m_RendererAPI(RendererAPI::Create(spec.rendererAPI)),
       m_Renderer(*m_RendererAPI, m_ResourceManager),
-      m_Context(*this, *m_Input, m_Time, *m_Window, *m_RendererAPI, m_Renderer, m_ResourceManager, m_Scene)
+      m_Context(*this, *m_Input, m_Time, *m_Window, m_Renderer, m_ResourceManager, m_Scene)
 {
+    // Must happen before anything can call Texture::Create()/Shader::Create()/etc. - those
+    // dispatch to GetActiveRendererAPI(), which asserts if this hasn't run yet.
+    SetActiveRendererAPI(*m_RendererAPI);
+
     // SDL's GL context is current immediately, so this fires synchronously here. Qt's isn't
     // ready until QOpenGLWidget::initializeGL() runs later, so InitGraphics() is deferred until
     // then instead - see Window::SetContextReadyCallback.
@@ -93,6 +108,11 @@ void Application::OnEvent(const Event& event)
 {
 }
 
+void Application::RenderCamera()
+{
+    RenderSystem::Update(m_Scene, m_Renderer);
+}
+
 void Application::Update()
 {
     m_Time.Update();
@@ -111,6 +131,8 @@ void Application::Render()
     for (auto& system : m_RenderSystems)
         system();
 
+    RenderCamera();
+
     OnRender();
     m_Renderer.Flush();
     m_Window->SwapBuffers();
@@ -125,7 +147,6 @@ void Application::RegisterSystems()
     m_RenderSystems.push_back([this] { TransformSystem::Update(m_Scene); });
     m_RenderSystems.push_back([this] { CameraSystem::Update(m_Scene); });
     m_RenderSystems.push_back([this] { LightSystem::Update(m_Scene, m_Renderer); });
-    m_RenderSystems.push_back([this] { RenderSystem::Update(m_Scene, m_Renderer); });
 }
 
 void Application::PollEvents()
@@ -147,30 +168,34 @@ void Application::LogContext()
 
     MT_CORE_INFO("MatchaEngine v{}.{}", matchaEngineMajor, matchaEngineMinor);
 #ifdef MT_PLATFORM_WINDOWS
-    MT_CORE_INFO("Platform: WINDOWS");
+    MT_CORE_INFO("Platform: Windows");
 #endif
 #ifdef MT_PLATFORM_LINUX
-    MT_CORE_INFO("Platform: LINUX");
+    MT_CORE_INFO("Platform: Linux");
 #endif
 
     const char* vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
     const char* renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
     const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
 
-    MT_CORE_INFO("OpenGL Info:");
+    MT_CORE_INFO("Renderer Info:");
+    MT_CORE_INFO("  API: {0}", RendererAPI::ToString(m_AppSpec.rendererAPI));
     MT_CORE_INFO("  Vendor: {0}", vendor);
     MT_CORE_INFO("  Renderer: {0}", renderer);
     MT_CORE_INFO("  Version: {0}", version);
 
-    MT_ASSERT(GLVersion.major > 4 || (GLVersion.major == 4 && GLVersion.minor >= 6),
-              "Matcha requires at least OpenGL version 4.6!");
+    if (m_AppSpec.rendererAPI == RendererAPI::API::OpenGL)
+    {
+        MT_ASSERT(GLVersion.major > 4 || (GLVersion.major == 4 && GLVersion.minor >= 6),
+                  "Matcha requires at least OpenGL version 4.6!");
+    }
 
     int sdlVersion = SDL_GetVersion();
 
     MT_CORE_INFO("SDL v{}.{}.{}", SDL_VERSIONNUM_MAJOR(sdlVersion), SDL_VERSIONNUM_MINOR(sdlVersion), SDL_VERSIONNUM_MICRO(sdlVersion));
 
 #ifdef MT_ENABLE_QT_BACKEND
-    if (m_AppSpec.m_WindowBackend == WindowBackend::Qt)
+    if (m_AppSpec.windowBackend == WindowBackend::Qt)
         MT_CORE_INFO("Qt v{0} (compiled with v{1})", qVersion(), QT_VERSION_STR);
 #endif
 }

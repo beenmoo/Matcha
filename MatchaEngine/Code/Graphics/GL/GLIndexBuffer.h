@@ -12,6 +12,9 @@ public:
     GLIndexBuffer(const GLuint* indices, GLuint count);
     ~GLIndexBuffer() override;
 
+    GLIndexBuffer(const GLIndexBuffer&) = delete;
+    GLIndexBuffer& operator=(const GLIndexBuffer&) = delete;
+
     [[nodiscard]] uint32_t GetHandle() const override;
     [[nodiscard]] uint32_t GetCount() const override;
 

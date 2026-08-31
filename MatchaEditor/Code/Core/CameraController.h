@@ -1,16 +1,16 @@
 #pragma once
 
-#include "Scene/ScriptableEntity.h"
+#include <Matcha.h>
 
-namespace Matcha
+namespace MatchaEditor
 {
 // Free-fly movement (WASD + Space/Ctrl) and mouse-look (held right mouse button), relative to the
 // camera entity's own orientation - not tied to any particular scene, so usable as a default
 // controller for any camera entity, editor-created ones included.
-class CameraController : public ScriptableEntity
+class CameraController
 {
-protected:
-    void OnUpdate() override;
+public:
+    void Update(EngineContext& context, Transform& cameraTransform);
 
 private:
     // Accumulated separately (degrees) and rebuilt into the camera's rotation from scratch each
@@ -21,4 +21,4 @@ private:
     float m_Yaw = 0.0f;
     float m_Pitch = 0.0f;
 };
-}  // namespace Matcha
+}  // namespace MatchaEditor

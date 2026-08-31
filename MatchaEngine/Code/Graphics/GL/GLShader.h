@@ -20,6 +20,9 @@ public:
         const std::initializer_list<std::string>& paths);
     ~GLShader() override;
 
+    GLShader(const GLShader&) = delete;
+    GLShader& operator=(const GLShader&) = delete;
+
     void Bind() const override;
     void Unbind() const override;
 

@@ -4,4 +4,8 @@ target_sources(${TARGET_NAME} PRIVATE
     Editor.cpp
     Editor.h
     EditorMainWindow.cpp
-    EditorMainWindow.h)
+    EditorMainWindow.h
+    EditorCamera.cpp
+    EditorCamera.h
+    CameraController.cpp
+    CameraController.h)

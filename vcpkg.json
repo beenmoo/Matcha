@@ -31,6 +31,10 @@
                 "opengl",
                 "png"
             ]
+        },
+        {
+            "name": "pybind11",
+            "default-features": false
         }
     ]
 }

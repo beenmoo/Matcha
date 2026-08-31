@@ -6,17 +6,19 @@ namespace Matcha
 {
 namespace
 {
-RendererAPI::API s_API = RendererAPI::API::OpenGL;
+RendererAPI* s_ActiveRendererAPI = nullptr;
 }
 
-RendererAPI::API GetRendererAPI()
+RendererAPI& GetActiveRendererAPI()
 {
-    return s_API;
+    MT_ASSERT(s_ActiveRendererAPI, "No RendererAPI is currently active - SetActiveRendererAPI() must be called first!");
+
+    return *s_ActiveRendererAPI;
 }
 
-void SetRendererAPI(RendererAPI::API api)
+void SetActiveRendererAPI(RendererAPI& api)
 {
-    s_API = api;
+    s_ActiveRendererAPI = &api;
 }
 
 std::unique_ptr<RendererAPI> RendererAPI::Create(API api)
@@ -33,5 +35,23 @@ std::unique_ptr<RendererAPI> RendererAPI::Create(API api)
     }
 
     return nullptr;
+}
+
+std::string RendererAPI::ToString(API api)
+{
+    switch (api)
+    {
+    case API::None:
+        return "None";
+    case API::OpenGL:
+        return "OpenGL";
+    case API::Vulkan:
+        return "Vulkan";
+    case API::DirectX12:
+        return "DirectX12";
+    }
+
+    MT_ASSERT(false, "Unknown RendererAPI!");
+    return "Unknown";
 }
 }  // namespace Matcha

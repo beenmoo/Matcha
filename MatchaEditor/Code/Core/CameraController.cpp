@@ -1,21 +1,12 @@
 #include "CameraController.h"
-#include "Core/EngineContext.h"
-#include "Core/Input.h"
-#include "Core/KeyCodes.h"
-#include "Core/Time.h"
-#include "Math/Quaternion.h"
-#include "Math/Transform.h"
-#include "Math/Vector.h"
-#include "Scene/Component/TransformComponent.h"
 
 #include <algorithm>
 
-namespace Matcha
+namespace MatchaEditor
 {
-void CameraController::OnUpdate()
+void CameraController::Update(EngineContext& context, Transform& cameraTransform)
 {
-    Input& input = GetContext().GetInput();
-    Transform& cameraTransform = GetComponent<TransformComponent>().transform;
+    Input& input = context.GetInput();
 
     // Look: only while holding the right mouse button. Lock/hide the cursor for the duration so
     // it can't run out of window to move in - SetCursorLockState hides it and, on Qt, warps it
@@ -61,6 +52,6 @@ void CameraController::OnUpdate()
         movement -= Vector3(0.0f, 1.0f, 0.0f);
 
     if (movement != Vector3(0.0f))
-        cameraTransform.Translate(Normalize(movement) * moveSpeed * GetContext().GetTime().GetDeltaTime());
+        cameraTransform.Translate(Normalize(movement) * moveSpeed * context.GetTime().GetDeltaTime());
 }
-}  // namespace Matcha
+}  // namespace MatchaEditor

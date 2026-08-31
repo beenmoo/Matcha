@@ -14,6 +14,9 @@ public:
     GLVertexArray();
     ~GLVertexArray() override;
 
+    GLVertexArray(const GLVertexArray&) = delete;
+    GLVertexArray& operator=(const GLVertexArray&) = delete;
+
     void Bind() const override;
     void Unbind() const override;
 

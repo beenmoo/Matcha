@@ -34,10 +34,13 @@ struct ApplicationCommandLineArgs
 
 struct ApplicationSpecification
 {
-    std::string m_Title = "Application";
-    std::string m_WorkingDirectory;
-    ApplicationCommandLineArgs m_CommandLineArgs;
-    WindowBackend m_WindowBackend = WindowBackend::SDL;
+    std::string title = "Application";
+    std::string workingDirectory;
+    ApplicationCommandLineArgs commandLineArgs;
+    WindowBackend windowBackend = WindowBackend::SDL;
+    RendererAPI::API rendererAPI = GetDefaultRendererAPI();
+
+    [[nodiscard]] RendererAPI::API GetDefaultRendererAPI() const;
 };
 
 class Application
@@ -47,7 +50,7 @@ public:
     using ApplicationSpecification = Matcha::ApplicationSpecification;
 
 public:
-    Application(const ApplicationSpecification& spec = ApplicationSpecification());
+    explicit Application(const ApplicationSpecification& spec = ApplicationSpecification());
     virtual ~Application();
 
     // Blocking loop: while (m_IsRunning) Tick(); - what SDL-backed apps (Sandbox, an SDL-mode
@@ -69,6 +72,15 @@ protected:
     virtual void OnUpdate();
     virtual void OnRender();
     virtual void OnEvent(const Event& event);
+
+    // Called once per frame from Render(), after the Transform/Camera/Light systems and before
+    // OnRender(). Default draws from the scene's own primary CameraComponent entity, via
+    // RenderSystem::Update() - override to draw from a different source instead (e.g. MatchaEditor's
+    // standalone, non-Scene EditorCamera). Deliberately not folded into RegisterSystems()/
+    // m_RenderSystems: that's populated from Application's own constructor, where a virtual call
+    // can never resolve to a derived override (the derived vtable isn't installed yet) - this is
+    // called from Render(), well after construction, where virtual dispatch works normally.
+    virtual void RenderCamera();
 
 private:
     void Update();

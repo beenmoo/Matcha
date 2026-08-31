@@ -9,8 +9,11 @@ namespace Matcha
 class GLFrameBuffer final : public FrameBuffer
 {
 public:
-    GLFrameBuffer(const FrameBufferSpecification& spec);
+    explicit GLFrameBuffer(const FrameBufferSpecification& spec);
     ~GLFrameBuffer() override;
+
+    GLFrameBuffer(const GLFrameBuffer&) = delete;
+    GLFrameBuffer& operator=(const GLFrameBuffer&) = delete;
 
     void Bind() const override;
     void Unbind() const override;

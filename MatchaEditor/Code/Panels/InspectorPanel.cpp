@@ -264,7 +264,6 @@ void InspectorPanel::ShowAddComponentMenu(QPushButton* anchor)
 
 void InspectorPanel::RegisterScripts()
 {
-    RegisterScript<CameraController>("Camera Controller");
 }
 
 template <typename Script>
@@ -318,7 +317,7 @@ void InspectorPanel::AddVec3Field(ComponentBoxWidget* box, const QString& label,
 
 template <typename Component>
 void InspectorPanel::AddStringField(ComponentBoxWidget* box, const QString& label, const QString& initialValue,
-                                    std::string Component::*member)
+                                    std::string Component::* member)
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
@@ -338,7 +337,7 @@ void InspectorPanel::AddStringField(ComponentBoxWidget* box, const QString& labe
 
 template <typename Component>
 void InspectorPanel::AddBoolField(ComponentBoxWidget* box, const QString& label, bool initialValue,
-                                  bool Component::*member)
+                                  bool Component::* member)
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
@@ -355,7 +354,7 @@ void InspectorPanel::AddBoolField(ComponentBoxWidget* box, const QString& label,
 
 template <typename Component>
 void InspectorPanel::AddFloatField(ComponentBoxWidget* box, const QString& label, float initialValue,
-                                   float Component::*member)
+                                   float Component::* member)
 {
     // Unlike AddStringField/AddBoolField above (TagComponent's name/active, which the Scene
     // Hierarchy tree displays), none of these numeric fields are reflected anywhere outside the
@@ -375,7 +374,7 @@ void InspectorPanel::AddFloatField(ComponentBoxWidget* box, const QString& label
 
 template <typename Component>
 void InspectorPanel::AddVec3Field(ComponentBoxWidget* box, const QString& label, const Vector3& initialValue,
-                                  Vector3 Component::*member)
+                                  Vector3 Component::* member)
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
@@ -391,7 +390,7 @@ void InspectorPanel::AddVec3Field(ComponentBoxWidget* box, const QString& label,
 
 template <typename Component>
 void InspectorPanel::AddVec4Field(ComponentBoxWidget* box, const QString& label, const Vector4& initialValue,
-                                  Vector4 Component::*member)
+                                  Vector4 Component::* member)
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
@@ -407,7 +406,7 @@ void InspectorPanel::AddVec4Field(ComponentBoxWidget* box, const QString& label,
 
 template <typename Component, typename Enum>
 void InspectorPanel::AddEnumField(ComponentBoxWidget* box, const QString& label, const QStringList& options,
-                                  Enum initialValue, Enum Component::*member)
+                                  Enum initialValue, Enum Component::* member)
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
