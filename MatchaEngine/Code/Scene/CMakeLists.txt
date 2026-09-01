@@ -11,6 +11,10 @@ target_sources(${TARGET_NAME} PRIVATE
     Component/TagComponent.h
     Scene.cpp
     Scene.h
+    SceneManager.cpp
+    SceneManager.h
+    SceneSerializer.cpp
+    SceneSerializer.h
     System/CameraSystem.cpp
     System/CameraSystem.h
     System/RenderSystem.cpp

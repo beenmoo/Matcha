@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <string>
 #include <string_view>
-#include <initializer_list>
+#include <span>
 #include <utility>
 #include <expected>
 #include <glad/glad.h>
@@ -15,9 +15,7 @@ namespace Matcha
 class GLShader final : public Shader
 {
 public:
-    GLShader(
-        std::string_view name,
-        const std::initializer_list<std::string>& paths);
+    GLShader(std::string_view name, std::span<const std::string> paths);
     ~GLShader() override;
 
     GLShader(const GLShader&) = delete;

@@ -35,8 +35,7 @@ entt::entity VariantToHandle(const QVariant& variant)
 
 SceneHierarchyWidget::SceneHierarchyWidget(EngineContext& context, QWidget* parent)
     : QTreeWidget(parent),
-      m_Context(context),
-      m_Scene(context.GetScene())
+      m_Context(context)
 {
     setHeaderHidden(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -49,17 +48,25 @@ SceneHierarchyWidget::SceneHierarchyWidget(EngineContext& context, QWidget* pare
     // rebuilding the tree around the same still-selected set doesn't spuriously renotify.
     connect(this, &QTreeWidget::itemSelectionChanged, this, [this] { emit SelectionChanged(GetSelectedEntities()); });
 
-    m_Scene.AddOnSceneChanged([this] { Refresh(); });
+    // Re-subscribes to whatever Scene is current whenever SceneManager swaps it out (New/Open) -
+    // a swapped-out Scene's own AddOnSceneChanged subscriber list is destroyed along with it.
+    context.GetSceneManager().AddOnSceneReplaced([this] { BindScene(); });
+    BindScene();
+}
 
+void SceneHierarchyWidget::BindScene()
+{
+    m_Context.GetScene().AddOnSceneChanged([this] { Refresh(); });
     Refresh();
 }
 
 std::vector<Entity> SceneHierarchyWidget::GetSelectedEntities() const
 {
+    Scene& scene = m_Context.GetScene();
     std::vector<Entity> entities;
 
     for (QTreeWidgetItem* item : selectedItems())
-        entities.emplace_back(VariantToHandle(item->data(0, Qt::UserRole)), &m_Scene);
+        entities.emplace_back(VariantToHandle(item->data(0, Qt::UserRole)), &scene);
 
     return entities;
 }
@@ -77,7 +84,7 @@ void SceneHierarchyWidget::Refresh()
     clear();
     m_ItemsByHandle.clear();
 
-    for (Entity root : m_Scene.GetRootEntities())
+    for (Entity root : m_Context.GetScene().GetRootEntities())
         AddEntityItem(nullptr, root.GetHandle());
 
     for (quint32 handle : previouslySelected)
@@ -87,7 +94,7 @@ void SceneHierarchyWidget::Refresh()
 
 void SceneHierarchyWidget::AddEntityItem(QTreeWidgetItem* parentItem, entt::entity handle)
 {
-    Entity entity(handle, &m_Scene);
+    Entity entity(handle, &m_Context.GetScene());
 
     QString label = entity.HasComponent<TagComponent>() ? QString::fromStdString(entity.GetComponent<TagComponent>().name) : "Entity";
 
@@ -124,13 +131,16 @@ Entity SceneHierarchyWidget::CreateCubeEntity()
         m_CubeShader = resourceManager.CreateShader(
             "StandardMesh", {"Assets/Shaders/StandardMesh.vert", "Assets/Shaders/StandardMesh.frag"});
 
+        // "Cube" tags this handle as a regeneratable primitive - see ResourceManager::CreateMesh
+        // and SceneSerializer, which needs to be able to rebuild this exact geometry from scratch
+        // on scene load rather than saving/resolving a source file that doesn't exist for it.
         CubePrimitive cubePrimitive;
         m_CubeMesh = resourceManager.CreateMesh(cubePrimitive.vertices,
                                                 {ShaderDataType::Float3, ShaderDataType::Float3, ShaderDataType::Float2},
-                                                cubePrimitive.indices);
+                                                cubePrimitive.indices, "Cube");
     }
 
-    Entity entity = m_Scene.CreateEntity("Cube");
+    Entity entity = m_Context.GetScene().CreateEntity("Cube");
     entity.AddComponent<MeshComponent>().mesh = m_CubeMesh;
 
     MaterialComponent& material = entity.AddComponent<MaterialComponent>();
@@ -142,7 +152,7 @@ Entity SceneHierarchyWidget::CreateCubeEntity()
 
 Entity SceneHierarchyWidget::CreateCameraEntity()
 {
-    Entity entity = m_Scene.CreateEntity("Camera");
+    Entity entity = m_Context.GetScene().CreateEntity("Camera");
     entity.AddComponent<CameraComponent>().aspectRatio = m_Context.GetWindow().GetAspectRatio();
 
     return entity;
@@ -150,7 +160,7 @@ Entity SceneHierarchyWidget::CreateCameraEntity()
 
 Entity SceneHierarchyWidget::CreateLightEntity()
 {
-    Entity entity = m_Scene.CreateEntity("Light");
+    Entity entity = m_Context.GetScene().CreateEntity("Light");
     entity.AddComponent<LightComponent>();
 
     return entity;
@@ -158,6 +168,11 @@ Entity SceneHierarchyWidget::CreateLightEntity()
 
 void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 {
+    // Fetched once, reused for the rest of this synchronous call - safe since nothing here swaps
+    // the scene itself (only SceneManager::NewScene()/OpenScene() do, from a menu action), unlike
+    // a member cache that could outlive an actual swap.
+    Scene& scene = m_Context.GetScene();
+
     QTreeWidgetItem* item = itemAt(pos);
     QList<QTreeWidgetItem*> selected = selectedItems();
 
@@ -180,9 +195,9 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
         // - including `item` - so it can't be touched again afterward.
         entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
 
-        Entity created = m_Scene.CreateEntity("Entity");
+        Entity created = scene.CreateEntity("Entity");
         if (parentHandle != entt::null)
-            SetParent(created, Entity(parentHandle, &m_Scene));
+            SetParent(created, Entity(parentHandle, &scene));
     }
     else if (chosen == createCubeAction)
     {
@@ -192,7 +207,7 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 
         Entity created = CreateCubeEntity();
         if (parentHandle != entt::null)
-            SetParent(created, Entity(parentHandle, &m_Scene));
+            SetParent(created, Entity(parentHandle, &scene));
     }
     else if (chosen == createCameraAction)
     {
@@ -202,7 +217,7 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 
         Entity created = CreateCameraEntity();
         if (parentHandle != entt::null)
-            SetParent(created, Entity(parentHandle, &m_Scene));
+            SetParent(created, Entity(parentHandle, &scene));
     }
     else if (chosen == createLightAction)
     {
@@ -212,7 +227,7 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 
         Entity created = CreateLightEntity();
         if (parentHandle != entt::null)
-            SetParent(created, Entity(parentHandle, &m_Scene));
+            SetParent(created, Entity(parentHandle, &scene));
     }
     else if (chosen == deleteAction)
     {
@@ -226,7 +241,7 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 
         for (entt::entity handle : handles)
         {
-            Entity entity(handle, &m_Scene);
+            Entity entity(handle, &scene);
             if (!entity.IsValid())
                 continue;  // already gone - destroyed below as part of a selected ancestor's subtree
 
@@ -248,7 +263,7 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
             }
 
             if (!hasSelectedAncestor)
-                DestroyEntityRecursive(m_Scene, entity);
+                DestroyEntityRecursive(scene, entity);
         }
     }
     else if (chosen == renameAction)
@@ -275,7 +290,7 @@ void SceneHierarchyWidget::RenameItem(QTreeWidgetItem* item, int column)
     if (column != 0)
         return;
 
-    Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Scene);
+    Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Context.GetScene());
     if (entity.IsValid() && entity.HasComponent<TagComponent>())
         entity.GetComponent<TagComponent>().name = item->text(0).toStdString();
 }

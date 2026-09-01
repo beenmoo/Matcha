@@ -4,10 +4,11 @@
 #include "Math/Vector.h"
 
 #include <cstdint>
-#include <initializer_list>
 #include <memory>
+#include <span>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace Matcha
 {
@@ -29,6 +30,20 @@ public:
 
     [[nodiscard]] virtual uint32_t GetHandle() const = 0;
 
-    [[nodiscard]] static std::unique_ptr<Shader> Create(std::string_view name, const std::initializer_list<std::string>& paths);
+    [[nodiscard]] const std::vector<std::string>& GetPaths() const
+    {
+        return m_Paths;
+    }
+
+    [[nodiscard]] static std::unique_ptr<Shader> Create(std::string_view name, std::span<const std::string> paths);
+
+protected:
+    void SetPaths(std::vector<std::string> paths)
+    {
+        m_Paths = std::move(paths);
+    }
+
+private:
+    std::vector<std::string> m_Paths;
 };
 }  // namespace Matcha

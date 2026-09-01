@@ -9,9 +9,7 @@
 
 namespace Matcha
 {
-GLShader::GLShader(
-    std::string_view name,
-    const std::initializer_list<std::string>& paths)
+GLShader::GLShader(std::string_view name, std::span<const std::string> paths)
     : m_Handle(glCreateProgram())
 {
     for (const auto& p : paths)
@@ -23,6 +21,12 @@ GLShader::GLShader(
             return;
         }
     }
+
+    // Every source file parsed successfully - same "only report a path once it's confirmed
+    // loaded" reasoning as GLTexture::LoadTextureFromFile. Separate from CreateProgram() below
+    // (GL link step) succeeding or not: these are still genuinely this shader's source files
+    // even if linking then fails.
+    SetPaths(std::vector<std::string>(paths.begin(), paths.end()));
 
     if (auto result = CreateProgram(m_Sources, m_Handle); !result)
         MT_CORE_ERROR("Failed to create shader: {0}", result.error());

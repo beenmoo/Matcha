@@ -19,6 +19,7 @@ add_executable(${TARGET_NAME}
     Code/QuaternionTests.cpp
     Code/RendererTests.cpp
     Code/SceneTests.cpp
+    Code/SceneSerializerTests.cpp
     Code/TransformSystemTests.cpp
     Code/TransformTests.cpp
     Code/VectorTests.cpp)

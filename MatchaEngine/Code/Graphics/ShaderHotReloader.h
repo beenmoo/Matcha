@@ -3,8 +3,8 @@
 #include "Utility/FileWatcher.h"
 
 #include <cstdint>
-#include <initializer_list>
 #include <mutex>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -20,8 +20,12 @@ public:
     ShaderHotReloader();
 
     // Starts watching every path in `paths` on `shaderID`'s behalf - call once, at the shader's
-    // creation.
-    void Watch(uint32_t shaderID, const std::initializer_list<std::string>& paths);
+    // creation. std::span rather than std::initializer_list so this accepts either a compile-time
+    // {"a", "b"} list or a runtime-sized std::vector (e.g. from SceneSerializer, deserializing an
+    // arbitrary number of shader stages) - every caller already has an already-typed, named
+    // container by the time it reaches here, never a raw brace-literal argument, so span's
+    // range constructor covers both without needing two overloads.
+    void Watch(uint32_t shaderID, std::span<const std::string> paths);
 
     // Stops tracking `shaderID` - call when the shader itself is destroyed.
     void Forget(uint32_t shaderID);

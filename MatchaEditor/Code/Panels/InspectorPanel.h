@@ -27,13 +27,23 @@ class InspectorPanel : public ads::CDockWidget
 {
     Q_OBJECT
 public:
-    explicit InspectorPanel(ads::CDockManager* dockManager, Scene& scene, QWidget* parent = nullptr);
+    explicit InspectorPanel(ads::CDockManager* dockManager, EngineContext& context, QWidget* parent = nullptr);
 
     void SetSelectedEntities(std::vector<Entity> entities);
 
 private:
     void Refresh();
     void OnSceneChanged();
+
+    // Subscribes to the *current* Scene's AddOnSceneChanged - called both at construction and
+    // every time SceneManager::AddOnSceneReplaced fires, since a swapped-out Scene destroys its
+    // own subscriber list along with it.
+    void BindScene();
+
+    // The scene itself (not just its content) was replaced - every currently-selected entity
+    // belongs to a Scene that no longer exists, so there's nothing to prune, just drop the
+    // selection outright and rebind to whatever Scene is current now.
+    void OnSceneReplaced();
 
     // Pushes every registered field's current entity value into its widget (skipping any field
     // currently focused, so it doesn't clobber an in-progress edit) - called on a timer so values
@@ -104,7 +114,7 @@ private:
         std::function<void(Entity)> bind;
     };
 
-    Scene& m_Scene;
+    EngineContext& m_Context;
     std::vector<Entity> m_SelectedEntities;
     std::vector<ComponentInspectorEntry> m_ComponentInspectors;
     std::vector<ScriptInspectorEntry> m_ScriptInspectors;

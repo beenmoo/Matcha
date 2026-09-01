@@ -10,6 +10,11 @@ namespace ads
 class CDockWidget;
 }  // namespace ads
 
+namespace Matcha
+{
+class EngineContext;
+}  // namespace Matcha
+
 namespace MatchaEditor
 {
 // Owns the editor's top-level menu bar structure (File/Edit/View, and View's Panels submenu).
@@ -21,7 +26,7 @@ namespace MatchaEditor
 class MenuChrome
 {
 public:
-    explicit MenuChrome(QMainWindow* mainWindow);
+    explicit MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context);
 
     QMenuBar* GetMenuBar() const { return m_MenuBar; }
     QMenu* GetFileMenu() const { return m_FileMenu; }

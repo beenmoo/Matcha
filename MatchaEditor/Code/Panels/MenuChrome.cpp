@@ -1,18 +1,23 @@
 #include "MenuChrome.h"
 
+#include <Matcha.h>
+
 #include <DockWidget.h>
 
 namespace MatchaEditor
 {
-MenuChrome::MenuChrome(QMainWindow* mainWindow)
+MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context)
 {
     m_MenuBar = new QMenuBar(mainWindow);
 
     m_FileMenu = m_MenuBar->addMenu("File");
-    // Disabled rather than silently doing nothing when clicked - no scene serialization exists
-    // yet to back these. Flip setEnabled(true) and connect() once it does; nothing else about
-    // this menu needs to change.
-    m_FileMenu->addAction("New Scene")->setEnabled(false);
+    // New Scene needs no file I/O, so it's real - SceneManager::NewScene() is fully implemented.
+    // Open/Save/Save As stay disabled rather than silently doing nothing when clicked: they're
+    // stubs in SceneManager until SceneSerializer exists. Flip setEnabled(true) once it does;
+    // nothing else about this menu needs to change.
+    QAction* newSceneAction = m_FileMenu->addAction("New Scene");
+    QObject::connect(newSceneAction, &QAction::triggered, mainWindow,
+                      [&context] { context.GetSceneManager().NewScene(); });
     m_FileMenu->addAction("Open Scene...")->setEnabled(false);
     m_FileMenu->addAction("Save Scene")->setEnabled(false);
     m_FileMenu->addAction("Save Scene As...")->setEnabled(false);

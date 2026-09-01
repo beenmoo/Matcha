@@ -3,6 +3,7 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/ResourceManager.h"
 #include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
 
 #include <type_traits>
 
@@ -23,7 +24,7 @@ public:
                            Window& window,
                            Renderer& renderer,
                            ResourceManager& resourceManager,
-                           Scene& scene);
+                           SceneManager& sceneManager);
 
     template <typename Self>
     [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Application&, Application&> GetApplication(this Self& self)
@@ -61,10 +62,19 @@ public:
         return self.m_ResourceManager;
     }
 
+    // Delegates to m_SceneManager rather than holding its own Scene& - the Scene it returns can
+    // be swapped out from under any caller that holds onto it (SceneManager::NewScene()/
+    // OpenScene()), so this must re-fetch the live one every call rather than caching it here.
     template <typename Self>
     [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Scene&, Scene&> GetScene(this Self& self)
     {
-        return self.m_Scene;
+        return self.m_SceneManager.GetScene();
+    }
+
+    template <typename Self>
+    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const SceneManager&, SceneManager&> GetSceneManager(this Self& self)
+    {
+        return self.m_SceneManager;
     }
 
 private:
@@ -74,6 +84,6 @@ private:
     Window& m_Window;
     Renderer& m_Renderer;
     ResourceManager& m_ResourceManager;
-    Scene& m_Scene;
+    SceneManager& m_SceneManager;
 };
 }  // namespace Matcha

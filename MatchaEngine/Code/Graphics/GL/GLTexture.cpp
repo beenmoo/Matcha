@@ -62,11 +62,6 @@ uint32_t GLTexture::GetHeight() const
     return m_Height;
 }
 
-const std::string& GLTexture::GetPath() const
-{
-    return m_Path;
-}
-
 void GLTexture::LoadTextureFromFile(std::string_view path)
 {
     stbi_set_flip_vertically_on_load(1);
@@ -80,7 +75,7 @@ void GLTexture::LoadTextureFromFile(std::string_view path)
         return;
     }
 
-    m_Path = path;
+    SetPath(path);
     m_Width = width;
     m_Height = height;
 

@@ -9,7 +9,6 @@
 
 namespace Matcha
 {
-class Scene;
 class Entity;
 }  // namespace Matcha
 
@@ -34,6 +33,10 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
 
 private:
+    // (Re)subscribes to the *current* Scene's AddOnSceneChanged and refreshes - called both at
+    // construction and every time SceneManager::AddOnSceneReplaced fires, since a swapped-out
+    // Scene destroys its own subscriber list along with it.
+    void BindScene();
     void Refresh();
     void AddEntityItem(QTreeWidgetItem* parentItem, entt::entity handle);
     void ShowContextMenu(const QPoint& pos);
@@ -49,7 +52,6 @@ private:
 
 private:
     EngineContext& m_Context;
-    Scene& m_Scene;
 
     ShaderHandle m_CubeShader;
     MeshHandle m_CubeMesh;

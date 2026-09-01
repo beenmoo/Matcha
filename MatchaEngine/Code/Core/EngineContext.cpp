@@ -12,14 +12,14 @@ EngineContext::EngineContext(Application& application,
                              Window& window,
                              Renderer& renderer,
                              ResourceManager& resourceManager,
-                             Scene& scene)
+                             SceneManager& sceneManager)
     : m_Application(application),
       m_Input(input),
       m_Time(time),
       m_Window(window),
       m_Renderer(renderer),
       m_ResourceManager(resourceManager),
-      m_Scene(scene)
+      m_SceneManager(sceneManager)
 {
 }
 }  // namespace Matcha

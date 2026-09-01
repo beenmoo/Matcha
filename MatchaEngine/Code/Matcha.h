@@ -35,6 +35,8 @@
 #include "Scene/Entity.h"
 #include "Scene/ScriptableEntity.h"
 #include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
+#include "Scene/SceneSerializer.h"
 #include "Scene/Component/CameraComponent.h"
 #include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Component/LightComponent.h"

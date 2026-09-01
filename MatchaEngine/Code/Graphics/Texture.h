@@ -18,9 +18,21 @@ public:
 
     [[nodiscard]] virtual uint32_t GetWidth() const = 0;
     [[nodiscard]] virtual uint32_t GetHeight() const = 0;
-    [[nodiscard]] virtual const std::string& GetPath() const = 0;
+    [[nodiscard]] const std::string& GetPath() const
+    {
+        return m_Path;
+    }
 
     [[nodiscard]] static std::unique_ptr<Texture> Create(uint32_t width, uint32_t height);
     [[nodiscard]] static std::unique_ptr<Texture> Create(std::string_view path);
+
+protected:
+    void SetPath(std::string_view path)
+    {
+        m_Path = path;
+    }
+
+private:
+    std::string m_Path;
 };
 }  // namespace Matcha

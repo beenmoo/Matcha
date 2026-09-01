@@ -48,7 +48,7 @@ std::unique_ptr<Texture> GLRendererAPI::CreateTexture(std::string_view path)
     return std::make_unique<GLTexture>(path);
 }
 
-std::unique_ptr<Shader> GLRendererAPI::CreateShader(std::string_view name, const std::initializer_list<std::string>& paths)
+std::unique_ptr<Shader> GLRendererAPI::CreateShader(std::string_view name, std::span<const std::string> paths)
 {
     return std::make_unique<GLShader>(name, paths);
 }

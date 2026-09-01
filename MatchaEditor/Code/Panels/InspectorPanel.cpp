@@ -59,9 +59,9 @@ QLabel* CreateSectionLabel(const QString& text, QWidget* parent)
 }
 }  // namespace
 
-InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, Scene& scene, QWidget* parent)
+InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, EngineContext& context, QWidget* parent)
     : ads::CDockWidget(dockManager, "Inspector Panel", parent),
-      m_Scene(scene)
+      m_Context(context)
 {
     setObjectName("InspectorPanel");
 
@@ -80,7 +80,8 @@ InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, Scene& scene, QWi
     RegisterComponentInspectors();
     RegisterScripts();
 
-    m_Scene.AddOnSceneChanged([this] { OnSceneChanged(); });
+    m_Context.GetSceneManager().AddOnSceneReplaced([this] { OnSceneReplaced(); });
+    BindScene();
 
     // Matches the editor's own render-tick cadence (see Editor::m_TickTimer) - frequent enough
     // that a script-driven value (e.g. CameraController moving the camera) visibly updates in
@@ -88,6 +89,18 @@ InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, Scene& scene, QWi
     m_SyncTimer = new QTimer(this);
     connect(m_SyncTimer, &QTimer::timeout, this, &InspectorPanel::SyncLiveValues);
     m_SyncTimer->start(16);
+}
+
+void InspectorPanel::BindScene()
+{
+    m_Context.GetScene().AddOnSceneChanged([this] { OnSceneChanged(); });
+}
+
+void InspectorPanel::OnSceneReplaced()
+{
+    m_SelectedEntities.clear();
+    BindScene();
+    Refresh();
 }
 void InspectorPanel::SetSelectedEntities(std::vector<Entity> entities)
 {
@@ -349,7 +362,7 @@ void InspectorPanel::AddStringField(ComponentBoxWidget* box, const QString& labe
         std::string stdValue = value.toStdString();
         for (Entity entity : entities)
             entity.GetComponent<Component>().*member = stdValue;
-        m_Scene.NotifyChanged();
+        m_Context.GetScene().NotifyChanged();
     });
     box->SetContent(field);
 
@@ -368,7 +381,7 @@ void InspectorPanel::AddBoolField(ComponentBoxWidget* box, const QString& label,
     connect(field, &BoolFieldWidget::ValueChanged, this, [this, entities, member](bool value) {
         for (Entity entity : entities)
             entity.GetComponent<Component>().*member = value;
-        m_Scene.NotifyChanged();
+        m_Context.GetScene().NotifyChanged();
     });
     box->SetContent(field);
 
@@ -381,7 +394,7 @@ void InspectorPanel::AddFloatField(ComponentBoxWidget* box, const QString& label
 {
     // Unlike AddStringField/AddBoolField above (TagComponent's name/active, which the Scene
     // Hierarchy tree displays), none of these numeric fields are reflected anywhere outside the
-    // Inspector, so editing them doesn't call m_Scene.NotifyChanged() - same reasoning as
+    // Inspector, so editing them doesn't call Scene::NotifyChanged() - same reasoning as
     // AddVec3Field's TransformComponent fields.
     std::vector<Entity> entities = m_SelectedEntities;
 

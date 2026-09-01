@@ -9,7 +9,7 @@ ShaderHotReloader::ShaderHotReloader()
     m_FileWatcher.Watch();
 }
 
-void ShaderHotReloader::Watch(uint32_t shaderID, const std::initializer_list<std::string>& paths)
+void ShaderHotReloader::Watch(uint32_t shaderID, std::span<const std::string> paths)
 {
     for (const auto& path : paths)
     {

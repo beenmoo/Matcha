@@ -93,7 +93,7 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     m_DockManager->setStyleSheet(m_DockManager->styleSheet() + CompactDockChromeStyleSheet());
     setCentralWidget(m_DockManager);
 
-    MenuChrome menuChrome(this);
+    MenuChrome menuChrome(this, context);
 
     // Built left-to-right by passing each previous call's returned CDockAreaWidget as the next
     // one's placement target, so Scene Hierarchy/Viewport/Inspector land in that explicit order
@@ -107,7 +107,7 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     ads::CDockAreaWidget* viewportArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, viewportPanel, sceneHierarchyArea);
     menuChrome.AddPanel(viewportPanel);
 
-    InspectorPanel* inspectorPanel = new InspectorPanel(m_DockManager, context.GetScene(), this);
+    InspectorPanel* inspectorPanel = new InspectorPanel(m_DockManager, context, this);
     ads::CDockAreaWidget* inspectorArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, inspectorPanel, viewportArea);
     menuChrome.AddPanel(inspectorPanel);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);

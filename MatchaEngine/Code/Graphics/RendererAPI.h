@@ -8,8 +8,8 @@
 #include "VertexArray.h"
 
 #include <cstdint>
-#include <initializer_list>
 #include <memory>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -43,7 +43,7 @@ public:
     // touching every resource type.
     [[nodiscard]] virtual std::unique_ptr<Texture> CreateTexture(uint32_t width, uint32_t height) = 0;
     [[nodiscard]] virtual std::unique_ptr<Texture> CreateTexture(std::string_view path) = 0;
-    [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(std::string_view name, const std::initializer_list<std::string>& paths) = 0;
+    [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(std::string_view name, std::span<const std::string> paths) = 0;
     [[nodiscard]] virtual std::unique_ptr<VertexArray> CreateVertexArray() = 0;
     [[nodiscard]] virtual std::shared_ptr<IndexBuffer> CreateIndexBuffer(const uint32_t* indices, uint32_t count) = 0;
     [[nodiscard]] virtual std::shared_ptr<VertexBuffer> CreateVertexBuffer(const float* vertices, uint32_t sizeInBytes) = 0;

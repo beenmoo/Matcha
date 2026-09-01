@@ -9,7 +9,7 @@
 #include "Graphics/Renderer.h"
 #include "Graphics/RendererAPI.h"
 #include "Graphics/ResourceManager.h"
-#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
 
 #include <functional>
 #include <memory>
@@ -108,7 +108,7 @@ private:
     std::unique_ptr<RendererAPI> m_RendererAPI;
     ResourceManager m_ResourceManager;
     Renderer m_Renderer;
-    Scene m_Scene;
+    SceneManager m_SceneManager;
     EngineContext m_Context;
 
     // Run in registration order every Update()/Render() - see RegisterSystems().

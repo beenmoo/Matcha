@@ -25,7 +25,6 @@ public:
 
     [[nodiscard]] uint32_t GetWidth() const override;
     [[nodiscard]] uint32_t GetHeight() const override;
-    [[nodiscard]] const std::string& GetPath() const override;
 
 private:
     void LoadTextureFromFile(std::string_view path);
@@ -33,8 +32,6 @@ private:
 
 private:
     uint32_t m_Handle;
-
-    std::string m_Path;
 
     uint32_t m_Width, m_Height;
     GLenum m_InternalFormat, m_DataFormat;

@@ -18,6 +18,16 @@ ShaderHandle ResourceManager::CreateShader(std::string_view name, const std::ini
     return handle;
 }
 
+ShaderHandle ResourceManager::CreateShader(std::string_view name, const std::vector<std::string>& paths)
+{
+    ShaderHandle handle(m_NextShaderID++);
+    m_Shaders.emplace(handle.GetID(), Shader::Create(name, paths));
+
+    m_ShaderHotReloader.Watch(handle.GetID(), paths);
+
+    return handle;
+}
+
 void ResourceManager::DestroyShader(ShaderHandle handle)
 {
     m_Shaders.erase(handle.GetID());
@@ -69,7 +79,8 @@ void ResourceManager::DestroyTexture(TextureHandle handle)
 
 MeshHandle ResourceManager::CreateMesh(std::span<const float> vertices,
                                        std::initializer_list<ShaderDataType> layout,
-                                       std::span<const uint32_t> indices)
+                                       std::span<const uint32_t> indices,
+                                       std::string_view primitiveKind)
 {
     auto mesh = std::make_unique<Mesh>();
 
@@ -85,12 +96,16 @@ MeshHandle ResourceManager::CreateMesh(std::span<const float> vertices,
     MeshHandle handle(m_NextMeshID++);
     m_Meshes.emplace(handle.GetID(), std::move(mesh));
 
+    if (!primitiveKind.empty())
+        m_MeshPrimitiveKinds.emplace(handle.GetID(), primitiveKind);
+
     return handle;
 }
 
 void ResourceManager::DestroyMesh(MeshHandle handle)
 {
     m_Meshes.erase(handle.GetID());
+    m_MeshPrimitiveKinds.erase(handle.GetID());
 }
 
 Shader* ResourceManager::GetShader(ShaderHandle handle)
@@ -112,5 +127,12 @@ Mesh* ResourceManager::GetMesh(MeshHandle handle)
     auto it = m_Meshes.find(handle.GetID());
 
     return it != m_Meshes.end() ? it->second.get() : nullptr;
+}
+
+std::string ResourceManager::GetMeshPrimitiveKind(MeshHandle handle) const
+{
+    auto it = m_MeshPrimitiveKinds.find(handle.GetID());
+
+    return it != m_MeshPrimitiveKinds.end() ? it->second : std::string();
 }
 }  // namespace Matcha
