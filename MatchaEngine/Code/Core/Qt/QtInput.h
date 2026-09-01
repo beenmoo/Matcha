@@ -40,6 +40,14 @@ public:
     void PushMouseButtonDown(MouseButton button);
     void PushMouseButtonUp(MouseButton button);
 
+    // Called from QtViewportWidget::focusOutEvent() - once the widget loses keyboard focus, Qt
+    // stops delivering keyReleaseEvent() to it at all, so a key released while focus is elsewhere
+    // would otherwise be considered "held" indefinitely (see that override's own comment). Clears
+    // m_PendingKeyboardState (not m_KeyboardState directly), so this takes effect through the same
+    // ApplyPendingInput() path as every other key event, one frame later - consistent with how
+    // every other push lands.
+    void ResetKeyboard();
+
     // Copies m_Pending*State (live - Push*() writes land here the instant Qt delivers an event,
     // whenever that is) into m_KeyboardState/m_MouseButtonState (settled - only ever changes
     // here, once per frame). Called from QtWindow::PumpEvents(), which Application::Tick() invokes

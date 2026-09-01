@@ -101,6 +101,11 @@ void QtInput::PushMouseButtonUp(MouseButton button)
     m_PendingMouseButtonState[ToIndex(button)] = false;
 }
 
+void QtInput::ResetKeyboard()
+{
+    m_PendingKeyboardState.fill(false);
+}
+
 void QtInput::ApplyPendingInput()
 {
     // Qt calls PushKeyDown()/PushMouseButtonDown() etc. the instant it delivers the underlying

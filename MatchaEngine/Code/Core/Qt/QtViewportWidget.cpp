@@ -209,6 +209,19 @@ void QtViewportWidget::mouseMoveEvent(QMouseEvent* event)
     QOpenGLWidget::mouseMoveEvent(event);
 }
 
+void QtViewportWidget::focusOutEvent(QFocusEvent* event)
+{
+    // Once this widget loses keyboard focus (alt-tab, clicking another panel), Qt stops calling
+    // keyReleaseEvent() on it entirely - a key released while focus is elsewhere never reaches
+    // PushKeyUp(), so it would otherwise be considered "held" indefinitely (e.g. a stuck-moving
+    // camera). Treat losing focus as "every key is up" instead - same fix SDLInput applies via
+    // SDL_ResetKeyboard() on SDL_EVENT_WINDOW_FOCUS_LOST.
+    if (m_Input)
+        m_Input->ResetKeyboard();
+
+    QOpenGLWidget::focusOutEvent(event);
+}
+
 void QtViewportWidget::wheelEvent(QWheelEvent* event)
 {
     if (m_EventDispatch)

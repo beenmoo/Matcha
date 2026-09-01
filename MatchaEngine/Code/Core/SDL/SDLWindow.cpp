@@ -17,6 +17,8 @@ std::optional<Event> TranslateEvent(const SDL_Event& sdlEvent)
         return Event{.type = EventType::Quit};
     case SDL_EVENT_WINDOW_RESIZED:
         return Event{.type = EventType::WindowResized, .width = sdlEvent.window.data1, .height = sdlEvent.window.data2};
+    case SDL_EVENT_WINDOW_FOCUS_LOST:
+        return Event{.type = EventType::WindowFocusLost};
     case SDL_EVENT_MOUSE_MOTION:
         return Event{.type = EventType::MouseMoved, .x = sdlEvent.motion.xrel, .y = sdlEvent.motion.yrel};
     case SDL_EVENT_MOUSE_WHEEL:

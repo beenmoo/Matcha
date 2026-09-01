@@ -23,6 +23,16 @@ SDLInput::~SDLInput()
 void SDLInput::ProcessEvents(const Event& evt)
 {
     ApplyAxisEvent(evt, m_MouseData.m_MouseAxis, m_JoystickAxis, m_MouseData.m_MouseScrollDelta);
+
+    // Once this window loses focus, the OS stops delivering key-up events to it - if a key was
+    // held down (e.g. W while moving the camera) and gets released while focus is elsewhere (alt-
+    // tab, clicking another window), SDL_GetKeyboardState()'s array - which m_KeyboardState
+    // aliases directly, not a snapshot we control - never sees that release and keeps reporting
+    // the key as down indefinitely, even after this window regains focus. SDL_ResetKeyboard()
+    // forces every key back to up and synthesizes the matching key-up events, which is exactly
+    // the fix SDL itself documents for this case.
+    if (evt.type == EventType::WindowFocusLost)
+        SDL_ResetKeyboard();
 }
 
 void SDLInput::Update()
