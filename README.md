@@ -1,6 +1,6 @@
 # Matcha
 
-Matcha is a C++23 game engine built on SDL3 and OpenGL, with an ImGui-based editor ("Hazelnut") and a sandbox application for trying out engine features in isolation.
+Matcha is a C++23 game engine built on SDL3 and OpenGL, with an ImGui-based editor ("Matcha Editor") and a sandbox application for trying out engine features in isolation.
 
 ## Status
 
@@ -11,7 +11,7 @@ Early development. Core systems (windowing, input, time, logging, application li
 | Directory | Description |
 | --- | --- |
 | `MatchaEngine` | Core engine library: application/window/input lifecycle, OpenGL graphics primitives, math types. |
-| `MatchaEditor` | "Hazelnut" — the ImGui-based editor application. |
+| `MatchaEditor` | "Matcha Editor" — the ImGui-based editor application. |
 | `Sandbox` | Minimal application for testing engine features directly, including sample assets/shaders. |
 | `Tests` | Engine unit tests (GoogleTest). |
 | `Vendor` | Vendored third-party sources built in-tree (currently `glad`). |
@@ -79,4 +79,4 @@ ctest
 | --- | --- | --- |
 | `BUILD_SHARED_LIBS` | `OFF` | Build vendored/engine libraries as shared instead of static. |
 | `BUILD_TESTS` | `ON` | Build the `Tests` target. |
-| `BUILD_EDITOR` | `ON` | Build the `MatchaEditor` ("Hazelnut") target. |
+| `BUILD_EDITOR` | `ON` | Build the `MatchaEditor` ("Matcha Editor") target. |
