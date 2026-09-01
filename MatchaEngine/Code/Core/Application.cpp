@@ -163,7 +163,12 @@ void Application::InitGraphics()
     m_RendererAPI->Init();
     m_Renderer.Init();
 
-    LogContext();
+    static bool loggedContext = false;
+    if (!loggedContext)
+    {
+        LogContext();
+        loggedContext = true;
+    }
 }
 
 void Application::LogContext()
