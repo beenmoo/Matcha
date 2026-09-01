@@ -1,0 +1,3 @@
+# Hand-aligned raw vertex data tables - clang-format has no concept of the semantic
+# position/normal/texcoord grouping, so it would collapse each float back onto its own line.
+MatchaEngine/Code/Graphics/Primitives.h
