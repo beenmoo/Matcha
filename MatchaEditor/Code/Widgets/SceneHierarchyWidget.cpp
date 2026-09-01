@@ -7,12 +7,14 @@
 #include "Core/Commands/CreateEntityCommand.h"
 #include "Core/Commands/DeleteEntitiesCommand.h"
 #include "Core/Commands/RenameEntitiesCommand.h"
+#include "Core/Commands/ReparentEntitiesCommand.h"
 
 #include <Matcha.h>
 
 #include <entt/entt.hpp>
 
 #include <QAction>
+#include <QDropEvent>
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QLineEdit>
@@ -47,6 +49,10 @@ SceneHierarchyWidget::SceneHierarchyWidget(EngineContext& context, CommandManage
     setHeaderHidden(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
     setSelectionMode(QAbstractItemView::ExtendedSelection);
+    setDragDropMode(QAbstractItemView::InternalMove);
+    setDragEnabled(true);
+    setAcceptDrops(true);
+    setDropIndicatorShown(true);
 
     connect(this, &QTreeWidget::customContextMenuRequested, this, &SceneHierarchyWidget::ShowContextMenu);
     connect(this, &QTreeWidget::itemChanged, this, &SceneHierarchyWidget::RenameItem);
@@ -157,6 +163,19 @@ std::optional<UUID> SceneHierarchyWidget::ParentIdFor(QTreeWidgetItem* item) con
         return std::nullopt;
 
     return entity.GetComponent<TagComponent>().id;
+}
+
+bool SceneHierarchyWidget::IsAncestorOrSelf(Entity ancestor, Entity entity)
+{
+    while (entity.IsValid())
+    {
+        if (entity == ancestor)
+            return true;
+
+        entity = entity.HasComponent<HierarchyComponent>() ? entity.WithHandle(entity.GetComponent<HierarchyComponent>().parent) : Entity();
+    }
+
+    return false;
 }
 
 void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
@@ -293,6 +312,108 @@ void SceneHierarchyWidget::CreateEntityAtSelection()
     std::optional<UUID> parentId = ParentIdFor(selected.isEmpty() ? nullptr : selected.front());
 
     m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(m_Context, "Create Entity", "Entity", parentId));
+}
+
+void SceneHierarchyWidget::dropEvent(QDropEvent* event)
+{
+    // Only two outcomes make sense for a model with no sibling-order concept to preserve:
+    // dropping squarely onto a row re-parents under that row (OnItem); dropping in the empty area
+    // below every row detaches to the scene root (OnViewport). Dropping *between* two rows reads
+    // as a reorder request this model has no way to honor, so it's ignored - and the base
+    // QTreeWidget::dropEvent() is never called, since it would move QTreeWidgetItems directly;
+    // this tree is always rebuilt from Scene state instead (see Refresh()).
+    QAbstractItemView::DropIndicatorPosition indicatorPos = dropIndicatorPosition();
+    if (indicatorPos != QAbstractItemView::OnItem && indicatorPos != QAbstractItemView::OnViewport)
+    {
+        event->ignore();
+        return;
+    }
+
+    QTreeWidgetItem* targetItem = itemAt(event->position().toPoint());
+    std::optional<UUID> newParentId = ParentIdFor(targetItem);
+
+    Scene& scene = m_Context.GetScene();
+    Entity newParent = newParentId ? scene.FindEntityByUUID(*newParentId) : Entity();
+
+    // Selected rows are exactly the rows being dragged - selection doesn't change over the course
+    // of a drag-and-drop within the same view, so this is the same "what's selected right now"
+    // read every other action in this file already does synchronously (see DeleteSelectedEntities).
+    QList<QTreeWidgetItem*> selected = selectedItems();
+    std::vector<entt::entity> handles;
+    handles.reserve(selected.size());
+    for (QTreeWidgetItem* item : selected)
+        handles.push_back(VariantToHandle(item->data(0, Qt::UserRole)));
+
+    std::vector<ReparentEntitiesCommand::Reparent> reparents;
+    for (entt::entity handle : handles)
+    {
+        Entity entity(handle, &scene);
+        if (!entity.IsValid())
+            continue;
+
+        // Skip if a selected ancestor is also being dragged - it moves implicitly along with that
+        // ancestor, so an explicit SetParent for it would be redundant (same reasoning
+        // DeleteSelectedEntities already applies to its own subtree selections).
+        bool hasSelectedAncestor = false;
+        if (entity.HasComponent<HierarchyComponent>())
+        {
+            entt::entity ancestor = entity.GetComponent<HierarchyComponent>().parent;
+            while (ancestor != entt::null)
+            {
+                if (std::find(handles.begin(), handles.end(), ancestor) != handles.end())
+                {
+                    hasSelectedAncestor = true;
+                    break;
+                }
+                ancestor = entity.WithHandle(ancestor).GetComponent<HierarchyComponent>().parent;
+            }
+        }
+        if (hasSelectedAncestor)
+            continue;
+
+        // Dropping onto itself or one of its own descendants would create a cycle.
+        if (newParent.IsValid() && IsAncestorOrSelf(entity, newParent))
+            continue;
+
+        std::optional<UUID> currentParentId;
+        if (entity.HasComponent<HierarchyComponent>())
+        {
+            entt::entity parentHandle = entity.GetComponent<HierarchyComponent>().parent;
+            if (parentHandle != entt::null)
+                currentParentId = entity.WithHandle(parentHandle).GetComponent<TagComponent>().id;
+        }
+
+        // Already parented there - a no-op drop shouldn't push an empty undo entry.
+        if (currentParentId == newParentId)
+            continue;
+
+        reparents.push_back({entity.GetComponent<TagComponent>().id, currentParentId});
+    }
+
+    if (reparents.empty())
+    {
+        event->ignore();
+        return;
+    }
+
+    QString description = reparents.size() > 1 ? QString("Reparent %1 Entities").arg(reparents.size()) : QString("Reparent Entity");
+    m_CommandManager.ExecuteCommand(
+        std::make_unique<ReparentEntitiesCommand>(m_Context, description.toStdString(), std::move(reparents), newParentId));
+
+    // Not acceptProposedAction(): for QAbstractItemView::InternalMove, the proposed action is
+    // Qt::MoveAction, and accepting a drop with MoveAction makes QAbstractItemView::startDrag()
+    // (on the drag source side - the same widget here) run its own post-drop cleanup afterward,
+    // removing whatever QTreeWidgetItem currently sits at the dragged row's old index. That runs
+    // *after* this handler returns - by which point ExecuteCommand()'s NotifyChanged() has
+    // already triggered Refresh() and rebuilt the whole tree from scratch, so that "old index"
+    // now belongs to an unrelated freshly-created item, which Qt then deletes out from under us
+    // (the entity just correctly reparented visibly disappearing until something else happens to
+    // Refresh() again). Accepting with IgnoreAction still marks the event handled (so Qt doesn't
+    // fall back to any default behavior) without telling startDrag() a model "move" occurred, so
+    // that cleanup is skipped - correct here regardless, since this tree never lets Qt manage its
+    // own items in the first place.
+    event->setDropAction(Qt::IgnoreAction);
+    event->accept();
 }
 
 void SceneHierarchyWidget::mousePressEvent(QMouseEvent* event)

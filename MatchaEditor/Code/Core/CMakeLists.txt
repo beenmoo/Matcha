@@ -21,4 +21,6 @@ target_sources(${TARGET_NAME} PRIVATE
     Commands/RenameEntitiesCommand.cpp
     Commands/RenameEntitiesCommand.h
     Commands/PropertyEditCommand.h
+    Commands/ReparentEntitiesCommand.cpp
+    Commands/ReparentEntitiesCommand.h
 )

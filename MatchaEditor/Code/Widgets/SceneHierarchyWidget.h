@@ -35,6 +35,7 @@ signals:
 protected:
     void mousePressEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
 
 private:
     // (Re)subscribes to the *current* Scene's AddOnSceneChanged and refreshes - called both at
@@ -75,6 +76,13 @@ private:
     // resolves its parent fresh at Execute()/Redo() time, by which point the original handle may
     // have been recycled by an intervening destroy+recreate.
     std::optional<UUID> ParentIdFor(QTreeWidgetItem* item) const;
+
+    // Walks up from `entity` via HierarchyComponent::parent (same traversal shape as
+    // IsActiveInHierarchy/ParentIdFor) checking whether `ancestor` is reached - true if `entity`
+    // *is* `ancestor` too, not just a strict descendant. Used to reject a drag-and-drop reparent
+    // that would drop an entity onto itself or one of its own descendants, which would otherwise
+    // create a cycle in the hierarchy.
+    [[nodiscard]] static bool IsAncestorOrSelf(Entity ancestor, Entity entity);
 
 private:
     EngineContext& m_Context;
