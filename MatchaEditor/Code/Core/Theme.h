@@ -12,4 +12,12 @@ namespace MatchaEditor
 // dock chrome (title bars, tab bars, close/float buttons) - every widget inside a panel falls
 // back to whatever the application palette says, which is what this sets.
 void ApplyDarkTheme(QApplication& app);
+
+// Registers the bundled Inter variable font (Resources/Resources.qrc, compiled into the binary -
+// see that file's own comment for why this isn't a loose Assets/ file like Editor.qss) and makes
+// it the application default. Call this before constructing anything that could build a dock
+// widget/tab (Editor/EditorMainWindow) - ADS computes each tab's own layout from QFontMetrics of
+// the application's font at the tab's construction time, not at paint time, so setting the font
+// any later would leave tab spacing computed against whatever font was active before this ran.
+void ApplyEditorFont(QApplication& app);
 }  // namespace MatchaEditor

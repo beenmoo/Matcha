@@ -33,6 +33,11 @@ int main(int argc, char** argv)
     // the default "windowsvista" style's native theming can hit.
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
+    // Both must run before MatchaEditor::Editor (and thus EditorMainWindow, and thus any dock
+    // widget/tab) is constructed below - see ApplyEditorFont's own comment for why the font
+    // specifically can't just be applied later.
+    MatchaEditor::ApplyEditorFont(qapp);
+
     // Our own dark QPalette, not an external stylesheet library - see Theme.cpp. Qt-Advanced-
     // Docking-System (EditorMainWindow.cpp) separately ships its own dark theme for dock chrome
     // (title bars, tab bars, close/float buttons); this covers every widget inside a panel.

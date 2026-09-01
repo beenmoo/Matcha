@@ -28,7 +28,7 @@ Editor::~Editor() = default;
 
 void Editor::Show()
 {
-    m_MainWindow->show();
+    m_MainWindow->showMaximized();
 }
 
 void Editor::OnUpdate()
@@ -52,4 +52,4 @@ void Editor::RenderCamera()
 
     RenderSystem::Draw(GetContext().GetScene(), renderer);
 }
-}  // namespace Matcha
+}  // namespace MatchaEditor

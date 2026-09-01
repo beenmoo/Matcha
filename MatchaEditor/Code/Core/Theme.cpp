@@ -4,6 +4,8 @@
 #include <QApplication>
 #include <QColor>
 #include <QFile>
+#include <QFont>
+#include <QFontDatabase>
 #include <QPalette>
 #include <QTextStream>
 
@@ -78,5 +80,28 @@ void ApplyDarkTheme(QApplication& app)
     // the one widget that needs left-aligned text, ...) lives in Editor.qss instead of scattered
     // setStyleSheet() calls in each widget's own .cpp - see that file's own header comment.
     app.setStyleSheet(LoadStyleSheet());
+}
+
+void ApplyEditorFont(QApplication& app)
+{
+    int fontID = QFontDatabase::addApplicationFont(":/fonts/Inter.ttf");
+    if (fontID == -1)
+    {
+        MT_CORE_WARN("Failed to register the bundled Inter font (:/fonts/Inter.ttf) - falling back to the OS default font.");
+        return;
+    }
+
+    QStringList families = QFontDatabase::applicationFontFamilies(fontID);
+    if (families.isEmpty())
+    {
+        MT_CORE_WARN("Inter font registered but reported no font family - falling back to the OS default font.");
+        return;
+    }
+
+    QFont font = app.font();
+    font.setFamily(families.front());
+    font.setWeight(QFont::Medium);
+    font.setPointSize(8);
+    app.setFont(font);
 }
 }  // namespace MatchaEditor

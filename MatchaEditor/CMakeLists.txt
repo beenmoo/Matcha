@@ -6,6 +6,24 @@ find_package(qtadvanceddocking-qt6 CONFIG REQUIRED)
 
 add_executable(${TARGET_NAME} Code/main.cpp)
 
+# Compiled into the binary via Qt's resource system rather than a loose Assets/ file - a bundled
+# font needs to be guaranteed present for every user, not just whoever happens to have the working
+# directory set up right. Two things had to be gotten right here, both confirmed the hard way (by
+# QFontDatabase::addApplicationFont() returning -1 at runtime, not a build error):
+#  - target_sources(${TARGET_NAME} PRIVATE Resources/Resources.qrc) alone does nothing: this
+#    project never actually turns CMAKE_AUTORCC on anywhere (confirmed by grepping every
+#    CMakeLists.txt in the repo) - qt_standard_project_setup() does NOT enable it, so the .qrc was
+#    just an inert, never-compiled source.
+#  - qt_add_resources(${TARGET_NAME} Resources/Resources.qrc) - passing the target name as the
+#    first argument - ALSO silently does nothing: that's the "big resources" overload
+#    (qt_add_resources(<target> <resourceName> PREFIX <p> FILES <files>...)), which requires an
+#    explicit FILES list and just returns early without one, existing .qrc path or not. The
+#    "process this .qrc file" overload only exists on the *other* call signature, which is
+#    selected by the first argument NOT being a registered target - a plain output variable, whose
+#    generated source then has to be added to the target explicitly.
+qt_add_resources(GENERATED_QRC_SOURCES Resources/Resources.qrc)
+target_sources(${TARGET_NAME} PRIVATE ${GENERATED_QRC_SOURCES})
+
 add_subdirectory(Code/Core)
 add_subdirectory(Code/Panels)
 add_subdirectory(Code/Widgets)

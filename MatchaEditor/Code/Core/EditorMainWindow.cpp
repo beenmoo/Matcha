@@ -57,16 +57,35 @@ QIcon MakePlaceholderIcon()
 }
 
 // Qt-Advanced-Docking-System's CDockManager sets its own default stylesheet directly on itself
-// during construction (an embedded resource, src/stylesheets/default.css upstream) - it leaves
-// every tab/title-bar button icon at 16px, which is what makes tabs read as "big". Appending
-// these rules after construction shrinks just the icons: later rules win Qt's CSS cascade for
+// during construction (an embedded resource, src/stylesheets/default.css upstream). Appending
+// rules after construction overrides pieces of it: later rules win Qt's CSS cascade for
 // equal-specificity selectors, so this doesn't need to replace ADS's own sheet, just follow it.
-// The tab's left margin is a second, smaller contributor - it's computed from QFontMetrics of
-// the application's default font at each tab's construction time (DockWidgetTabPrivate::
-// createLayout(), confirmed by reading ADS 4.5.0's actual source), not stylesheet-driven, so it
-// can only shrink via a global QApplication font change - left alone here since that would
-// affect text everywhere, not just tabs.
-QString CompactDockChromeStyleSheet()
+// Three unrelated fixes live here:
+//  - Icon size: every tab/title-bar button icon defaults to 16px, which is what makes tabs read
+//    as "big". The tab's own left margin is a second, smaller contributor to that - it's computed
+//    from QFontMetrics of the application's default font at each tab's construction time
+//    (DockWidgetTabPrivate::createLayout(), confirmed by reading ADS 4.5.0's actual source), not
+//    stylesheet-driven, so it can only shrink via a global QApplication font change - left alone
+//    here since that would affect text everywhere, not just tabs.
+//  - Contrast: default.css colors inactive-tab text via palette(dark), which Theme.cpp sets to
+//    button.darker(150) (~RGB 46,46,46) - almost invisible against the tab's own palette(window)
+//    background (60,60,60). Confirmed by computing both, not just by eye.
+//  - Flatness: default.css's active tab uses a qlineargradient (palette(window) to palette(light))
+//    - the only gradient anywhere in this editor's theme, which is otherwise flat everywhere else
+//    - and the close button's hover/press states darken with a black rgba overlay, invisible (or
+//    backwards-looking) on a dark background instead of lightening it.
+//  - Selection: the active tab's own background is flattened to palette(base) - a deliberate
+//    accent border was tried here too (palette(highlight), matching the color everywhere else in
+//    this app uses for selection) but reverted: "active" in ADS means "frontmost tab of its own
+//    dock area's tab group", and this editor's default layout never actually tabs any panels
+//    together (Scene Hierarchy/Viewport/Inspector/Console each get their own separate dock area in
+//    EditorMainWindow.cpp) - a lone tab with no siblings is trivially "active", so every panel got
+//    a loud accent simultaneously instead of only whichever one a user had actually brought
+//    forward in a real tab group. The subtler background-only version doesn't read as a false
+//    signal the same way, so it stays; a real "you are here" accent needs to only ever apply once
+//    two or more panels are genuinely tabbed together, which isn't something plain QSS can
+//    condition on (sibling count isn't a selectable property) - would need actual C++ if wanted.
+QString DockChromeStyleSheetOverrides()
 {
     return QStringLiteral(
         "ads--CTitleBarButton { qproperty-iconSize: 12px; }"
@@ -75,7 +94,12 @@ QString CompactDockChromeStyleSheet()
         "#dockAreaCloseButton { qproperty-iconSize: 12px; }"
         "#detachGroupButton { qproperty-iconSize: 12px; }"
         "#dockAreaAutoHideButton { qproperty-iconSize: 12px; }"
-        "#dockAreaMinimizeButton { qproperty-iconSize: 12px; }");
+        "#dockAreaMinimizeButton { qproperty-iconSize: 12px; }"
+        "ads--CDockWidgetTab[activeTab=\"true\"] { background: palette(base); }"
+        "ads--CDockWidgetTab QLabel { color: #a0a0a0; }"
+        "ads--CDockWidgetTab[activeTab=\"true\"] QLabel { color: palette(foreground); }"
+        "#tabCloseButton:hover { background: rgba(255, 255, 255, 32); border: none; }"
+        "#tabCloseButton:pressed { background: rgba(255, 255, 255, 56); }");
 }
 }  // namespace
 
@@ -84,15 +108,12 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
       m_Context(context)
 {
     setWindowIcon(MakePlaceholderIcon());
-    resize(1600, 900);
 
-    // Qt-Advanced-Docking-System (ads::CDockManager) replaces QMainWindow's own dock-widget
-    // system entirely - it becomes the central widget, and every panel (viewport included) is
-    // one of its dock widgets. This sidesteps the whole class of QMainWindow dock-area quirks
-    // (central-widget-size-hint-dependent splitter guessing, docks only splitting within their
-    // own top-level area) that the previous QDockWidget-based layout kept running into.
+    ads::CDockManager::setConfigFlag(ads::CDockManager::FocusHighlighting, true);
+    ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaHasTabsMenuButton, true);
+    ads::CDockManager::setConfigFlag(ads::CDockManager::OpaqueSplitterResize, true);
     m_DockManager = new ads::CDockManager(this);
-    m_DockManager->setStyleSheet(m_DockManager->styleSheet() + CompactDockChromeStyleSheet());
+    m_DockManager->setStyleSheet(m_DockManager->styleSheet() + DockChromeStyleSheetOverrides());
     setCentralWidget(m_DockManager);
 
     MenuChrome menuChrome(this, context);
@@ -105,10 +126,6 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     context.GetSceneManager().AddOnDirtyChanged([this] { UpdateWindowTitle(); });
     context.GetSceneManager().AddOnSceneReplaced([this] { UpdateWindowTitle(); });
 
-    // Built left-to-right by passing each previous call's returned CDockAreaWidget as the next
-    // one's placement target, so Scene Hierarchy/Viewport/Inspector land in that explicit order
-    // instead of being stacked/tabbed together. Each panel is also registered with menuChrome
-    // right after creation, so View > Panels lists it and it can be reopened if closed.
     SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(m_DockManager, context, this);
     ads::CDockAreaWidget* sceneHierarchyArea = m_DockManager->addDockWidget(ads::LeftDockWidgetArea, sceneHierarchyPanel);
     menuChrome.AddPanel(sceneHierarchyPanel);
@@ -126,13 +143,6 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     ads::CDockAreaWidget* consoleArea = m_DockManager->addDockWidget(ads::BottomDockWidgetArea, consolePanel);
     menuChrome.AddPanel(consolePanel);
 
-    // Initial panel sizes - ADS has no per-dock-widget size to set at addDockWidget() time, only
-    // this, after the fact, against whichever splitter a given area ends up in. Values are
-    // proportions (QSplitter::setSizes() semantics), not exact pixels - Qt scales them to
-    // whatever space is actually available once the window is shown, they don't need to sum to
-    // the window size. sceneHierarchyArea/viewportArea/inspectorArea share one horizontal
-    // splitter (3 sizes); consoleArea's splitter has 2 children: that whole horizontal row as
-    // one item, and Console as the other.
     m_DockManager->setSplitterSizes(sceneHierarchyArea, {250, 1000, 350});
     m_DockManager->setSplitterSizes(consoleArea, {700, 200});
 
@@ -166,8 +176,8 @@ void EditorMainWindow::UpdateWindowTitle()
     Matcha::SceneManager& sceneManager = m_Context.GetSceneManager();
 
     QString sceneName = sceneManager.GetFilePath().empty()
-                             ? "Untitled"
-                             : QFileInfo(QString::fromStdString(sceneManager.GetFilePath())).completeBaseName();
+                            ? "Untitled"
+                            : QFileInfo(QString::fromStdString(sceneManager.GetFilePath())).completeBaseName();
 
     setWindowTitle(QString("%1%2 - Matcha Editor").arg(sceneManager.IsDirty() ? "*" : "", sceneName));
 }

@@ -15,6 +15,14 @@ QToolTip {
     color: #e0e0e0;
     background-color: #3c3c3c;
     border: 1px solid #545454;
+    border-radius: 4px;
+}
+
+/* Only the top corners - a tab's bottom edge sits flush against the content pane below it, so
+ * rounding all four would look like the tab is floating free of its own content. */
+ads--CDockWidgetTab {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
 }
 
 /* ComponentBoxWidget's collapsible header button - left-aligned title instead of Fusion's
