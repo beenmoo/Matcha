@@ -5,6 +5,7 @@
 #include <DockWidget.h>
 
 #include <QFileDialog>
+#include <QKeySequence>
 #include <QMessageBox>
 
 namespace MatchaEditor
@@ -59,12 +60,14 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context)
 
     m_FileMenu = m_MenuBar->addMenu("File");
     QAction* newSceneAction = m_FileMenu->addAction("New Scene");
+    newSceneAction->setShortcut(QKeySequence::New);
     QObject::connect(newSceneAction, &QAction::triggered, mainWindow, [&context, mainWindow] {
         if (ConfirmDiscardUnsavedChanges(mainWindow, context))
             context.GetSceneManager().NewScene();
     });
 
     QAction* openSceneAction = m_FileMenu->addAction("Open Scene...");
+    openSceneAction->setShortcut(QKeySequence::Open);
     QObject::connect(openSceneAction, &QAction::triggered, mainWindow, [&context, mainWindow] {
         if (!ConfirmDiscardUnsavedChanges(mainWindow, context))
             return;
@@ -77,6 +80,7 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context)
     });
 
     QAction* saveSceneAction = m_FileMenu->addAction("Save Scene");
+    saveSceneAction->setShortcut(QKeySequence::Save);
     QObject::connect(saveSceneAction, &QAction::triggered, mainWindow, [&context, mainWindow] {
         Matcha::SceneManager& sceneManager = context.GetSceneManager();
 
@@ -90,6 +94,7 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context)
     });
 
     QAction* saveSceneAsAction = m_FileMenu->addAction("Save Scene As...");
+    saveSceneAsAction->setShortcut(QKeySequence::SaveAs);
     QObject::connect(saveSceneAsAction, &QAction::triggered, mainWindow,
                      [&context, mainWindow] { PromptSaveSceneAs(mainWindow, context); });
 

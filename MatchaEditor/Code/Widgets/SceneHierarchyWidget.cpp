@@ -10,6 +10,7 @@
 
 #include <QAction>
 #include <QInputDialog>
+#include <QKeyEvent>
 #include <QLineEdit>
 #include <QMenu>
 #include <QMouseEvent>
@@ -231,48 +232,80 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
     }
     else if (chosen == deleteAction)
     {
-        // Collected up front: DestroyEntityRecursive() notifies (Refresh()ing this tree, which
-        // deletes every QTreeWidgetItem) after each top-level deletion, so nothing below this
-        // point can keep reading from `selected`/`item`.
-        std::vector<entt::entity> handles;
-        handles.reserve(selected.size());
-        for (QTreeWidgetItem* selectedItem : selected)
-            handles.push_back(VariantToHandle(selectedItem->data(0, Qt::UserRole)));
-
-        for (entt::entity handle : handles)
-        {
-            Entity entity(handle, &scene);
-            if (!entity.IsValid())
-                continue;  // already gone - destroyed below as part of a selected ancestor's subtree
-
-            // Skip if a selected ancestor will destroy this one anyway as part of its own
-            // subtree - deleting it here too would double-destroy an already-dead handle.
-            bool hasSelectedAncestor = false;
-            if (entity.HasComponent<HierarchyComponent>())
-            {
-                entt::entity ancestor = entity.GetComponent<HierarchyComponent>().parent;
-                while (ancestor != entt::null)
-                {
-                    if (std::find(handles.begin(), handles.end(), ancestor) != handles.end())
-                    {
-                        hasSelectedAncestor = true;
-                        break;
-                    }
-                    ancestor = entity.WithHandle(ancestor).GetComponent<HierarchyComponent>().parent;
-                }
-            }
-
-            if (!hasSelectedAncestor)
-                DestroyEntityRecursive(scene, entity);
-        }
+        DeleteSelectedEntities();
     }
     else if (chosen == renameAction)
     {
-        if (selected.size() > 1)
-            RenameSelected(selected);
-        else
-            editItem(item, 0);
+        RenameCurrentSelection();
     }
+}
+
+void SceneHierarchyWidget::DeleteSelectedEntities()
+{
+    QList<QTreeWidgetItem*> selected = selectedItems();
+    if (selected.isEmpty())
+        return;
+
+    Scene& scene = m_Context.GetScene();
+
+    // Collected up front: DestroyEntityRecursive() notifies (Refresh()ing this tree, which
+    // deletes every QTreeWidgetItem) after each top-level deletion, so nothing below this point
+    // can keep reading from `selected`.
+    std::vector<entt::entity> handles;
+    handles.reserve(selected.size());
+    for (QTreeWidgetItem* selectedItem : selected)
+        handles.push_back(VariantToHandle(selectedItem->data(0, Qt::UserRole)));
+
+    for (entt::entity handle : handles)
+    {
+        Entity entity(handle, &scene);
+        if (!entity.IsValid())
+            continue;  // already gone - destroyed below as part of a selected ancestor's subtree
+
+        // Skip if a selected ancestor will destroy this one anyway as part of its own subtree -
+        // deleting it here too would double-destroy an already-dead handle.
+        bool hasSelectedAncestor = false;
+        if (entity.HasComponent<HierarchyComponent>())
+        {
+            entt::entity ancestor = entity.GetComponent<HierarchyComponent>().parent;
+            while (ancestor != entt::null)
+            {
+                if (std::find(handles.begin(), handles.end(), ancestor) != handles.end())
+                {
+                    hasSelectedAncestor = true;
+                    break;
+                }
+                ancestor = entity.WithHandle(ancestor).GetComponent<HierarchyComponent>().parent;
+            }
+        }
+
+        if (!hasSelectedAncestor)
+            DestroyEntityRecursive(scene, entity);
+    }
+}
+
+void SceneHierarchyWidget::RenameCurrentSelection()
+{
+    QList<QTreeWidgetItem*> selected = selectedItems();
+    if (selected.isEmpty())
+        return;
+
+    if (selected.size() > 1)
+        RenameSelected(selected);
+    else
+        editItem(selected.front(), 0);
+}
+
+void SceneHierarchyWidget::CreateEntityAtSelection()
+{
+    Scene& scene = m_Context.GetScene();
+
+    QList<QTreeWidgetItem*> selected = selectedItems();
+    entt::entity parentHandle = selected.isEmpty() ? entt::null : VariantToHandle(selected.front()->data(0, Qt::UserRole));
+
+    Entity created = scene.CreateEntity("Entity");
+    if (parentHandle != entt::null)
+        SetParent(created, Entity(parentHandle, &scene));
 }
 
 void SceneHierarchyWidget::mousePressEvent(QMouseEvent* event)
@@ -283,6 +316,29 @@ void SceneHierarchyWidget::mousePressEvent(QMouseEvent* event)
         clearSelection();
 
     QTreeWidget::mousePressEvent(event);
+}
+
+void SceneHierarchyWidget::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Delete)
+    {
+        DeleteSelectedEntities();
+        return;
+    }
+
+    if (event->key() == Qt::Key_F2)
+    {
+        RenameCurrentSelection();
+        return;
+    }
+
+    if (event->key() == Qt::Key_N && event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier))
+    {
+        CreateEntityAtSelection();
+        return;
+    }
+
+    QTreeWidget::keyPressEvent(event);
 }
 
 void SceneHierarchyWidget::RenameItem(QTreeWidgetItem* item, int column)
