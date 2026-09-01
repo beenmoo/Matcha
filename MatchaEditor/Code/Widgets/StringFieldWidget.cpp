@@ -1,7 +1,7 @@
 #include "StringFieldWidget.h"
+#include "FieldLabel.h"
 
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QLineEdit>
 #include <QSignalBlocker>
 
@@ -11,23 +11,21 @@ StringFieldWidget::StringFieldWidget(const QString& label, const QString& initia
     : QWidget(parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(2, 2, 2, 2);
-    layout->setSpacing(4);
+    layout->setContentsMargins(1, 1, 1, 1);
+    layout->setSpacing(3);
 
-    QLabel* mainLabel = new QLabel(label, this);
-    mainLabel->setFixedWidth(65);  // Aligned with Vec3ControlWidget's labels
-    mainLabel->setStyleSheet("color: #b0b0b0; font-size: 11px;");
-    layout->addWidget(mainLabel);
+    layout->addWidget(CreateFieldLabel(label, this));
 
     m_LineEdit = new QLineEdit(this);
     m_LineEdit->setText(initialValue);
-    m_LineEdit->setFixedHeight(20);
+    m_LineEdit->setFixedHeight(16);
     m_LineEdit->setStyleSheet(
         "QLineEdit {"
         "   background-color: #222222;"
         "   color: #dcdcdc;"
         "   border: 1px solid #1a1a1a;"
         "   border-radius: 2px;"
+        "   font-size: 10px;"
         "   padding-left: 4px;"
         "}");
 
