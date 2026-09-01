@@ -4,6 +4,7 @@
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
 #include "Panels/ViewportPanel.h"
+#include "Panels/MenuChrome.h"
 #include "Core/Logger.h"
 #include "Core/Qt/QtViewportWidget.h"
 
@@ -12,7 +13,6 @@
 #include <DockAreaWidget.h>
 #include <DockManager.h>
 
-#include <QMenuBar>
 #include <QPainter>
 #include <QPixmap>
 #include <QString>
@@ -93,27 +93,28 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     m_DockManager->setStyleSheet(m_DockManager->styleSheet() + CompactDockChromeStyleSheet());
     setCentralWidget(m_DockManager);
 
-    QMenuBar* menuBar = new QMenuBar(this);
-    menuBar->addMenu("File");
-    menuBar->addMenu("Edit");
-    menuBar->addMenu("View");
-    setMenuBar(menuBar);
+    MenuChrome menuChrome(this);
 
     // Built left-to-right by passing each previous call's returned CDockAreaWidget as the next
     // one's placement target, so Scene Hierarchy/Viewport/Inspector land in that explicit order
-    // instead of being stacked/tabbed together.
+    // instead of being stacked/tabbed together. Each panel is also registered with menuChrome
+    // right after creation, so View > Panels lists it and it can be reopened if closed.
     SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(m_DockManager, context, this);
     ads::CDockAreaWidget* sceneHierarchyArea = m_DockManager->addDockWidget(ads::LeftDockWidgetArea, sceneHierarchyPanel);
+    menuChrome.AddPanel(sceneHierarchyPanel);
 
     ViewportPanel* viewportPanel = new ViewportPanel(m_DockManager, viewport, this);
     ads::CDockAreaWidget* viewportArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, viewportPanel, sceneHierarchyArea);
+    menuChrome.AddPanel(viewportPanel);
 
     InspectorPanel* inspectorPanel = new InspectorPanel(m_DockManager, context.GetScene(), this);
     ads::CDockAreaWidget* inspectorArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, inspectorPanel, viewportArea);
+    menuChrome.AddPanel(inspectorPanel);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);
 
     ConsolePanel* consolePanel = new ConsolePanel(m_DockManager, this);
     ads::CDockAreaWidget* consoleArea = m_DockManager->addDockWidget(ads::BottomDockWidgetArea, consolePanel);
+    menuChrome.AddPanel(consolePanel);
 
     // Initial panel sizes - ADS has no per-dock-widget size to set at addDockWidget() time, only
     // this, after the fact, against whichever splitter a given area ends up in. Values are

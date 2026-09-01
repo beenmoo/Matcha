@@ -6,4 +6,6 @@ target_sources(${TARGET_NAME} PRIVATE
 	InspectorPanel.cpp
 	InspectorPanel.h
 	ViewportPanel.cpp
-	ViewportPanel.h)
+	ViewportPanel.h
+	MenuChrome.cpp
+	MenuChrome.h)
