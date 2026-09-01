@@ -33,7 +33,9 @@
                 "xcb",
                 "xcb-xlib",
                 "wayland",
-                "egl"
+                "egl",
+                "freetype",
+                "fontconfig"
             ],
             "platform": "linux"
         },
