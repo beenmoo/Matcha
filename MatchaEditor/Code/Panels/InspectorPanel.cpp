@@ -8,6 +8,8 @@
 #include "Widgets/EnumFieldWidget.h"
 #include "Utility/EntityUtils.h"
 
+#include <DockManager.h>
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFrame>
@@ -30,46 +32,35 @@ QPushButton* CreateAddButton(const QString& text, QWidget* parent)
 {
     QPushButton* button = new QPushButton(text, parent);
     button->setCursor(Qt::PointingHandCursor);
-    button->setStyleSheet(
-        "QPushButton {"
-        "   background-color: #383838;"
-        "   color: #dcdcdc;"
-        "   border: 1px solid #242424;"
-        "   border-radius: 2px;"
-        "   font-size: 10px;"
-        "   min-height: 18px;"
-        "   max-height: 18px;"
-        "}"
-        "QPushButton:hover {"
-        "   background-color: #404040;"
-        "}");
     return button;
 }
 
 // Thin horizontal rule for splitting a component box's fields into visually distinct groups
 // (e.g. CameraComponent's Perspective-only vs Orthographic-only fields, both always present on
-// the struct regardless of which projectionType is active).
+// the struct regardless of which projectionType is active). Fusion's own QFrame::HLine painting
+// is enough on its own - no stylesheet rule needed.
 QFrame* CreateSeparator(QWidget* parent)
 {
     QFrame* separator = new QFrame(parent);
     separator->setFrameShape(QFrame::HLine);
-    separator->setStyleSheet("background-color: #242424; max-height: 1px; border: none;");
     return separator;
 }
 
 // Names the group of fields that follow it (e.g. "Perspective" above FOV/Near/Far), for a
 // component box like CameraComponent's whose fields aren't self-explanatory as a flat list -
 // distinct from a normal field's own label, which names one value rather than a group of them.
+// Bold weight (Editor.qss's QLabel#SectionLabel rule) is the semantic hierarchy cue vs a plain
+// field label.
 QLabel* CreateSectionLabel(const QString& text, QWidget* parent)
 {
     QLabel* label = new QLabel(text, parent);
-    label->setStyleSheet("color: #dcdcdc; font-size: 10px; font-weight: bold;");
+    label->setObjectName("SectionLabel");
     return label;
 }
 }  // namespace
 
-InspectorPanel::InspectorPanel(Scene& scene, QWidget* parent)
-    : QDockWidget("Inspector Panel", parent),
+InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, Scene& scene, QWidget* parent)
+    : ads::CDockWidget(dockManager, "Inspector Panel", parent),
       m_Scene(scene)
 {
     setObjectName("InspectorPanel");
@@ -238,7 +229,7 @@ void InspectorPanel::RegisterComponentInspectors()
         // No asset picker UI exists yet, so the mesh handle is shown read-only rather than editable.
         QString info = meshComponent.mesh.IsValid() ? QString("Handle #%1").arg(meshComponent.mesh.GetID()) : "None";
         QLabel* label = new QLabel(info, box);
-        label->setStyleSheet("color: #b0b0b0; font-size: 10px; padding: 1px;");
+        label->setObjectName("ReadOnlyInfoLabel");
         box->SetContent(label);
     });
 
@@ -246,7 +237,7 @@ void InspectorPanel::RegisterComponentInspectors()
         NativeScriptComponent& script = m_SelectedEntities.front().GetComponent<NativeScriptComponent>();
 
         QLabel* countLabel = new QLabel(QString("%1 script(s) bound").arg(script.bindings.size()), box);
-        countLabel->setStyleSheet("color: #b0b0b0; font-size: 10px; padding: 1px;");
+        countLabel->setObjectName("ReadOnlyInfoLabel");
         box->SetContent(countLabel);
 
         QPushButton* addScriptButton = CreateAddButton("+ Add Script", box);

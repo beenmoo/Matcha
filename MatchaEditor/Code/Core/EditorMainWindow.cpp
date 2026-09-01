@@ -3,15 +3,19 @@
 #include "Panels/ConsolePanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
+#include "Panels/ViewportPanel.h"
 #include "Core/Logger.h"
 #include "Core/Qt/QtViewportWidget.h"
 
 #include <spdlog/spdlog.h>
 
-#include <QDockWidget>
+#include <DockAreaWidget.h>
+#include <DockManager.h>
+
 #include <QMenuBar>
 #include <QPainter>
 #include <QPixmap>
+#include <QString>
 
 #include <algorithm>
 
@@ -49,6 +53,28 @@ QIcon MakePlaceholderIcon()
 
     return QIcon(pixmap);
 }
+
+// Qt-Advanced-Docking-System's CDockManager sets its own default stylesheet directly on itself
+// during construction (an embedded resource, src/stylesheets/default.css upstream) - it leaves
+// every tab/title-bar button icon at 16px, which is what makes tabs read as "big". Appending
+// these rules after construction shrinks just the icons: later rules win Qt's CSS cascade for
+// equal-specificity selectors, so this doesn't need to replace ADS's own sheet, just follow it.
+// The tab's left margin is a second, smaller contributor - it's computed from QFontMetrics of
+// the application's default font at each tab's construction time (DockWidgetTabPrivate::
+// createLayout(), confirmed by reading ADS 4.5.0's actual source), not stylesheet-driven, so it
+// can only shrink via a global QApplication font change - left alone here since that would
+// affect text everywhere, not just tabs.
+QString CompactDockChromeStyleSheet()
+{
+    return QStringLiteral(
+        "ads--CTitleBarButton { qproperty-iconSize: 12px; }"
+        "#tabCloseButton { qproperty-iconSize: 12px; padding: 0px -4px; }"
+        "#tabsMenuButton { qproperty-iconSize: 12px; }"
+        "#dockAreaCloseButton { qproperty-iconSize: 12px; }"
+        "#detachGroupButton { qproperty-iconSize: 12px; }"
+        "#dockAreaAutoHideButton { qproperty-iconSize: 12px; }"
+        "#dockAreaMinimizeButton { qproperty-iconSize: 12px; }");
+}
 }  // namespace
 
 EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtViewportWidget* viewport, QWidget* parent)
@@ -58,7 +84,14 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     setWindowIcon(MakePlaceholderIcon());
     resize(1600, 900);
 
-    setCentralWidget(viewport);
+    // Qt-Advanced-Docking-System (ads::CDockManager) replaces QMainWindow's own dock-widget
+    // system entirely - it becomes the central widget, and every panel (viewport included) is
+    // one of its dock widgets. This sidesteps the whole class of QMainWindow dock-area quirks
+    // (central-widget-size-hint-dependent splitter guessing, docks only splitting within their
+    // own top-level area) that the previous QDockWidget-based layout kept running into.
+    m_DockManager = new ads::CDockManager(this);
+    m_DockManager->setStyleSheet(m_DockManager->styleSheet() + CompactDockChromeStyleSheet());
+    setCentralWidget(m_DockManager);
 
     QMenuBar* menuBar = new QMenuBar(this);
     menuBar->addMenu("File");
@@ -66,19 +99,31 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     menuBar->addMenu("View");
     setMenuBar(menuBar);
 
-    SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(context, this);
-    addDockWidget(Qt::LeftDockWidgetArea, sceneHierarchyPanel);
-    InspectorPanel* inspectorPanel = new InspectorPanel(context.GetScene(), this);
-    addDockWidget(Qt::RightDockWidgetArea, inspectorPanel);
+    // Built left-to-right by passing each previous call's returned CDockAreaWidget as the next
+    // one's placement target, so Scene Hierarchy/Viewport/Inspector land in that explicit order
+    // instead of being stacked/tabbed together.
+    SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(m_DockManager, context, this);
+    ads::CDockAreaWidget* sceneHierarchyArea = m_DockManager->addDockWidget(ads::LeftDockWidgetArea, sceneHierarchyPanel);
+
+    ViewportPanel* viewportPanel = new ViewportPanel(m_DockManager, viewport, this);
+    ads::CDockAreaWidget* viewportArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, viewportPanel, sceneHierarchyArea);
+
+    InspectorPanel* inspectorPanel = new InspectorPanel(m_DockManager, context.GetScene(), this);
+    ads::CDockAreaWidget* inspectorArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, inspectorPanel, viewportArea);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);
 
-    // Left to its own sizeHint, the dock starts about as narrow as its "No entity selected."
-    // label - too cramped once it's showing Transform controls. resizeDocks() sets the initial
-    // split explicitly rather than relying on that hint.
-    resizeDocks({inspectorPanel}, {350}, Qt::Horizontal);
+    ConsolePanel* consolePanel = new ConsolePanel(m_DockManager, this);
+    ads::CDockAreaWidget* consoleArea = m_DockManager->addDockWidget(ads::BottomDockWidgetArea, consolePanel);
 
-    ConsolePanel* consolePanel = new ConsolePanel(this);
-    addDockWidget(Qt::BottomDockWidgetArea, consolePanel);
+    // Initial panel sizes - ADS has no per-dock-widget size to set at addDockWidget() time, only
+    // this, after the fact, against whichever splitter a given area ends up in. Values are
+    // proportions (QSplitter::setSizes() semantics), not exact pixels - Qt scales them to
+    // whatever space is actually available once the window is shown, they don't need to sum to
+    // the window size. sceneHierarchyArea/viewportArea/inspectorArea share one horizontal
+    // splitter (3 sizes); consoleArea's splitter has 2 children: that whole horizontal row as
+    // one item, and Console as the other.
+    m_DockManager->setSplitterSizes(sceneHierarchyArea, {250, 1000, 350});
+    m_DockManager->setSplitterSizes(consoleArea, {700, 200});
 
     // Not parented to the console widget - it's owned by this shared_ptr and by whichever
     // logger sinks() vectors hold a copy, so ownership can't be split with Qt's parent/child

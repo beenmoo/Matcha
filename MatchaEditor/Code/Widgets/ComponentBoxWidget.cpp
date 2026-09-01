@@ -17,30 +17,17 @@ ComponentBoxWidget::ComponentBoxWidget(const QString& title, bool isCollapsed, Q
     // 1. Create the header as a clickable button so it handles clicks natively
     m_HeaderButton = new QPushButton(QString("  ▼  %1").arg(title), this);
     m_HeaderButton->setCursor(Qt::PointingHandCursor);
-    m_HeaderButton->setStyleSheet(
-        "QPushButton {"
-        "   background-color: #383838;"
-        "   color: #dcdcdc;"
-        "   border: none;"
-        "   border-bottom: 1px solid #242424;"
-        "   text-align: left;"
-        "   font-size: 10px;"
-        "   min-height: 18px;"
-        "   max-height: 18px;"
-        "   padding-left: 4px;"
-        "}"
-        "QPushButton:hover {"
-        "   background-color: #404040;"
-        "}");
+    // Left-aligned text (Fusion centers QPushButton text by default) - see Editor.qss's
+    // QPushButton#ComponentHeaderButton rule.
+    m_HeaderButton->setObjectName("ComponentHeaderButton");
     mainLayout->addWidget(m_HeaderButton);
 
-    // 2. Content container widget that holds your properties
+    // 2. Content container widget that holds your properties.
     m_ContentContainer = new QWidget(this);
-    m_ContentContainer->setStyleSheet("background-color: #303030;");
 
     m_ContentLayout = new QVBoxLayout(m_ContentContainer);
-    m_ContentLayout->setContentsMargins(6, 2, 6, 2);
-    m_ContentLayout->setSpacing(2);
+    m_ContentLayout->setContentsMargins(6, 4, 6, 4);
+    m_ContentLayout->setSpacing(4);
 
     mainLayout->addWidget(m_ContentContainer);
     setLayout(mainLayout);

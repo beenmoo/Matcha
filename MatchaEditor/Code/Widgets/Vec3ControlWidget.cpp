@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QDoubleSpinBox>
 #include <QSignalBlocker>
+#include <QSizePolicy>
 
 namespace MatchaEditor
 {
@@ -11,36 +12,35 @@ Vec3ControlWidget::Vec3ControlWidget(const QString& label, const Vector3& initia
     : QWidget(parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(1, 1, 1, 1);
-    layout->setSpacing(3);  // Keep elements close together
+    layout->setContentsMargins(2, 2, 2, 2);
+    layout->setSpacing(4);  // Keep elements close together
 
     // Main property label (e.g., "Position") on the left
     layout->addWidget(CreateFieldLabel(label, this));
 
     // Lambda helper to create a single Axis sub-layout (e.g., "X" + SpinBox)
-    auto createAxisWidget = [this](double val, const QString& axisName, const QString& textColor, QDoubleSpinBox*& outSpinBox) {
+    auto createAxisWidget = [this](double val, const QString& axisName, QDoubleSpinBox*& outSpinBox) {
         QHBoxLayout* axisLayout = new QHBoxLayout();
-        axisLayout->setSpacing(1);
+        axisLayout->setSpacing(2);
         axisLayout->setContentsMargins(0, 0, 0, 0);
 
+        // Axis color-coding (red/green/blue for X/Y/Z, the standard 3D-tool convention) is
+        // driven by Editor.qss's QLabel[axis="..."] rules, keyed off this property - not a color
+        // baked into this widget, so both Vec3ControlWidget and Vec4ControlWidget share one
+        // source of truth for the color mapping.
         QLabel* axisLabel = new QLabel(axisName, this);
-        axisLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 9px;").arg(textColor));
+        axisLabel->setProperty("axis", axisName.toLower());
+        // Fixed, not the QLabel default of Preferred - otherwise this label claims a share of
+        // whatever stretch space the container receives (see the stretch factor below), pushing
+        // it away from the spin box instead of staying flush against it.
+        axisLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
         axisLayout->addWidget(axisLabel);
 
         outSpinBox = new QDoubleSpinBox(this);
         outSpinBox->setRange(-999999.0, 999999.0);
         outSpinBox->setValue(val);
         outSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);  // Hides default ugly arrows!
-        outSpinBox->setFixedHeight(16);                             // Sleek and thin like Unity
-        outSpinBox->setStyleSheet(
-            "QDoubleSpinBox {"
-            "   background-color: #222222;"
-            "   color: #dcdcdc;"
-            "   border: 1px solid #1a1a1a;"
-            "   border-radius: 2px;"
-            "   font-size: 10px;"
-            "   padding-left: 2px;"
-            "}");
+        ApplySquishPolicy(outSpinBox);
 
         connect(outSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                 this, &Vec3ControlWidget::OnValuesChanged);
@@ -53,10 +53,11 @@ Vec3ControlWidget::Vec3ControlWidget(const QString& label, const Vector3& initia
         return container;
     };
 
-    // Unity-accurate axis colors (Red for X, Green for Y, Blue for Z)
-    layout->addWidget(createAxisWidget(initialValue.x, "X", "#ff5555", m_XSpinBox));
-    layout->addWidget(createAxisWidget(initialValue.y, "Y", "#55ff55", m_YSpinBox));
-    layout->addWidget(createAxisWidget(initialValue.z, "Z", "#5555ff", m_ZSpinBox));
+    // Equal stretch factors so the three axes squish evenly together as the panel narrows,
+    // rather than one shrinking before the others.
+    layout->addWidget(createAxisWidget(initialValue.x, "X", m_XSpinBox), 1);
+    layout->addWidget(createAxisWidget(initialValue.y, "Y", m_YSpinBox), 1);
+    layout->addWidget(createAxisWidget(initialValue.z, "Z", m_ZSpinBox), 1);
 
     setLayout(layout);
 }

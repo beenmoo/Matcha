@@ -8,4 +8,6 @@ target_sources(${TARGET_NAME} PRIVATE
     EditorCamera.cpp
     EditorCamera.h
     CameraController.cpp
-    CameraController.h)
+    CameraController.h
+    Theme.cpp
+    Theme.h)

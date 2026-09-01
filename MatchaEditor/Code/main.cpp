@@ -1,4 +1,5 @@
 #include "Core/Editor.h"
+#include "Core/Theme.h"
 
 #include <QApplication>
 #include <QGuiApplication>
@@ -31,6 +32,11 @@ int main(int argc, char** argv)
     // class of native-integration bugs (e.g. HICON/HBITMAP-to-QPixmap conversion asserts) that
     // the default "windowsvista" style's native theming can hit.
     QApplication::setStyle(QStyleFactory::create("Fusion"));
+
+    // Our own dark QPalette, not an external stylesheet library - see Theme.cpp. Qt-Advanced-
+    // Docking-System (EditorMainWindow.cpp) separately ships its own dark theme for dock chrome
+    // (title bars, tab bars, close/float buttons); this covers every widget inside a panel.
+    MatchaEditor::ApplyDarkTheme(qapp);
 
     Matcha::Application::ApplicationSpecification spec;
     spec.title = "Matcha Editor";

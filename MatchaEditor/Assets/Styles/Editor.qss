@@ -1,0 +1,58 @@
+/* Central style rules for MatchaEditor widgets.
+ *
+ * Colors here should stay in step with the dark QPalette applied in Theme.cpp - this file is
+ * only for the handful of things a QPalette can't express (per-instance axis colors, bold
+ * section labels, a widget-specific text alignment). Anything a QPalette already covers (window/
+ * base/button/text/highlight colors) belongs there, not duplicated here.
+ *
+ * Widgets opt into a rule by object name or a dynamic property, not by literal color/font values
+ * baked into their own C++ - see FieldLabel.h's ApplySquishPolicy neighbors, ComponentBoxWidget,
+ * Vec3ControlWidget/Vec4ControlWidget, and InspectorPanel's CreateSectionLabel for the setObjectName/
+ * setProperty calls this file's selectors match against.
+ */
+
+QToolTip {
+    color: #e0e0e0;
+    background-color: #3c3c3c;
+    border: 1px solid #545454;
+}
+
+/* ComponentBoxWidget's collapsible header button - left-aligned title instead of Fusion's
+ * default centered QPushButton text. */
+QPushButton#ComponentHeaderButton {
+    text-align: left;
+}
+
+/* InspectorPanel::CreateSectionLabel - names a group of fields (e.g. "Perspective" above
+ * CameraComponent's FOV/Near/Far) with the same size as a normal label, just bolded. */
+QLabel#SectionLabel {
+    font-weight: bold;
+}
+
+/* Read-only info rows (mesh handle, script count) in InspectorPanel. */
+QLabel#ReadOnlyInfoLabel {
+    padding: 2px;
+}
+
+/* Vec3ControlWidget/Vec4ControlWidget axis labels - Unity-accurate axis colors (Red/Green/Blue/
+ * White for X/Y/Z/W). Centralized here via the "axis" property instead of a hex string passed
+ * into each widget, so both control widgets (and any future one) share a single source of truth. */
+QLabel[axis="x"] {
+    color: #ff5555;
+    font-weight: bold;
+}
+
+QLabel[axis="y"] {
+    color: #55ff55;
+    font-weight: bold;
+}
+
+QLabel[axis="z"] {
+    color: #5555ff;
+    font-weight: bold;
+}
+
+QLabel[axis="w"] {
+    color: #cccccc;
+    font-weight: bold;
+}
