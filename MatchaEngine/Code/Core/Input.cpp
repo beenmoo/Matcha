@@ -13,18 +13,26 @@ void Input::ApplyAxisEvent(const Event& evt, Vector2Int& mouseAxis, Vector2Int& 
     switch (evt.type)
     {
     case EventType::MouseMoved:
-        mouseAxis.x = evt.x;
-        mouseAxis.y = evt.y;
+        // Accumulate, not overwrite: SDL delivers one MouseMoved event per raw motion report, and
+        // PumpEvents() drains all of them each frame - under WSL2 relative mode in particular,
+        // several small reports commonly arrive within a single frame, so summing is the only way
+        // to capture the frame's total movement instead of just its last report.
+        mouseAxis.x += evt.x;
+        mouseAxis.y += evt.y;
         break;
     case EventType::JoystickMoved:
+        // Overwrite, not accumulate: unlike mouse motion, an axis-motion event reports the axis's
+        // current absolute position, not a delta since the last event - summing would runaway.
         if (evt.axis == 0)
             joystickAxis.x = evt.x;
         else if (evt.axis == 1)
             joystickAxis.y = evt.x;
         break;
     case EventType::MouseScrolled:
-        mouseScrollDelta.x = evt.x;
-        mouseScrollDelta.y = evt.y;
+        // Same accumulate-not-overwrite reasoning as MouseMoved: each wheel event reports a
+        // per-event scroll delta, so multiple events in one frame need to sum.
+        mouseScrollDelta.x += evt.x;
+        mouseScrollDelta.y += evt.y;
         break;
     default:
         break;

@@ -1,12 +1,12 @@
 #pragma once
 
+#include "Scene/ScriptableEntity.h"
+
 #include <type_traits>
 #include <vector>
 
 namespace Matcha
 {
-class ScriptableEntity;
-
 struct NativeScriptComponent
 {
     struct Binding
