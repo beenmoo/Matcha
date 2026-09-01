@@ -16,6 +16,14 @@ target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::Open
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
 
+# QDarkStyleSheet (vendored under Vendor/qdarkstyle - MIT license, see Vendor/qdarkstyle/LICENSE.rst),
+# compiled via AUTORCC into a Qt resource and loaded at startup in main.cpp via
+# qApp->setStyleSheet(). This is now the single source of truth for widget theming - see the
+# Widgets/ files' own comments for what stays layered on top (fixed sizes, semantic colors) vs
+# what this replaced (background/border/base font-size, previously duplicated per widget).
+set_target_properties(${TARGET_NAME} PROPERTIES AUTORCC ON)
+target_sources(${TARGET_NAME} PRIVATE Vendor/qdarkstyle/dark/darkstyle.qrc)
+
 matcha_copy_engine_assets(${TARGET_NAME})
 
 # Copies MatchaEditor's own Assets (editor-only shaders, icons, etc.) into the same output

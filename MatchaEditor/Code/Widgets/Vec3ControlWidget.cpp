@@ -11,8 +11,8 @@ Vec3ControlWidget::Vec3ControlWidget(const QString& label, const Vector3& initia
     : QWidget(parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(1, 1, 1, 1);
-    layout->setSpacing(3);  // Keep elements close together
+    layout->setContentsMargins(2, 2, 2, 2);
+    layout->setSpacing(4);  // Keep elements close together
 
     // Main property label (e.g., "Position") on the left
     layout->addWidget(CreateFieldLabel(label, this));
@@ -20,27 +20,20 @@ Vec3ControlWidget::Vec3ControlWidget(const QString& label, const Vector3& initia
     // Lambda helper to create a single Axis sub-layout (e.g., "X" + SpinBox)
     auto createAxisWidget = [this](double val, const QString& axisName, const QString& textColor, QDoubleSpinBox*& outSpinBox) {
         QHBoxLayout* axisLayout = new QHBoxLayout();
-        axisLayout->setSpacing(1);
+        axisLayout->setSpacing(2);
         axisLayout->setContentsMargins(0, 0, 0, 0);
 
+        // Axis color-coding (red/green/blue for X/Y/Z, the standard 3D-tool convention) is
+        // semantic, not theme - kept regardless of QDarkStyleSheet, unlike the plain field labels.
+        // No font-size override - matches the rest of the Inspector's default-font text.
         QLabel* axisLabel = new QLabel(axisName, this);
-        axisLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 9px;").arg(textColor));
+        axisLabel->setStyleSheet(QString("color: %1; font-weight: bold;").arg(textColor));
         axisLayout->addWidget(axisLabel);
 
         outSpinBox = new QDoubleSpinBox(this);
         outSpinBox->setRange(-999999.0, 999999.0);
         outSpinBox->setValue(val);
         outSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);  // Hides default ugly arrows!
-        outSpinBox->setFixedHeight(16);                             // Sleek and thin like Unity
-        outSpinBox->setStyleSheet(
-            "QDoubleSpinBox {"
-            "   background-color: #222222;"
-            "   color: #dcdcdc;"
-            "   border: 1px solid #1a1a1a;"
-            "   border-radius: 2px;"
-            "   font-size: 10px;"
-            "   padding-left: 2px;"
-            "}");
 
         connect(outSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                 this, &Vec3ControlWidget::OnValuesChanged);

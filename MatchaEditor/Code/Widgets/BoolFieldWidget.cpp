@@ -11,8 +11,8 @@ BoolFieldWidget::BoolFieldWidget(const QString& label, bool initialValue, QWidge
     : QWidget(parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(1, 1, 1, 1);
-    layout->setSpacing(3);
+    layout->setContentsMargins(2, 2, 2, 2);
+    layout->setSpacing(4);
 
     layout->addWidget(CreateFieldLabel(label, this));
 

@@ -11,34 +11,27 @@ Vec4ControlWidget::Vec4ControlWidget(const QString& label, const Vector4& initia
     : QWidget(parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(1, 1, 1, 1);
-    layout->setSpacing(3);
+    layout->setContentsMargins(2, 2, 2, 2);
+    layout->setSpacing(4);
 
     layout->addWidget(CreateFieldLabel(label, this));
 
     auto createAxisWidget = [this](double val, const QString& axisName, const QString& textColor, QDoubleSpinBox*& outSpinBox) {
         QHBoxLayout* axisLayout = new QHBoxLayout();
-        axisLayout->setSpacing(1);
+        axisLayout->setSpacing(2);
         axisLayout->setContentsMargins(0, 0, 0, 0);
 
+        // Axis color-coding (red/green/blue/white for X/Y/Z/W, the standard 3D-tool convention)
+        // is semantic, not theme - kept regardless of QDarkStyleSheet, unlike the plain labels.
+        // No font-size override - matches the rest of the Inspector's default-font text.
         QLabel* axisLabel = new QLabel(axisName, this);
-        axisLabel->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 9px;").arg(textColor));
+        axisLabel->setStyleSheet(QString("color: %1; font-weight: bold;").arg(textColor));
         axisLayout->addWidget(axisLabel);
 
         outSpinBox = new QDoubleSpinBox(this);
         outSpinBox->setRange(-999999.0, 999999.0);
         outSpinBox->setValue(val);
         outSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        outSpinBox->setFixedHeight(16);
-        outSpinBox->setStyleSheet(
-            "QDoubleSpinBox {"
-            "   background-color: #222222;"
-            "   color: #dcdcdc;"
-            "   border: 1px solid #1a1a1a;"
-            "   border-radius: 2px;"
-            "   font-size: 10px;"
-            "   padding-left: 2px;"
-            "}");
 
         connect(outSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                 this, &Vec4ControlWidget::OnValuesChanged);
