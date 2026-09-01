@@ -1,5 +1,9 @@
 set(TARGET_NAME MatchaEditor)
 
+# Only MatchaEditor needs this (not the engine's own Qt window backend), so it's found here
+# rather than alongside Qt6 itself in the top-level CMakeLists.txt.
+find_package(qtadvanceddocking-qt6 CONFIG REQUIRED)
+
 add_executable(${TARGET_NAME} Code/main.cpp)
 
 add_subdirectory(Code/Core)
@@ -12,17 +16,9 @@ add_subdirectory(Code/Utility)
 # own target propagating its INTERFACE_COMPILE_DEFINITIONS (SPDLOG_COMPILED_LIB/SPDLOG_SHARED_LIB,
 # since vcpkg builds it as spdlogd.dll here) those headers fall back to embedding full symbol
 # definitions in this target's objects, which then collide with the DLL's exported ones at link time.
-target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets spdlog::spdlog)
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets Qt6::Svg spdlog::spdlog ads::qtadvanceddocking-qt6)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
-
-# QDarkStyleSheet (vendored under Vendor/qdarkstyle - MIT license, see Vendor/qdarkstyle/LICENSE.rst),
-# compiled via AUTORCC into a Qt resource and loaded at startup in main.cpp via
-# qApp->setStyleSheet(). This is now the single source of truth for widget theming - see the
-# Widgets/ files' own comments for what stays layered on top (fixed sizes, semantic colors) vs
-# what this replaced (background/border/base font-size, previously duplicated per widget).
-set_target_properties(${TARGET_NAME} PROPERTIES AUTORCC ON)
-target_sources(${TARGET_NAME} PRIVATE Vendor/qdarkstyle/dark/darkstyle.qrc)
 
 matcha_copy_engine_assets(${TARGET_NAME})
 
@@ -47,12 +43,18 @@ if (UNIX AND NOT APPLE)
     # context under each platform plugin - EGL-over-XCB and EGL-over-Wayland respectively, since
     # this qtbase build has no GLX) have to be listed explicitly too, not just the platform
     # plugins themselves.
+    # QSvgIconPlugin/QSvgPlugin: Qt-Advanced-Docking-System's own theme (Vendor-free, comes from
+    # the qtadvanceddocking-qt6 package itself) sets every title-bar/tab button icon via QSS
+    # qproperty-icon: url(...svg) - without these, that resolves to nothing and every dock button
+    # (close, float, auto-hide) renders with no icon at all.
     qt_import_plugins(${TARGET_NAME}
         INCLUDE
             Qt6::QXcbIntegrationPlugin
             Qt6::QXcbEglIntegrationPlugin
             Qt6::QWaylandIntegrationPlugin
-            Qt6::QWaylandEglClientBufferPlugin)
+            Qt6::QWaylandEglClientBufferPlugin
+            Qt6::QSvgIconPlugin
+            Qt6::QSvgPlugin)
 endif()
 
 if (WIN32)
@@ -72,6 +74,34 @@ if (WIN32)
             "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll"
             "$<TARGET_FILE_DIR:${TARGET_NAME}>/platforms/"
         COMMENT "Copying Qt platform plugin (qwindows)"
+        VERBATIM)
+
+    # Same reasoning as the qwindows copy above: qt_generate_deploy_app_script() would pick these
+    # up too, but only at `cmake --install` time. Without them Qt-Advanced-Docking-System's SVG
+    # title-bar icons (close/float/auto-hide) silently render as nothing.
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${TARGET_NAME}>/iconengines"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>Qt6/plugins/iconengines/qsvgicon$<$<CONFIG:Debug>:d>.dll"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>/iconengines/"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${TARGET_NAME}>/imageformats"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>Qt6/plugins/imageformats/qsvg$<$<CONFIG:Debug>:d>.dll"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>/imageformats/"
+        COMMENT "Copying Qt SVG plugins (qsvgicon, qsvg)"
+        VERBATIM)
+
+    # Qt6Svg[d].dll itself, not just the two plugins above - z-applocal only walks MatchaEditor.exe's
+    # own import table, and nothing in our code calls a QtSvg symbol directly (Qt6::Svg is linked
+    # only so the plugins above have something to satisfy their own dependency on), so it was never
+    # discovered as a dependency and never got copied. The plugins fail to LoadLibrary without it -
+    # confirmed via QT_DEBUG_PLUGINS=1, which reported "The specified module could not be found" for
+    # both, not a missing-plugin-file error.
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>bin/Qt6Svg$<$<CONFIG:Debug>:d>.dll"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>/"
+        COMMENT "Copying Qt6Svg.dll (the SVG plugins' own dependency, not walked by z-applocal)"
         VERBATIM)
 endif()
 

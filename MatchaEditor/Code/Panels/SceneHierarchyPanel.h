@@ -1,18 +1,23 @@
 #pragma once
 
 #include <Matcha.h>
-#include <QDockWidget>
+#include <DockWidget.h>
 #include <vector>
+
+namespace ads
+{
+class CDockManager;
+}  // namespace ads
 
 namespace MatchaEditor
 {
 class SceneHierarchyWidget;
 
-class SceneHierarchyPanel : public QDockWidget
+class SceneHierarchyPanel : public ads::CDockWidget
 {
     Q_OBJECT
 public:
-    explicit SceneHierarchyPanel(EngineContext& context, QWidget* parent = nullptr);
+    explicit SceneHierarchyPanel(ads::CDockManager* dockManager, EngineContext& context, QWidget* parent = nullptr);
 
 signals:
     void SelectionChanged(std::vector<Entity> entities);

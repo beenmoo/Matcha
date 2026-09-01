@@ -17,14 +17,12 @@ ComponentBoxWidget::ComponentBoxWidget(const QString& title, bool isCollapsed, Q
     // 1. Create the header as a clickable button so it handles clicks natively
     m_HeaderButton = new QPushButton(QString("  ▼  %1").arg(title), this);
     m_HeaderButton->setCursor(Qt::PointingHandCursor);
-    // Background/border/hover color come from QDarkStyleSheet (Vendor/qdarkstyle); only the
-    // left-aligned text layout stays set here - no font-size/height override, so this matches
-    // the Scene Hierarchy panel's default-font text sizing.
-    m_HeaderButton->setStyleSheet("QPushButton { text-align: left; }");
+    // Left-aligned text (Fusion centers QPushButton text by default) - see Editor.qss's
+    // QPushButton#ComponentHeaderButton rule.
+    m_HeaderButton->setObjectName("ComponentHeaderButton");
     mainLayout->addWidget(m_HeaderButton);
 
-    // 2. Content container widget that holds your properties - background comes from
-    // QDarkStyleSheet's QWidget rule now, same as everything else.
+    // 2. Content container widget that holds your properties.
     m_ContentContainer = new QWidget(this);
 
     m_ContentLayout = new QVBoxLayout(m_ContentContainer);

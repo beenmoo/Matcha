@@ -4,4 +4,6 @@ target_sources(${TARGET_NAME} PRIVATE
 	SceneHierarchyPanel.cpp
 	SceneHierarchyPanel.h
 	InspectorPanel.cpp
-	InspectorPanel.h)
+	InspectorPanel.h
+	ViewportPanel.cpp
+	ViewportPanel.h)

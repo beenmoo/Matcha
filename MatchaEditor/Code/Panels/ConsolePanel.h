@@ -1,14 +1,19 @@
-#include <QDockWidget>
+#include <DockWidget.h>
+
+namespace ads
+{
+class CDockManager;
+}  // namespace ads
 
 namespace MatchaEditor
 {
 class ConsoleWidget;
 
-class ConsolePanel : public QDockWidget
+class ConsolePanel : public ads::CDockWidget
 {
     Q_OBJECT
 public:
-    explicit ConsolePanel(QWidget* parent = nullptr);
+    explicit ConsolePanel(ads::CDockManager* dockManager, QWidget* parent = nullptr);
     ~ConsolePanel() = default;
 
     // Slot/Method to receive logs and pass them to the inner widget

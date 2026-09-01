@@ -10,6 +10,11 @@ class QtViewportWidget;
 class EngineContext;
 }  // namespace Matcha
 
+namespace ads
+{
+class CDockManager;
+}  // namespace ads
+
 namespace MatchaEditor
 {
 class ConsoleSink;
@@ -23,6 +28,7 @@ public:
     ~EditorMainWindow() override;
 
 private:
+    ads::CDockManager* m_DockManager;
     std::shared_ptr<ConsoleSink> m_ConsoleSink;
 };
 }  // namespace Matcha

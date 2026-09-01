@@ -35,7 +35,10 @@ if (BUILD_QT_BACKEND)
     # Must precede add_subdirectory(MatchaEngine): qt_standard_project_setup() sets
     # CMAKE_AUTOMOC/CMAKE_AUTOUIC for this scope and below, and does not apply retroactively
     # to targets already defined.
-    find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets)
+    # Svg is only actually linked by MatchaEditor (Qt6::Svg, for Qt-Advanced-Docking-System's
+    # icon-engine plugin - see MatchaEditor/CMakeLists.txt), not MatchaEngine's own Qt backend,
+    # but every Qt component is found together here since this is the one place Qt6 is resolved.
+    find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets Svg)
     qt_standard_project_setup()
 endif()
 

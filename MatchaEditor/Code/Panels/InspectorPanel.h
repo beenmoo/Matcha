@@ -3,7 +3,7 @@
 #include "Scene/Entity.h"
 
 #include <Matcha.h>
-#include <QDockWidget>
+#include <DockWidget.h>
 #include <QStringList>
 #include <vector>
 #include <unordered_map>
@@ -14,15 +14,20 @@ class QVBoxLayout;
 class QPushButton;
 class QTimer;
 
+namespace ads
+{
+class CDockManager;
+}  // namespace ads
+
 namespace MatchaEditor
 {
 class ComponentBoxWidget;
 
-class InspectorPanel : public QDockWidget
+class InspectorPanel : public ads::CDockWidget
 {
     Q_OBJECT
 public:
-    explicit InspectorPanel(Scene& scene, QWidget* parent = nullptr);
+    explicit InspectorPanel(ads::CDockManager* dockManager, Scene& scene, QWidget* parent = nullptr);
 
     void SetSelectedEntities(std::vector<Entity> entities);
 

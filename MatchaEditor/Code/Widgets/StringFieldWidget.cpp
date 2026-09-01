@@ -18,6 +18,7 @@ StringFieldWidget::StringFieldWidget(const QString& label, const QString& initia
 
     m_LineEdit = new QLineEdit(this);
     m_LineEdit->setText(initialValue);
+    ApplySquishPolicy(m_LineEdit);
 
     // editingFinished takes no arguments (fires on Enter/focus-loss, not per keystroke) - read
     // the committed text from m_LineEdit itself rather than from the signal.

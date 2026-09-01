@@ -19,6 +19,7 @@ EnumFieldWidget::EnumFieldWidget(const QString& label, const QStringList& option
     m_ComboBox = new QComboBox(this);
     m_ComboBox->addItems(options);
     m_ComboBox->setCurrentIndex(initialIndex);
+    ApplySquishPolicy(m_ComboBox);
 
     connect(m_ComboBox, &QComboBox::currentIndexChanged, this, &EnumFieldWidget::ValueChanged);
 

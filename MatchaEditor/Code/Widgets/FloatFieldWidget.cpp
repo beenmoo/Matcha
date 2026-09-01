@@ -20,6 +20,7 @@ FloatFieldWidget::FloatFieldWidget(const QString& label, float initialValue, QWi
     m_SpinBox->setRange(-999999.0, 999999.0);
     m_SpinBox->setValue(initialValue);
     m_SpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    ApplySquishPolicy(m_SpinBox);
 
     connect(m_SpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
             [this](double value) { emit ValueChanged(static_cast<float>(value)); });

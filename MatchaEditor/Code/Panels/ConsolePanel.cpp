@@ -1,10 +1,12 @@
 #include "ConsolePanel.h"
 #include "Widgets/ConsoleWidget.h"
 
+#include <DockManager.h>
+
 namespace MatchaEditor
 {
-ConsolePanel::ConsolePanel(QWidget* parent)
-    : QDockWidget("Console Panel", parent)
+ConsolePanel::ConsolePanel(ads::CDockManager* dockManager, QWidget* parent)
+    : ads::CDockWidget(dockManager, "Console Panel", parent)
 {
     setObjectName("ConsolePanel");
 

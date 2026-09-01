@@ -1,11 +1,10 @@
 #include "Core/Editor.h"
+#include "Core/Theme.h"
 
 #include <QApplication>
-#include <QFile>
 #include <QGuiApplication>
 #include <QStyleFactory>
 #include <QSurfaceFormat>
-#include <QTextStream>
 
 // Does not include Core/EntryPoint.h: Qt requires QApplication to exist before any Qt object is
 // constructed, and to own its own exec() loop - both incompatible with EntryPoint.h's generic
@@ -31,19 +30,13 @@ int main(int argc, char** argv)
 
     // Fusion draws everything in pure Qt with no native Windows GDI/theme calls - avoids a whole
     // class of native-integration bugs (e.g. HICON/HBITMAP-to-QPixmap conversion asserts) that
-    // the default "windowsvista" style's native theming can hit. Also QDarkStyleSheet's own
-    // documented base style - its QSS is written assuming Fusion's rendering, not a native one.
+    // the default "windowsvista" style's native theming can hit.
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
-    // QDarkStyleSheet (Vendor/qdarkstyle, compiled into the binary via AUTORCC - see
-    // MatchaEditor/CMakeLists.txt) - the single source of truth for widget theming from here on,
-    // applied once, app-wide, rather than each widget carrying its own hand-rolled stylesheet.
-    QFile darkStyleSheet(":/qdarkstyle/dark/darkstyle.qss");
-
-    if (darkStyleSheet.open(QFile::ReadOnly | QFile::Text))
-        qApp->setStyleSheet(QTextStream(&darkStyleSheet).readAll());
-    else
-        MT_CORE_WARN("Failed to load QDarkStyleSheet - falling back to unstyled Fusion.");
+    // Our own dark QPalette, not an external stylesheet library - see Theme.cpp. Qt-Advanced-
+    // Docking-System (EditorMainWindow.cpp) separately ships its own dark theme for dock chrome
+    // (title bars, tab bars, close/float buttons); this covers every widget inside a panel.
+    MatchaEditor::ApplyDarkTheme(qapp);
 
     Matcha::Application::ApplicationSpecification spec;
     spec.title = "Matcha Editor";
