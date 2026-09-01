@@ -64,9 +64,17 @@ public:
     // whatever Scene is current now, not just when that scene's own content changes.
     void AddOnSceneReplaced(std::function<void()> callback);
 
+    // Fired only when IsDirty() actually changes value - once on the first edit since the last
+    // save/load (not on every subsequent edit, since it's already dirty), and once when a save
+    // completes and clears it. Meant for UI that reflects dirty state (a window title's asterisk)
+    // without needing to separately listen to every scene edit just to re-check a bool.
+    void AddOnDirtyChanged(std::function<void()> callback);
+
 private:
     void BindDirtyTracking();
+    void SetDirty(bool dirty);
     void NotifySceneReplaced();
+    void NotifyDirtyChanged();
 
 private:
     ResourceManager& m_ResourceManager;
@@ -74,5 +82,6 @@ private:
     std::string m_FilePath;
     bool m_IsDirty = false;
     std::vector<std::function<void()>> m_OnSceneReplaced;
+    std::vector<std::function<void()>> m_OnDirtyChanged;
 };
 }  // namespace Matcha

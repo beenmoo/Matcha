@@ -43,7 +43,7 @@ void SceneManager::SaveScene()
     }
 
     SceneSerializer::Serialize(m_FilePath, m_Scene.get(), m_ResourceManager);
-    m_IsDirty = false;
+    SetDirty(false);
 }
 
 void SceneManager::SaveSceneAs(const std::string& filepath)
@@ -57,14 +57,34 @@ void SceneManager::AddOnSceneReplaced(std::function<void()> callback)
     m_OnSceneReplaced.push_back(std::move(callback));
 }
 
+void SceneManager::AddOnDirtyChanged(std::function<void()> callback)
+{
+    m_OnDirtyChanged.push_back(std::move(callback));
+}
+
 void SceneManager::BindDirtyTracking()
 {
-    m_Scene->AddOnSceneChanged([this] { m_IsDirty = true; });
+    m_Scene->AddOnSceneChanged([this] { SetDirty(true); });
+}
+
+void SceneManager::SetDirty(bool dirty)
+{
+    if (m_IsDirty == dirty)
+        return;
+
+    m_IsDirty = dirty;
+    NotifyDirtyChanged();
 }
 
 void SceneManager::NotifySceneReplaced()
 {
     for (auto& callback : m_OnSceneReplaced)
+        callback();
+}
+
+void SceneManager::NotifyDirtyChanged()
+{
+    for (auto& callback : m_OnDirtyChanged)
         callback();
 }
 }  // namespace Matcha

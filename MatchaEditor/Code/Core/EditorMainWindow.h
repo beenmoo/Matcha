@@ -4,6 +4,8 @@
 
 #include <memory>
 
+class QCloseEvent;
+
 namespace Matcha
 {
 class QtViewportWidget;
@@ -27,7 +29,19 @@ public:
     explicit EditorMainWindow(Matcha::EngineContext& context, Matcha::QtViewportWidget* viewport, QWidget* parent = nullptr);
     ~EditorMainWindow() override;
 
+protected:
+    // Catches the window's own close (X button) the same way MenuChrome's Exit action does
+    // (Exit is routed through close() specifically so this applies to both) - prompts to save
+    // unsaved changes and ignores the close if the user cancels.
+    void closeEvent(QCloseEvent* event) override;
+
 private:
+    // Reflects SceneManager's current file path and dirty state (an asterisk) - refreshed from
+    // SceneManager::AddOnDirtyChanged/AddOnSceneReplaced, not computed once at construction.
+    void UpdateWindowTitle();
+
+private:
+    Matcha::EngineContext& m_Context;
     ads::CDockManager* m_DockManager;
     std::shared_ptr<ConsoleSink> m_ConsoleSink;
 };

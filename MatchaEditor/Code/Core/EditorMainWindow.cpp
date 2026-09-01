@@ -13,6 +13,8 @@
 #include <DockAreaWidget.h>
 #include <DockManager.h>
 
+#include <QCloseEvent>
+#include <QFileInfo>
 #include <QPainter>
 #include <QPixmap>
 #include <QString>
@@ -78,9 +80,9 @@ QString CompactDockChromeStyleSheet()
 }  // namespace
 
 EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtViewportWidget* viewport, QWidget* parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent),
+      m_Context(context)
 {
-    setWindowTitle("Matcha Editor");
     setWindowIcon(MakePlaceholderIcon());
     resize(1600, 900);
 
@@ -94,6 +96,14 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     setCentralWidget(m_DockManager);
 
     MenuChrome menuChrome(this, context);
+
+    // Unlike Scene::AddOnSceneChanged (which InspectorPanel/SceneHierarchyWidget have to
+    // re-subscribe to on every scene swap, since it dies with the Scene it's attached to), these
+    // two are SceneManager's own callbacks - SceneManager itself outlives any one Scene, so a
+    // single subscription here covers every scene for the rest of the editor's lifetime.
+    UpdateWindowTitle();
+    context.GetSceneManager().AddOnDirtyChanged([this] { UpdateWindowTitle(); });
+    context.GetSceneManager().AddOnSceneReplaced([this] { UpdateWindowTitle(); });
 
     // Built left-to-right by passing each previous call's returned CDockAreaWidget as the next
     // one's placement target, so Scene Hierarchy/Viewport/Inspector land in that explicit order
@@ -141,5 +151,24 @@ EditorMainWindow::~EditorMainWindow()
 {
     DetachSink(m_ConsoleSink, MT_CORE_LOGGER);
     DetachSink(m_ConsoleSink, MT_CLIENT_LOGGER);
+}
+
+void EditorMainWindow::closeEvent(QCloseEvent* event)
+{
+    if (ConfirmDiscardUnsavedChanges(this, m_Context))
+        event->accept();
+    else
+        event->ignore();
+}
+
+void EditorMainWindow::UpdateWindowTitle()
+{
+    Matcha::SceneManager& sceneManager = m_Context.GetSceneManager();
+
+    QString sceneName = sceneManager.GetFilePath().empty()
+                             ? "Untitled"
+                             : QFileInfo(QString::fromStdString(sceneManager.GetFilePath())).completeBaseName();
+
+    setWindowTitle(QString("%1%2 - Matcha Editor").arg(sceneManager.IsDirty() ? "*" : "", sceneName));
 }
 }  // namespace MatchaEditor
