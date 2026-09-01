@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/CommandManager.h"
+
 #include <QMainWindow>
 
 #include <memory>
@@ -42,6 +44,12 @@ private:
 
 private:
     Matcha::EngineContext& m_Context;
+
+    // Constructed before every panel/MenuChrome below (all of which take a reference to it) and
+    // cleared whenever the scene is replaced (New/Open) - see the constructor - since a Command's
+    // targets live in the Scene object that New/Open destroys.
+    CommandManager m_CommandManager;
+
     ads::CDockManager* m_DockManager;
     std::shared_ptr<ConsoleSink> m_ConsoleSink;
 };

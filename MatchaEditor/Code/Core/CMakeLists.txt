@@ -10,4 +10,15 @@ target_sources(${TARGET_NAME} PRIVATE
     CameraController.cpp
     CameraController.h
     Theme.cpp
-    Theme.h)
+    Theme.h
+    CommandManager.cpp
+    CommandManager.h
+    Command.h
+    Commands/CreateEntityCommand.cpp
+    Commands/CreateEntityCommand.h
+    Commands/DeleteEntitiesCommand.cpp
+    Commands/DeleteEntitiesCommand.h
+    Commands/RenameEntitiesCommand.cpp
+    Commands/RenameEntitiesCommand.h
+    Commands/PropertyEditCommand.h
+)

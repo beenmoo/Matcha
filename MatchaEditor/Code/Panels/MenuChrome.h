@@ -17,6 +17,8 @@ class EngineContext;
 
 namespace MatchaEditor
 {
+class CommandManager;
+
 // Returns true if it's fine to proceed with something that would discard the current scene's
 // unsaved changes (New Scene, Open Scene, closing the window) - false if the user cancelled.
 // A no-op (returns true immediately) if the scene isn't dirty. Otherwise prompts Save/Discard/
@@ -34,7 +36,7 @@ namespace MatchaEditor
 class MenuChrome
 {
 public:
-    explicit MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context);
+    explicit MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context, CommandManager& commandManager);
 
     QMenuBar* GetMenuBar() const { return m_MenuBar; }
     QMenu* GetFileMenu() const { return m_FileMenu; }
@@ -54,5 +56,8 @@ private:
     QMenu* m_EditMenu;
     QMenu* m_ViewMenu;
     QMenu* m_PanelsMenu;
+
+    QAction* m_UndoAction;
+    QAction* m_RedoAction;
 };
 }  // namespace MatchaEditor

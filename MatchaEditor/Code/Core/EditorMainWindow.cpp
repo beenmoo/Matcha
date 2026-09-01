@@ -116,7 +116,7 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     m_DockManager->setStyleSheet(m_DockManager->styleSheet() + DockChromeStyleSheetOverrides());
     setCentralWidget(m_DockManager);
 
-    MenuChrome menuChrome(this, context);
+    MenuChrome menuChrome(this, context, m_CommandManager);
 
     // Unlike Scene::AddOnSceneChanged (which InspectorPanel/SceneHierarchyWidget have to
     // re-subscribe to on every scene swap, since it dies with the Scene it's attached to), these
@@ -126,7 +126,14 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     context.GetSceneManager().AddOnDirtyChanged([this] { UpdateWindowTitle(); });
     context.GetSceneManager().AddOnSceneReplaced([this] { UpdateWindowTitle(); });
 
-    SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(m_DockManager, context, this);
+    // A Command resolves its target(s) fresh out of the live Scene at every Execute()/Undo() (see
+    // CommandManager.h) - once New/Open destroys that Scene, every command on both stacks is
+    // meaningless, so drop them rather than leave them to fail silently (or resolve into whatever
+    // entity happens to reuse the same UUID by coincidence, which can't happen, but is exactly
+    // the kind of thing this guards against on principle).
+    context.GetSceneManager().AddOnSceneReplaced([this] { m_CommandManager.Clear(); });
+
+    SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(m_DockManager, context, m_CommandManager, this);
     ads::CDockAreaWidget* sceneHierarchyArea = m_DockManager->addDockWidget(ads::LeftDockWidgetArea, sceneHierarchyPanel);
     menuChrome.AddPanel(sceneHierarchyPanel);
 
@@ -134,7 +141,7 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     ads::CDockAreaWidget* viewportArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, viewportPanel, sceneHierarchyArea);
     menuChrome.AddPanel(viewportPanel);
 
-    InspectorPanel* inspectorPanel = new InspectorPanel(m_DockManager, context, this);
+    InspectorPanel* inspectorPanel = new InspectorPanel(m_DockManager, context, m_CommandManager, this);
     ads::CDockAreaWidget* inspectorArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, inspectorPanel, viewportArea);
     menuChrome.AddPanel(inspectorPanel);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);

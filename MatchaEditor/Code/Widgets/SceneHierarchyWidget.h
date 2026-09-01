@@ -5,6 +5,7 @@
 #include <Matcha.h>
 #include <QHash>
 #include <QTreeWidget>
+#include <optional>
 #include <vector>
 
 namespace Matcha
@@ -14,6 +15,8 @@ class Entity;
 
 namespace MatchaEditor
 {
+class CommandManager;
+
 // Builds and maintains a tree view of a Scene's entities, driven by Scene::SetOnSceneChanged
 // rather than rebuilding every tick - see Scene::GetRootEntities()/HierarchyComponent for the
 // traversal this mirrors.
@@ -22,7 +25,7 @@ class SceneHierarchyWidget : public QTreeWidget
     Q_OBJECT
 
 public:
-    explicit SceneHierarchyWidget(EngineContext& context, QWidget* parent = nullptr);
+    explicit SceneHierarchyWidget(EngineContext& context, CommandManager& commandManager, QWidget* parent = nullptr);
 
     [[nodiscard]] std::vector<Entity> GetSelectedEntities() const;
 
@@ -61,13 +64,21 @@ private:
 
     // Lazily creates (once) and reuses a single cube mesh/shader pair for every "Create Cube" -
     // resource creation issues GL calls, which need the viewport's context current. That's only
-    // guaranteed automatically inside the render loop, so this makes it current itself first.
-    Entity CreateCubeEntity();
-    Entity CreateCameraEntity();
-    Entity CreateLightEntity();
+    // guaranteed automatically inside the render loop, so this makes it current itself first. Only
+    // populates m_CubeShader/m_CubeMesh - actual entity creation goes through CreateEntityCommand,
+    // so the cube's components are added via a populate callback built around these handles
+    // rather than by this method creating the entity itself.
+    void EnsureCubeResources();
+
+    // Reads the right-clicked/selected item's entity id, if any - used as CreateEntityCommand's
+    // parentId. Captured as a UUID (not the raw entt::entity handle) because CreateEntityCommand
+    // resolves its parent fresh at Execute()/Redo() time, by which point the original handle may
+    // have been recycled by an intervening destroy+recreate.
+    std::optional<UUID> ParentIdFor(QTreeWidgetItem* item) const;
 
 private:
     EngineContext& m_Context;
+    CommandManager& m_CommandManager;
 
     ShaderHandle m_CubeShader;
     MeshHandle m_CubeMesh;

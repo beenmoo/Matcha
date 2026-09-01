@@ -41,6 +41,7 @@ Vec4ControlWidget::Vec4ControlWidget(const QString& label, const Vector4& initia
 
         connect(outSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
                 this, &Vec4ControlWidget::OnValuesChanged);
+        connect(outSpinBox, &QDoubleSpinBox::editingFinished, this, &Vec4ControlWidget::EditingFinished);
 
         axisLayout->addWidget(outSpinBox);
 

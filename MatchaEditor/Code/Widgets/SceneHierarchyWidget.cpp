@@ -3,6 +3,10 @@
 #include "Scene/Component/TagComponent.h"
 #include "Scene/Entity.h"
 #include "Scene/Scene.h"
+#include "Core/CommandManager.h"
+#include "Core/Commands/CreateEntityCommand.h"
+#include "Core/Commands/DeleteEntitiesCommand.h"
+#include "Core/Commands/RenameEntitiesCommand.h"
 
 #include <Matcha.h>
 
@@ -17,6 +21,7 @@
 #include <QSignalBlocker>
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 
 namespace MatchaEditor
@@ -34,9 +39,10 @@ entt::entity VariantToHandle(const QVariant& variant)
 }
 }  // namespace
 
-SceneHierarchyWidget::SceneHierarchyWidget(EngineContext& context, QWidget* parent)
+SceneHierarchyWidget::SceneHierarchyWidget(EngineContext& context, CommandManager& commandManager, QWidget* parent)
     : QTreeWidget(parent),
-      m_Context(context)
+      m_Context(context),
+      m_CommandManager(commandManager)
 {
     setHeaderHidden(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -117,65 +123,51 @@ void SceneHierarchyWidget::AddEntityItem(QTreeWidgetItem* parentItem, entt::enti
     }
 }
 
-Entity SceneHierarchyWidget::CreateCubeEntity()
+void SceneHierarchyWidget::EnsureCubeResources()
 {
+    if (m_CubeShader.IsValid() && m_CubeMesh.IsValid())
+        return;
+
+    // Resource creation below issues GL calls (shader compilation, buffer uploads) - only
+    // guaranteed to have the viewport's context current inside the render loop, so make it
+    // current explicitly here. Cached in m_CubeShader/m_CubeMesh so this only runs once per
+    // editor session - every subsequent cube reuses the same shader/mesh handles.
+    m_Context.GetWindow().MakeContextCurrent();
+
     ResourceManager& resourceManager = m_Context.GetResourceManager();
+    m_CubeShader = resourceManager.CreateShader(
+        "StandardMesh", {"Assets/Shaders/StandardMesh.vert", "Assets/Shaders/StandardMesh.frag"});
 
-    if (!m_CubeShader.IsValid() || !m_CubeMesh.IsValid())
-    {
-        // Resource creation below issues GL calls (shader compilation, buffer uploads) - only
-        // guaranteed to have the viewport's context current inside the render loop, so make it
-        // current explicitly here. Cached in m_CubeShader/m_CubeMesh above so this only runs once
-        // per editor session - every subsequent cube reuses the same shader/mesh handles.
-        m_Context.GetWindow().MakeContextCurrent();
-
-        m_CubeShader = resourceManager.CreateShader(
-            "StandardMesh", {"Assets/Shaders/StandardMesh.vert", "Assets/Shaders/StandardMesh.frag"});
-
-        // "Cube" tags this handle as a regeneratable primitive - see ResourceManager::CreateMesh
-        // and SceneSerializer, which needs to be able to rebuild this exact geometry from scratch
-        // on scene load rather than saving/resolving a source file that doesn't exist for it.
-        CubePrimitive cubePrimitive;
-        m_CubeMesh = resourceManager.CreateMesh(cubePrimitive.vertices,
-                                                {ShaderDataType::Float3, ShaderDataType::Float3, ShaderDataType::Float2},
-                                                cubePrimitive.indices, "Cube");
-    }
-
-    Entity entity = m_Context.GetScene().CreateEntity("Cube");
-    entity.AddComponent<MeshComponent>().mesh = m_CubeMesh;
-
-    MaterialComponent& material = entity.AddComponent<MaterialComponent>();
-    material.shader = m_CubeShader;
-    material.albedoColor = Vector4(0.8f, 0.8f, 0.8f, 1.0f);
-
-    return entity;
+    // "Cube" tags this handle as a regeneratable primitive - see ResourceManager::CreateMesh
+    // and SceneSerializer, which needs to be able to rebuild this exact geometry from scratch
+    // on scene load rather than saving/resolving a source file that doesn't exist for it.
+    CubePrimitive cubePrimitive;
+    m_CubeMesh = resourceManager.CreateMesh(cubePrimitive.vertices,
+                                            {ShaderDataType::Float3, ShaderDataType::Float3, ShaderDataType::Float2},
+                                            cubePrimitive.indices, "Cube");
 }
 
-Entity SceneHierarchyWidget::CreateCameraEntity()
+std::optional<UUID> SceneHierarchyWidget::ParentIdFor(QTreeWidgetItem* item) const
 {
-    Entity entity = m_Context.GetScene().CreateEntity("Camera");
-    entity.AddComponent<CameraComponent>().aspectRatio = m_Context.GetWindow().GetAspectRatio();
+    if (!item)
+        return std::nullopt;
 
-    return entity;
-}
+    Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Context.GetScene());
+    if (!entity.IsValid() || !entity.HasComponent<TagComponent>())
+        return std::nullopt;
 
-Entity SceneHierarchyWidget::CreateLightEntity()
-{
-    Entity entity = m_Context.GetScene().CreateEntity("Light");
-    entity.AddComponent<LightComponent>();
-
-    return entity;
+    return entity.GetComponent<TagComponent>().id;
 }
 
 void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 {
-    // Fetched once, reused for the rest of this synchronous call - safe since nothing here swaps
-    // the scene itself (only SceneManager::NewScene()/OpenScene() do, from a menu action), unlike
-    // a member cache that could outlive an actual swap.
-    Scene& scene = m_Context.GetScene();
-
     QTreeWidgetItem* item = itemAt(pos);
     QList<QTreeWidgetItem*> selected = selectedItems();
+
+    // Resolved before the menu runs any action below: CreateEntityCommand::Execute() notifies the
+    // scene-changed callback synchronously, which Refresh()es this tree and deletes every
+    // QTreeWidgetItem - including `item` - so it can't be touched again afterward.
+    std::optional<UUID> parentId = ParentIdFor(item);
 
     QMenu menu(this);
     QAction* createAction = menu.addAction(item ? "Create Child Entity" : "Create Empty Entity");
@@ -191,44 +183,35 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 
     if (chosen == createAction)
     {
-        // Capture the parent's handle before CreateEntity(): it notifies the scene-changed
-        // callback synchronously, which Refresh()es this tree and deletes every QTreeWidgetItem
-        // - including `item` - so it can't be touched again afterward.
-        entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
-
-        Entity created = scene.CreateEntity("Entity");
-        if (parentHandle != entt::null)
-            SetParent(created, Entity(parentHandle, &scene));
+        m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(m_Context, "Create Entity", "Entity", parentId));
     }
     else if (chosen == createCubeAction)
     {
-        // Same reasoning as createAction above: capture the parent's handle before creating the
-        // entity, since that notifies (and thus Refresh()es, deleting `item`) synchronously.
-        entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
+        EnsureCubeResources();
+        ShaderHandle cubeShader = m_CubeShader;
+        MeshHandle cubeMesh = m_CubeMesh;
 
-        Entity created = CreateCubeEntity();
-        if (parentHandle != entt::null)
-            SetParent(created, Entity(parentHandle, &scene));
+        m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(
+            m_Context, "Create Cube", "Cube", parentId, [cubeMesh, cubeShader](Entity entity) {
+                entity.AddComponent<MeshComponent>().mesh = cubeMesh;
+
+                MaterialComponent& material = entity.AddComponent<MaterialComponent>();
+                material.shader = cubeShader;
+                material.albedoColor = Vector4(0.8f, 0.8f, 0.8f, 1.0f);
+            }));
     }
     else if (chosen == createCameraAction)
     {
-        // Same reasoning as createAction above: capture the parent's handle before creating the
-        // entity, since that notifies (and thus Refresh()es, deleting `item`) synchronously.
-        entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
+        float aspectRatio = m_Context.GetWindow().GetAspectRatio();
 
-        Entity created = CreateCameraEntity();
-        if (parentHandle != entt::null)
-            SetParent(created, Entity(parentHandle, &scene));
+        m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(
+            m_Context, "Create Camera", "Camera", parentId,
+            [aspectRatio](Entity entity) { entity.AddComponent<CameraComponent>().aspectRatio = aspectRatio; }));
     }
     else if (chosen == createLightAction)
     {
-        // Same reasoning as createAction above: capture the parent's handle before creating the
-        // entity, since that notifies (and thus Refresh()es, deleting `item`) synchronously.
-        entt::entity parentHandle = item ? VariantToHandle(item->data(0, Qt::UserRole)) : entt::null;
-
-        Entity created = CreateLightEntity();
-        if (parentHandle != entt::null)
-            SetParent(created, Entity(parentHandle, &scene));
+        m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(
+            m_Context, "Create Light", "Light", parentId, [](Entity entity) { entity.AddComponent<LightComponent>(); }));
     }
     else if (chosen == deleteAction)
     {
@@ -248,22 +231,23 @@ void SceneHierarchyWidget::DeleteSelectedEntities()
 
     Scene& scene = m_Context.GetScene();
 
-    // Collected up front: DestroyEntityRecursive() notifies (Refresh()ing this tree, which
-    // deletes every QTreeWidgetItem) after each top-level deletion, so nothing below this point
-    // can keep reading from `selected`.
+    // Collected up front, same as before this routed through a Command: nothing here destroys
+    // anything itself anymore (that happens once, inside DeleteEntitiesCommand::Execute()), but
+    // `selected`'s items are still only valid for this synchronous call.
     std::vector<entt::entity> handles;
     handles.reserve(selected.size());
     for (QTreeWidgetItem* selectedItem : selected)
         handles.push_back(VariantToHandle(selectedItem->data(0, Qt::UserRole)));
 
+    std::vector<Entity> subtreeRoots;
     for (entt::entity handle : handles)
     {
         Entity entity(handle, &scene);
         if (!entity.IsValid())
-            continue;  // already gone - destroyed below as part of a selected ancestor's subtree
+            continue;
 
-        // Skip if a selected ancestor will destroy this one anyway as part of its own subtree -
-        // deleting it here too would double-destroy an already-dead handle.
+        // Skip if a selected ancestor already covers this one as part of its own subtree -
+        // otherwise the same descendant would end up in the snapshot twice.
         bool hasSelectedAncestor = false;
         if (entity.HasComponent<HierarchyComponent>())
         {
@@ -280,8 +264,15 @@ void SceneHierarchyWidget::DeleteSelectedEntities()
         }
 
         if (!hasSelectedAncestor)
-            DestroyEntityRecursive(scene, entity);
+            subtreeRoots.push_back(entity);
     }
+
+    if (subtreeRoots.empty())
+        return;
+
+    QString description = subtreeRoots.size() > 1 ? QString("Delete %1 Entities").arg(subtreeRoots.size()) : QString("Delete Entity");
+    m_CommandManager.ExecuteCommand(
+        std::make_unique<DeleteEntitiesCommand>(m_Context, description.toStdString(), subtreeRoots));
 }
 
 void SceneHierarchyWidget::RenameCurrentSelection()
@@ -298,14 +289,10 @@ void SceneHierarchyWidget::RenameCurrentSelection()
 
 void SceneHierarchyWidget::CreateEntityAtSelection()
 {
-    Scene& scene = m_Context.GetScene();
-
     QList<QTreeWidgetItem*> selected = selectedItems();
-    entt::entity parentHandle = selected.isEmpty() ? entt::null : VariantToHandle(selected.front()->data(0, Qt::UserRole));
+    std::optional<UUID> parentId = ParentIdFor(selected.isEmpty() ? nullptr : selected.front());
 
-    Entity created = scene.CreateEntity("Entity");
-    if (parentHandle != entt::null)
-        SetParent(created, Entity(parentHandle, &scene));
+    m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(m_Context, "Create Entity", "Entity", parentId));
 }
 
 void SceneHierarchyWidget::mousePressEvent(QMouseEvent* event)
@@ -347,8 +334,16 @@ void SceneHierarchyWidget::RenameItem(QTreeWidgetItem* item, int column)
         return;
 
     Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Context.GetScene());
-    if (entity.IsValid() && entity.HasComponent<TagComponent>())
-        entity.GetComponent<TagComponent>().name = item->text(0).toStdString();
+    if (!entity.IsValid() || !entity.HasComponent<TagComponent>())
+        return;
+
+    std::string oldName = entity.GetComponent<TagComponent>().name;
+    std::string newName = item->text(0).toStdString();
+    if (oldName == newName)
+        return;
+
+    std::vector<RenameEntitiesCommand::Rename> renames{{entity.GetComponent<TagComponent>().id, oldName, newName}};
+    m_CommandManager.ExecuteCommand(std::make_unique<RenameEntitiesCommand>(m_Context, "Rename Entity", std::move(renames)));
 }
 
 // editItem() only ever drives one native inline editor at a time, and per-row inline editors
@@ -361,7 +356,27 @@ void SceneHierarchyWidget::RenameSelected(const QList<QTreeWidgetItem*>& items)
     if (!ok || name.isEmpty())
         return;
 
-    for (QTreeWidgetItem* item : items)
-        item->setText(0, name);  // fires itemChanged -> RenameItem() applies it to the entity
+    Scene& scene = m_Context.GetScene();
+    std::vector<RenameEntitiesCommand::Rename> renames;
+    renames.reserve(items.size());
+
+    {
+        // Sets item text directly rather than relying on itemChanged -> RenameItem() (which would
+        // push one Command per item) - blocked the same way Refresh() blocks its own bulk update,
+        // so the batch below becomes a single undo entry instead of N.
+        const QSignalBlocker blocker(this);
+        for (QTreeWidgetItem* item : items)
+        {
+            Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &scene);
+            if (!entity.IsValid() || !entity.HasComponent<TagComponent>())
+                continue;
+
+            renames.push_back({entity.GetComponent<TagComponent>().id, entity.GetComponent<TagComponent>().name, name.toStdString()});
+            item->setText(0, name);
+        }
+    }
+
+    if (!renames.empty())
+        m_CommandManager.ExecuteCommand(std::make_unique<RenameEntitiesCommand>(m_Context, "Rename Entities", std::move(renames)));
 }
 }  // namespace MatchaEditor

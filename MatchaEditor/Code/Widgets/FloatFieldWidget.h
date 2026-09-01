@@ -20,6 +20,11 @@ public:
 signals:
     void ValueChanged(float newValue);
 
+    // Fires once when the spin box commits an edit (Enter or focus-loss) - unlike ValueChanged,
+    // which fires on every intermediate tick while dragging/typing. This is what undo should key
+    // off of: one EditingFinished per committed edit, not one ValueChanged per tick.
+    void EditingFinished();
+
 private:
     QDoubleSpinBox* m_SpinBox;
 };

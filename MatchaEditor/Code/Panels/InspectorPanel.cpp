@@ -7,6 +7,9 @@
 #include "Widgets/FloatFieldWidget.h"
 #include "Widgets/EnumFieldWidget.h"
 #include "Utility/EntityUtils.h"
+#include "Core/CommandManager.h"
+#include "Core/Commands/PropertyEditCommand.h"
+#include "Scene/Component/TagComponent.h"
 
 #include <DockManager.h>
 
@@ -23,6 +26,7 @@
 #include <QTimer>
 
 #include <algorithm>
+#include <memory>
 
 namespace MatchaEditor
 {
@@ -59,9 +63,11 @@ QLabel* CreateSectionLabel(const QString& text, QWidget* parent)
 }
 }  // namespace
 
-InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, EngineContext& context, QWidget* parent)
+InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, EngineContext& context, CommandManager& commandManager,
+                               QWidget* parent)
     : ads::CDockWidget(dockManager, "Inspector Panel", parent),
-      m_Context(context)
+      m_Context(context),
+      m_CommandManager(commandManager)
 {
     setObjectName("InspectorPanel");
 
@@ -179,16 +185,16 @@ void InspectorPanel::RegisterComponentInspectors()
         TransformComponent& transformComponent = m_SelectedEntities.front().GetComponent<TransformComponent>();
         AddVec3Field(
             box, "Position", transformComponent.transform.GetPosition(),
-            [this] { return m_SelectedEntities.front().GetComponent<TransformComponent>().transform.GetPosition(); },
+            [](Entity entity) { return entity.GetComponent<TransformComponent>().transform.GetPosition(); },
             &Transform::SetPosition);
         // Edited as Euler angles - the transform stores rotation as a quaternion.
         AddVec3Field(
             box, "Rotation", transformComponent.transform.GetRotationEuler(),
-            [this] { return m_SelectedEntities.front().GetComponent<TransformComponent>().transform.GetRotationEuler(); },
+            [](Entity entity) { return entity.GetComponent<TransformComponent>().transform.GetRotationEuler(); },
             &Transform::SetRotationEuler);
         AddVec3Field(
             box, "Scale", transformComponent.transform.GetScale(),
-            [this] { return m_SelectedEntities.front().GetComponent<TransformComponent>().transform.GetScale(); },
+            [](Entity entity) { return entity.GetComponent<TransformComponent>().transform.GetScale(); },
             &Transform::SetScale);
     });
 
@@ -332,23 +338,58 @@ void InspectorPanel::ShowAddScriptMenu(QPushButton* anchor)
     menu.exec(anchor->mapToGlobal(QPoint(0, anchor->height())));
 }
 
+template <typename ValueType>
+std::function<void()> InspectorPanel::MakeCommitHandler(const QString& description, std::vector<Entity> entities,
+                                                         std::function<ValueType(Entity)> getter,
+                                                         std::function<void(Entity, ValueType)> setter)
+{
+    std::vector<typename PropertyEditCommand<ValueType>::Edit> edits;
+    edits.reserve(entities.size());
+    for (Entity entity : entities)
+        edits.push_back({entity.GetComponent<TagComponent>().id, getter(entity)});
+
+    // Mutable: `edits` is rebased to the newly-committed value after every push, so a second
+    // commit on the same field (without an intervening Refresh(), which would rebuild this
+    // closure from scratch) captures the right "before" for *that* edit, not the field's
+    // original value from when it was first built.
+    return [this, description, entities, getter, setter, edits]() mutable {
+        if (entities.empty())
+            return;
+
+        ValueType current = getter(entities.front());
+        if (!edits.empty() && current == edits.front().before)
+            return;  // nothing was actually live-applied since this field was built/last committed
+
+        m_CommandManager.ExecuteCommand(std::make_unique<PropertyEditCommand<ValueType>>(
+            m_Context, description.toStdString(), edits, current, setter));
+
+        for (auto& edit : edits)
+            edit.before = current;
+    };
+}
+
 void InspectorPanel::AddVec3Field(ComponentBoxWidget* box, const QString& label, const Vector3& initialValue,
-                                  std::function<Vector3()> getter, void (Transform::*setter)(const Vector3&))
+                                  std::function<Vector3(Entity)> getter, void (Transform::*setter)(const Vector3&))
 {
     // Captured by value (not a reference into any entity's TransformComponent, which entt can
     // relocate) and re-fetched fresh each time the control emits ValueChanged. Editing it applies
     // the new value to every selected entity.
     std::vector<Entity> entities = m_SelectedEntities;
 
+    auto applyToTransform = [setter](Entity entity, Vector3 value) {
+        (entity.GetComponent<TransformComponent>().transform.*setter)(value);
+    };
+
     Vec3ControlWidget* control = new Vec3ControlWidget(label, initialValue);
-    connect(control, &Vec3ControlWidget::ValueChanged, this,
-            [entities, setter](const Vector3& value) mutable {
-                for (Entity entity : entities)
-                    (entity.GetComponent<TransformComponent>().transform.*setter)(value);
-            });
+    connect(control, &Vec3ControlWidget::ValueChanged, this, [entities, applyToTransform](const Vector3& value) {
+        for (Entity entity : entities)
+            applyToTransform(entity, value);
+    });
+    connect(control, &Vec3ControlWidget::EditingFinished, this,
+            MakeCommitHandler<Vector3>(label, entities, getter, applyToTransform));
     box->SetContent(control);
 
-    m_LiveSyncCallbacks.push_back([control, getter] { control->SetValue(getter()); });
+    m_LiveSyncCallbacks.push_back([this, control, getter] { control->SetValue(getter(m_SelectedEntities.front())); });
 }
 
 template <typename Component>
@@ -357,18 +398,22 @@ void InspectorPanel::AddStringField(ComponentBoxWidget* box, const QString& labe
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
+    auto getter = [member](Entity entity) { return QString::fromStdString(entity.GetComponent<Component>().*member); };
+    auto setter = [member](Entity entity, QString value) { entity.GetComponent<Component>().*member = value.toStdString(); };
+
     StringFieldWidget* field = new StringFieldWidget(label, initialValue);
-    connect(field, &StringFieldWidget::ValueChanged, this, [this, entities, member](const QString& value) {
-        std::string stdValue = value.toStdString();
+    // StringFieldWidget::ValueChanged already only fires once per commit (QLineEdit::
+    // editingFinished), unlike the live-tick Vec3/Vec4/Float widgets - so the same signal both
+    // applies the value and (connected second, so it observes the already-applied value) commits
+    // the undo entry, rather than needing a separate EditingFinished signal.
+    connect(field, &StringFieldWidget::ValueChanged, this, [entities, setter](const QString& value) {
         for (Entity entity : entities)
-            entity.GetComponent<Component>().*member = stdValue;
-        m_Context.GetScene().NotifyChanged();
+            setter(entity, value);
     });
+    connect(field, &StringFieldWidget::ValueChanged, this, MakeCommitHandler<QString>(label, entities, getter, setter));
     box->SetContent(field);
 
-    m_LiveSyncCallbacks.push_back([this, field, member] {
-        field->SetValue(QString::fromStdString(m_SelectedEntities.front().GetComponent<Component>().*member));
-    });
+    m_LiveSyncCallbacks.push_back([this, field, getter] { field->SetValue(getter(m_SelectedEntities.front())); });
 }
 
 template <typename Component>
@@ -377,35 +422,43 @@ void InspectorPanel::AddBoolField(ComponentBoxWidget* box, const QString& label,
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
+    auto getter = [member](Entity entity) { return entity.GetComponent<Component>().*member; };
+    auto setter = [member](Entity entity, bool value) { entity.GetComponent<Component>().*member = value; };
+
     BoolFieldWidget* field = new BoolFieldWidget(label, initialValue);
-    connect(field, &BoolFieldWidget::ValueChanged, this, [this, entities, member](bool value) {
+    // BoolFieldWidget::ValueChanged already only fires once per click (QCheckBox::toggled) - same
+    // reasoning as AddStringField above.
+    connect(field, &BoolFieldWidget::ValueChanged, this, [entities, setter](bool value) {
         for (Entity entity : entities)
-            entity.GetComponent<Component>().*member = value;
-        m_Context.GetScene().NotifyChanged();
+            setter(entity, value);
     });
+    connect(field, &BoolFieldWidget::ValueChanged, this, MakeCommitHandler<bool>(label, entities, getter, setter));
     box->SetContent(field);
 
-    m_LiveSyncCallbacks.push_back([this, field, member] { field->SetValue(m_SelectedEntities.front().GetComponent<Component>().*member); });
+    m_LiveSyncCallbacks.push_back([this, field, getter] { field->SetValue(getter(m_SelectedEntities.front())); });
 }
 
 template <typename Component>
 void InspectorPanel::AddFloatField(ComponentBoxWidget* box, const QString& label, float initialValue,
                                    float Component::* member)
 {
-    // Unlike AddStringField/AddBoolField above (TagComponent's name/active, which the Scene
-    // Hierarchy tree displays), none of these numeric fields are reflected anywhere outside the
-    // Inspector, so editing them doesn't call Scene::NotifyChanged() - same reasoning as
-    // AddVec3Field's TransformComponent fields.
     std::vector<Entity> entities = m_SelectedEntities;
 
+    auto getter = [member](Entity entity) { return entity.GetComponent<Component>().*member; };
+    // Every field commits through PropertyEditCommand, which calls Scene::NotifyChanged() itself
+    // on Execute()/Undo() - see PropertyEditCommand.h. Unlike the old direct-write path, this
+    // fixes numeric fields (which previously never notified) to correctly dirty the scene.
+    auto setter = [member](Entity entity, float value) { entity.GetComponent<Component>().*member = value; };
+
     FloatFieldWidget* field = new FloatFieldWidget(label, initialValue);
-    connect(field, &FloatFieldWidget::ValueChanged, this, [entities, member](float value) {
+    connect(field, &FloatFieldWidget::ValueChanged, this, [entities, setter](float value) {
         for (Entity entity : entities)
-            entity.GetComponent<Component>().*member = value;
+            setter(entity, value);
     });
+    connect(field, &FloatFieldWidget::EditingFinished, this, MakeCommitHandler<float>(label, entities, getter, setter));
     box->SetContent(field);
 
-    m_LiveSyncCallbacks.push_back([this, field, member] { field->SetValue(m_SelectedEntities.front().GetComponent<Component>().*member); });
+    m_LiveSyncCallbacks.push_back([this, field, getter] { field->SetValue(getter(m_SelectedEntities.front())); });
 }
 
 template <typename Component>
@@ -414,14 +467,18 @@ void InspectorPanel::AddVec3Field(ComponentBoxWidget* box, const QString& label,
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
+    auto getter = [member](Entity entity) { return entity.GetComponent<Component>().*member; };
+    auto setter = [member](Entity entity, Vector3 value) { entity.GetComponent<Component>().*member = value; };
+
     Vec3ControlWidget* control = new Vec3ControlWidget(label, initialValue);
-    connect(control, &Vec3ControlWidget::ValueChanged, this, [entities, member](const Vector3& value) {
+    connect(control, &Vec3ControlWidget::ValueChanged, this, [entities, setter](const Vector3& value) {
         for (Entity entity : entities)
-            entity.GetComponent<Component>().*member = value;
+            setter(entity, value);
     });
+    connect(control, &Vec3ControlWidget::EditingFinished, this, MakeCommitHandler<Vector3>(label, entities, getter, setter));
     box->SetContent(control);
 
-    m_LiveSyncCallbacks.push_back([this, control, member] { control->SetValue(m_SelectedEntities.front().GetComponent<Component>().*member); });
+    m_LiveSyncCallbacks.push_back([this, control, getter] { control->SetValue(getter(m_SelectedEntities.front())); });
 }
 
 template <typename Component>
@@ -430,14 +487,18 @@ void InspectorPanel::AddVec4Field(ComponentBoxWidget* box, const QString& label,
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
+    auto getter = [member](Entity entity) { return entity.GetComponent<Component>().*member; };
+    auto setter = [member](Entity entity, Vector4 value) { entity.GetComponent<Component>().*member = value; };
+
     Vec4ControlWidget* control = new Vec4ControlWidget(label, initialValue);
-    connect(control, &Vec4ControlWidget::ValueChanged, this, [entities, member](const Vector4& value) {
+    connect(control, &Vec4ControlWidget::ValueChanged, this, [entities, setter](const Vector4& value) {
         for (Entity entity : entities)
-            entity.GetComponent<Component>().*member = value;
+            setter(entity, value);
     });
+    connect(control, &Vec4ControlWidget::EditingFinished, this, MakeCommitHandler<Vector4>(label, entities, getter, setter));
     box->SetContent(control);
 
-    m_LiveSyncCallbacks.push_back([this, control, member] { control->SetValue(m_SelectedEntities.front().GetComponent<Component>().*member); });
+    m_LiveSyncCallbacks.push_back([this, control, getter] { control->SetValue(getter(m_SelectedEntities.front())); });
 }
 
 template <typename Component, typename Enum>
@@ -446,16 +507,20 @@ void InspectorPanel::AddEnumField(ComponentBoxWidget* box, const QString& label,
 {
     std::vector<Entity> entities = m_SelectedEntities;
 
+    auto getter = [member](Entity entity) { return static_cast<int>(entity.GetComponent<Component>().*member); };
+    auto setter = [member](Entity entity, int value) { entity.GetComponent<Component>().*member = static_cast<Enum>(value); };
+
     EnumFieldWidget* field = new EnumFieldWidget(label, options, static_cast<int>(initialValue));
-    connect(field, &EnumFieldWidget::ValueChanged, this, [entities, member](int index) {
-        Enum value = static_cast<Enum>(index);
+    // EnumFieldWidget::ValueChanged already only fires once per selection (QComboBox::
+    // currentIndexChanged) - same reasoning as AddStringField above.
+    connect(field, &EnumFieldWidget::ValueChanged, this, [entities, setter](int value) {
         for (Entity entity : entities)
-            entity.GetComponent<Component>().*member = value;
+            setter(entity, value);
     });
+    connect(field, &EnumFieldWidget::ValueChanged, this, MakeCommitHandler<int>(label, entities, getter, setter));
     box->SetContent(field);
 
-    m_LiveSyncCallbacks.push_back(
-        [this, field, member] { field->SetValue(static_cast<int>(m_SelectedEntities.front().GetComponent<Component>().*member)); });
+    m_LiveSyncCallbacks.push_back([this, field, getter] { field->SetValue(getter(m_SelectedEntities.front())); });
 }
 
 ComponentBoxWidget* InspectorPanel::CreateComponentBox(const std::string& name)

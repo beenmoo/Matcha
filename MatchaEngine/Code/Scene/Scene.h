@@ -28,6 +28,15 @@ public:
     // it's what tree-building UI (the Scene Hierarchy panel) needs to find its starting points.
     [[nodiscard]] std::vector<Entity> GetRootEntities();
 
+    // Returns a default-constructed (invalid) Entity if no live entity has this id - callers must
+    // treat that as "target no longer exists", not an error. Needed because entt recycles a
+    // destroyed handle's slot (with a version bump), so a raw entt::entity captured before a
+    // destroy+recreate cycle (e.g. an undo of a delete) can't safely be reused as an identity
+    // token - TagComponent::id is this codebase's established stable identity across that
+    // boundary (see SceneSerializer, which already resolves parent links by UUID for the same
+    // reason).
+    [[nodiscard]] Entity FindEntityByUUID(UUID id);
+
     // Multi-subscriber: both the Scene Hierarchy panel (rebuilds its tree) and the Inspector
     // panel (re-checks whether its selected entity is still valid) observe this.
     void AddOnSceneChanged(std::function<void()> callback);

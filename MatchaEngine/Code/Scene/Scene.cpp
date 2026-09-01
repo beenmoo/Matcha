@@ -58,6 +58,18 @@ std::vector<Entity> Scene::GetRootEntities()
     return roots;
 }
 
+Entity Scene::FindEntityByUUID(UUID id)
+{
+    for (entt::entity handle : View<TagComponent>())
+    {
+        Entity entity(handle, this);
+        if (entity.GetComponent<TagComponent>().id == id)
+            return entity;
+    }
+
+    return Entity();
+}
+
 void Scene::AddOnSceneChanged(std::function<void()> callback)
 {
     m_OnSceneChanged.push_back(std::move(callback));

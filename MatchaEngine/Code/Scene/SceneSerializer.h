@@ -3,6 +3,7 @@
 #include "Entity.h"
 
 #include <string>
+#include <vector>
 #include <nlohmann/json.hpp>
 
 namespace Matcha
@@ -42,6 +43,20 @@ public:
     // engine's Scene is owned and swapped in one place (SceneManager), not handed out as a
     // fresh object from here.
     static void Deserialize(const std::string& filepath, Scene* scene, ResourceManager& resourceManager);
+
+    // In-memory equivalents of Serialize/Deserialize, scoped to an explicit entity list rather
+    // than a whole Scene - used by the editor's undo system to snapshot a subtree before deleting
+    // it (and reconstruct it on undo) without going through a file. Shares the exact same
+    // per-entity fidelity (and the same limitations - imported mesh geometry, procedural
+    // textures, NativeScriptComponent bindings aren't captured) as Serialize/Deserialize, since
+    // both go through the same SerializeEntity/DeserializeEntity underneath.
+    //
+    // DeserializeEntities resolves a "parent" id against every entity in entityNodes AND every
+    // entity already live in scene - so a snapshot of a subtree whose root's parent lies outside
+    // the snapshot (still alive in the scene) reattaches to that external parent correctly, not
+    // just to siblings within the snapshot itself.
+    static nlohmann::json SerializeEntities(const std::vector<Entity>& entities, ResourceManager& resourceManager);
+    static std::vector<Entity> DeserializeEntities(const nlohmann::json& entityNodes, Scene* scene, ResourceManager& resourceManager);
 
 private:
     static void SerializeEntity(nlohmann::json& out, Entity entity, ResourceManager& resourceManager);

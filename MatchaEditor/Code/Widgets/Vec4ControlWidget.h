@@ -21,6 +21,12 @@ public:
 signals:
     void ValueChanged(const Vector4& newValue);
 
+    // Fires once per axis whose spin box commits an edit (Enter or focus-loss) - unlike
+    // ValueChanged, which fires on every intermediate tick while dragging/typing. This is what
+    // undo should key off of: one EditingFinished per committed edit, not one ValueChanged per
+    // tick.
+    void EditingFinished();
+
 private:
     void OnValuesChanged();
 

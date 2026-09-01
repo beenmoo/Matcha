@@ -22,12 +22,14 @@ class CDockManager;
 namespace MatchaEditor
 {
 class ComponentBoxWidget;
+class CommandManager;
 
 class InspectorPanel : public ads::CDockWidget
 {
     Q_OBJECT
 public:
-    explicit InspectorPanel(ads::CDockManager* dockManager, EngineContext& context, QWidget* parent = nullptr);
+    explicit InspectorPanel(ads::CDockManager* dockManager, EngineContext& context, CommandManager& commandManager,
+                            QWidget* parent = nullptr);
 
     void SetSelectedEntities(std::vector<Entity> entities);
 
@@ -74,9 +76,12 @@ private:
     // entity's current value (via `getter`, re-read each sync tick) even when something other
     // than this field is what's changing it. A std::function rather than a pointer-to-member here
     // (unlike the templated Add*Field overloads below) because Transform::GetPosition() is a
-    // deducing-this template - not a plain member function pointer-to-member can bind to.
+    // deducing-this template - not a plain member function pointer-to-member can bind to. `getter`
+    // takes the Entity to read from (rather than always reading m_SelectedEntities.front()) so
+    // MakeCommitHandler can capture each selected entity's own "before" value for undo, not just
+    // the first one's.
     void AddVec3Field(ComponentBoxWidget* box, const QString& label, const Vector3& initialValue,
-                      std::function<Vector3()> getter, void (Transform::*setter)(const Vector3&));
+                      std::function<Vector3(Entity)> getter, void (Transform::*setter)(const Vector3&));
 
     // Adds a field widget to `box`, wired to write `member` directly on every currently-selected
     // entity's Component. Templated on the pointer-to-member so the wiring (capture selection,
@@ -98,6 +103,20 @@ private:
 
     ComponentBoxWidget* CreateComponentBox(const std::string& name);
 
+    // Shared choke point every Add*Field routes through to get undo support: snapshots each
+    // entity's current value (via `getter`) as the PropertyEditCommand's "before" state at field-
+    // build time, and returns a closure to connect to the field widget's commit signal (whichever
+    // one only fires once per actual edit - see the Add*Field bodies). Skips pushing a command if
+    // the front entity's value hasn't actually changed since the field was built (or since the
+    // last commit) - a focus-in/out with no edit shouldn't create an empty undo entry. `setter`
+    // writes the value onto one entity's component; used both by the live-apply connection
+    // (already wired separately in each Add*Field) and by the returned commit handler's
+    // PropertyEditCommand.
+    template <typename ValueType>
+    std::function<void()> MakeCommitHandler(const QString& description, std::vector<Entity> entities,
+                                            std::function<ValueType(Entity)> getter,
+                                            std::function<void(Entity, ValueType)> setter);
+
 private:
     struct ComponentInspectorEntry
     {
@@ -115,6 +134,7 @@ private:
     };
 
     EngineContext& m_Context;
+    CommandManager& m_CommandManager;
     std::vector<Entity> m_SelectedEntities;
     std::vector<ComponentInspectorEntry> m_ComponentInspectors;
     std::vector<ScriptInspectorEntry> m_ScriptInspectors;

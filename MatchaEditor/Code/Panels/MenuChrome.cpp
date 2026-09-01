@@ -1,4 +1,5 @@
 #include "MenuChrome.h"
+#include "Core/CommandManager.h"
 
 #include <Matcha.h>
 
@@ -7,6 +8,8 @@
 #include <QFileDialog>
 #include <QKeySequence>
 #include <QMessageBox>
+
+#include <string>
 
 namespace MatchaEditor
 {
@@ -54,7 +57,7 @@ bool ConfirmDiscardUnsavedChanges(QWidget* parent, Matcha::EngineContext& contex
     }
 }
 
-MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context)
+MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context, CommandManager& commandManager)
 {
     m_MenuBar = new QMenuBar(mainWindow);
 
@@ -106,9 +109,34 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context)
     QObject::connect(exitAction, &QAction::triggered, mainWindow, &QMainWindow::close);
 
     m_EditMenu = m_MenuBar->addMenu("Edit");
-    // Disabled - no undo/redo system exists yet.
-    m_EditMenu->addAction("Undo")->setEnabled(false);
-    m_EditMenu->addAction("Redo")->setEnabled(false);
+
+    m_UndoAction = m_EditMenu->addAction("Undo");
+    m_UndoAction->setShortcut(QKeySequence::Undo);
+    QObject::connect(m_UndoAction, &QAction::triggered, mainWindow, [&commandManager] { commandManager.Undo(); });
+
+    m_RedoAction = m_EditMenu->addAction("Redo");
+    m_RedoAction->setShortcut(QKeySequence::Redo);
+    QObject::connect(m_RedoAction, &QAction::triggered, mainWindow, [&commandManager] { commandManager.Redo(); });
+
+    // Keeps enabled state and label text ("Undo <description>") in sync with the stack - invoked
+    // once immediately below for the initial (empty) state, then again on every ExecuteCommand()/
+    // Undo()/Redo()/Clear(). Captures the QAction pointers directly (not `this`): MenuChrome
+    // itself is a short-lived local in EditorMainWindow's constructor (see that call site), while
+    // this callback is held by CommandManager for the rest of the editor's lifetime - the QAction
+    // objects it needs to keep updating outlive MenuChrome because they're owned by m_EditMenu.
+    QAction* undoAction = m_UndoAction;
+    QAction* redoAction = m_RedoAction;
+    auto updateEditMenu = [undoAction, redoAction, &commandManager] {
+        undoAction->setEnabled(commandManager.CanUndo());
+        std::string undoDescription = commandManager.GetUndoDescription();
+        undoAction->setText(undoDescription.empty() ? "Undo" : QString("Undo %1").arg(QString::fromStdString(undoDescription)));
+
+        redoAction->setEnabled(commandManager.CanRedo());
+        std::string redoDescription = commandManager.GetRedoDescription();
+        redoAction->setText(redoDescription.empty() ? "Redo" : QString("Redo %1").arg(QString::fromStdString(redoDescription)));
+    };
+    commandManager.SetOnStackChanged(updateEditMenu);
+    updateEditMenu();
 
     m_ViewMenu = m_MenuBar->addMenu("View");
     m_PanelsMenu = m_ViewMenu->addMenu("Panels");

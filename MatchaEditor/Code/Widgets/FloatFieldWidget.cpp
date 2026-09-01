@@ -24,6 +24,7 @@ FloatFieldWidget::FloatFieldWidget(const QString& label, float initialValue, QWi
 
     connect(m_SpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
             [this](double value) { emit ValueChanged(static_cast<float>(value)); });
+    connect(m_SpinBox, &QDoubleSpinBox::editingFinished, this, &FloatFieldWidget::EditingFinished);
 
     layout->addWidget(m_SpinBox);
     setLayout(layout);
