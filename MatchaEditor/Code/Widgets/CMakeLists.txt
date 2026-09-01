@@ -7,6 +7,7 @@ target_sources(${TARGET_NAME} PRIVATE
 	Vec3ControlWidget.h
 	ComponentBoxWidget.cpp
 	ComponentBoxWidget.h
+	FieldLabel.h
 	StringFieldWidget.cpp
 	StringFieldWidget.h
 	BoolFieldWidget.cpp

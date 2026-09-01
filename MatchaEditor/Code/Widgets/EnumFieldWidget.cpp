@@ -1,7 +1,7 @@
 #include "EnumFieldWidget.h"
+#include "FieldLabel.h"
 
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QComboBox>
 #include <QSignalBlocker>
 
@@ -11,24 +11,22 @@ EnumFieldWidget::EnumFieldWidget(const QString& label, const QStringList& option
     : QWidget(parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(2, 2, 2, 2);
-    layout->setSpacing(4);
+    layout->setContentsMargins(1, 1, 1, 1);
+    layout->setSpacing(3);
 
-    QLabel* mainLabel = new QLabel(label, this);
-    mainLabel->setFixedWidth(65);  // Aligned with Vec3ControlWidget's labels
-    mainLabel->setStyleSheet("color: #b0b0b0; font-size: 11px;");
-    layout->addWidget(mainLabel);
+    layout->addWidget(CreateFieldLabel(label, this));
 
     m_ComboBox = new QComboBox(this);
     m_ComboBox->addItems(options);
     m_ComboBox->setCurrentIndex(initialIndex);
-    m_ComboBox->setFixedHeight(20);
+    m_ComboBox->setFixedHeight(16);
     m_ComboBox->setStyleSheet(
         "QComboBox {"
         "   background-color: #222222;"
         "   color: #dcdcdc;"
         "   border: 1px solid #1a1a1a;"
         "   border-radius: 2px;"
+        "   font-size: 10px;"
         "   padding-left: 4px;"
         "}");
 

@@ -1,7 +1,7 @@
 #include "BoolFieldWidget.h"
+#include "FieldLabel.h"
 
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QCheckBox>
 #include <QSignalBlocker>
 
@@ -11,13 +11,10 @@ BoolFieldWidget::BoolFieldWidget(const QString& label, bool initialValue, QWidge
     : QWidget(parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(2, 2, 2, 2);
-    layout->setSpacing(4);
+    layout->setContentsMargins(1, 1, 1, 1);
+    layout->setSpacing(3);
 
-    QLabel* mainLabel = new QLabel(label, this);
-    mainLabel->setFixedWidth(65);  // Aligned with Vec3ControlWidget's labels
-    mainLabel->setStyleSheet("color: #b0b0b0; font-size: 11px;");
-    layout->addWidget(mainLabel);
+    layout->addWidget(CreateFieldLabel(label, this));
 
     m_CheckBox = new QCheckBox(this);
     m_CheckBox->setChecked(initialValue);

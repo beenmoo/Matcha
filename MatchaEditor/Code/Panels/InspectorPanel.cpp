@@ -10,6 +10,7 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
 #include <QDoubleSpinBox>
@@ -35,14 +36,35 @@ QPushButton* CreateAddButton(const QString& text, QWidget* parent)
         "   color: #dcdcdc;"
         "   border: 1px solid #242424;"
         "   border-radius: 2px;"
-        "   font-size: 11px;"
-        "   min-height: 22px;"
-        "   max-height: 22px;"
+        "   font-size: 10px;"
+        "   min-height: 18px;"
+        "   max-height: 18px;"
         "}"
         "QPushButton:hover {"
         "   background-color: #404040;"
         "}");
     return button;
+}
+
+// Thin horizontal rule for splitting a component box's fields into visually distinct groups
+// (e.g. CameraComponent's Perspective-only vs Orthographic-only fields, both always present on
+// the struct regardless of which projectionType is active).
+QFrame* CreateSeparator(QWidget* parent)
+{
+    QFrame* separator = new QFrame(parent);
+    separator->setFrameShape(QFrame::HLine);
+    separator->setStyleSheet("background-color: #242424; max-height: 1px; border: none;");
+    return separator;
+}
+
+// Names the group of fields that follow it (e.g. "Perspective" above FOV/Near/Far), for a
+// component box like CameraComponent's whose fields aren't self-explanatory as a flat list -
+// distinct from a normal field's own label, which names one value rather than a group of them.
+QLabel* CreateSectionLabel(const QString& text, QWidget* parent)
+{
+    QLabel* label = new QLabel(text, parent);
+    label->setStyleSheet("color: #dcdcdc; font-size: 10px; font-weight: bold;");
+    return label;
 }
 }  // namespace
 
@@ -169,12 +191,19 @@ void InspectorPanel::RegisterComponentInspectors()
     RegisterComponentInspector<LightComponent>("Light", true, [this](ComponentBoxWidget* box) {
         LightComponent& light = m_SelectedEntities.front().GetComponent<LightComponent>();
         AddEnumField<LightComponent>(box, "Type", {"Directional", "Point", "Spot"}, light.type, &LightComponent::type);
+        box->SetContent(CreateSectionLabel("General", box));
         AddVec3Field<LightComponent>(box, "Color", light.color, &LightComponent::color);
         AddFloatField<LightComponent>(box, "Intensity", light.intensity, &LightComponent::intensity);
+        box->SetContent(CreateSeparator(box));
+        box->SetContent(CreateSectionLabel("Point / Spot", box));
         AddFloatField<LightComponent>(box, "Range", light.range, &LightComponent::range);
+        box->SetContent(CreateSeparator(box));
+        box->SetContent(CreateSectionLabel("Spot Only", box));
         AddFloatField<LightComponent>(box, "Inner Cone", light.innerConeAngle, &LightComponent::innerConeAngle);
         AddFloatField<LightComponent>(box, "Outer Cone", light.outerConeAngle, &LightComponent::outerConeAngle);
-        AddFloatField<LightComponent>(box, "Ambient Str.", light.ambientStrength, &LightComponent::ambientStrength);
+        box->SetContent(CreateSeparator(box));
+        box->SetContent(CreateSectionLabel("Ambient", box));
+        AddFloatField<LightComponent>(box, "Ambient Strength", light.ambientStrength, &LightComponent::ambientStrength);
         AddVec3Field<LightComponent>(box, "Ambient Color", light.ambientColor, &LightComponent::ambientColor);
         AddBoolField<LightComponent>(box, "Cast Shadows", light.castShadows, &LightComponent::castShadows);
     });
@@ -183,9 +212,12 @@ void InspectorPanel::RegisterComponentInspectors()
         CameraComponent& camera = m_SelectedEntities.front().GetComponent<CameraComponent>();
         AddEnumField<CameraComponent>(box, "Projection", {"Perspective", "Orthographic"}, camera.projectionType,
                                       &CameraComponent::projectionType);
+        box->SetContent(CreateSectionLabel("Perspective", box));
         AddFloatField<CameraComponent>(box, "FOV", camera.perspectiveFOV, &CameraComponent::perspectiveFOV);
         AddFloatField<CameraComponent>(box, "Near", camera.perspectiveNear, &CameraComponent::perspectiveNear);
         AddFloatField<CameraComponent>(box, "Far", camera.perspectiveFar, &CameraComponent::perspectiveFar);
+        box->SetContent(CreateSeparator(box));
+        box->SetContent(CreateSectionLabel("Orthographic", box));
         AddFloatField<CameraComponent>(box, "Ortho Size", camera.orthographicSize, &CameraComponent::orthographicSize);
         AddFloatField<CameraComponent>(box, "Ortho Near", camera.orthographicNear, &CameraComponent::orthographicNear);
         AddFloatField<CameraComponent>(box, "Ortho Far", camera.orthographicFar, &CameraComponent::orthographicFar);
@@ -206,7 +238,7 @@ void InspectorPanel::RegisterComponentInspectors()
         // No asset picker UI exists yet, so the mesh handle is shown read-only rather than editable.
         QString info = meshComponent.mesh.IsValid() ? QString("Handle #%1").arg(meshComponent.mesh.GetID()) : "None";
         QLabel* label = new QLabel(info, box);
-        label->setStyleSheet("color: #b0b0b0; font-size: 11px; padding: 2px;");
+        label->setStyleSheet("color: #b0b0b0; font-size: 10px; padding: 1px;");
         box->SetContent(label);
     });
 
@@ -214,7 +246,7 @@ void InspectorPanel::RegisterComponentInspectors()
         NativeScriptComponent& script = m_SelectedEntities.front().GetComponent<NativeScriptComponent>();
 
         QLabel* countLabel = new QLabel(QString("%1 script(s) bound").arg(script.bindings.size()), box);
-        countLabel->setStyleSheet("color: #b0b0b0; font-size: 11px; padding: 2px;");
+        countLabel->setStyleSheet("color: #b0b0b0; font-size: 10px; padding: 1px;");
         box->SetContent(countLabel);
 
         QPushButton* addScriptButton = CreateAddButton("+ Add Script", box);

@@ -24,9 +24,9 @@ ComponentBoxWidget::ComponentBoxWidget(const QString& title, bool isCollapsed, Q
         "   border: none;"
         "   border-bottom: 1px solid #242424;"
         "   text-align: left;"
-        "   font-size: 11px;"
-        "   min-height: 22px;"
-        "   max-height: 22px;"
+        "   font-size: 10px;"
+        "   min-height: 18px;"
+        "   max-height: 18px;"
         "   padding-left: 4px;"
         "}"
         "QPushButton:hover {"
@@ -39,8 +39,8 @@ ComponentBoxWidget::ComponentBoxWidget(const QString& title, bool isCollapsed, Q
     m_ContentContainer->setStyleSheet("background-color: #303030;");
 
     m_ContentLayout = new QVBoxLayout(m_ContentContainer);
-    m_ContentLayout->setContentsMargins(6, 4, 6, 4);
-    m_ContentLayout->setSpacing(4);
+    m_ContentLayout->setContentsMargins(6, 2, 6, 2);
+    m_ContentLayout->setSpacing(2);
 
     mainLayout->addWidget(m_ContentContainer);
     setLayout(mainLayout);
