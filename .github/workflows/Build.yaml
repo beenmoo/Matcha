@@ -14,7 +14,7 @@ jobs:
           - os: windows-latest
             preset: "Windows Visual Studio"
             build-dir: Build/VS
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             preset: "Linux Clang"
             build-dir: Build/Clang
     runs-on: ${{ matrix.os }}
@@ -43,11 +43,11 @@ jobs:
           '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev
           libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libegl1-mesa-dev
           libwayland-dev wayland-protocols
-      - name: Install Clang 19
+      - name: Install Clang 22
         if: runner.os == 'Linux'
         run: >
           wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh &&
-          sudo ./llvm.sh 19
+          sudo ./llvm.sh 22
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
