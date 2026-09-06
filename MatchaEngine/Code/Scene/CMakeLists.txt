@@ -7,6 +7,7 @@ target_sources(${TARGET_NAME} PRIVATE
     Component/MeshComponent.h
     Component/TransformComponent.h
     Component/NativeScriptComponent.h
+    Component/PythonScriptComponent.h
     Component/LightComponent.h
     Component/TagComponent.h
     Scene.cpp
@@ -25,6 +26,8 @@ target_sources(${TARGET_NAME} PRIVATE
     System/TransformSystem.h
     System/ScriptSystem.cpp
     System/ScriptSystem.h
+    System/PythonScriptSystem.cpp
+    System/PythonScriptSystem.h
     System/LightSystem.cpp
     System/LightSystem.h
     )

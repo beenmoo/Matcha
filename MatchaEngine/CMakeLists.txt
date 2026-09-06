@@ -7,6 +7,7 @@ add_subdirectory(Code/Graphics)
 add_subdirectory(Code/Loader)
 add_subdirectory(Code/Math)
 add_subdirectory(Code/Scene)
+add_subdirectory(Code/Scripting)
 add_subdirectory(Code/Utility)
 
 # Umbrella public header, lives directly in Code/ rather than one of the subdirectories

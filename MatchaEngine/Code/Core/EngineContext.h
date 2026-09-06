@@ -12,6 +12,7 @@ namespace Matcha
 class Application;
 class Input;
 class Logger;
+class PythonRuntime;
 class Time;
 class Window;
 
@@ -24,7 +25,8 @@ public:
                            Window& window,
                            Renderer& renderer,
                            ResourceManager& resourceManager,
-                           SceneManager& sceneManager);
+                           SceneManager& sceneManager,
+                           PythonRuntime& pythonRuntime);
 
     template <typename Self>
     [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const Application&, Application&> GetApplication(this Self& self)
@@ -77,6 +79,12 @@ public:
         return self.m_SceneManager;
     }
 
+    template <typename Self>
+    [[nodiscard]] std::conditional_t<std::is_const_v<Self>, const PythonRuntime&, PythonRuntime&> GetPythonRuntime(this Self& self)
+    {
+        return self.m_PythonRuntime;
+    }
+
 private:
     Application& m_Application;
     Input& m_Input;
@@ -85,5 +93,6 @@ private:
     Renderer& m_Renderer;
     ResourceManager& m_ResourceManager;
     SceneManager& m_SceneManager;
+    PythonRuntime& m_PythonRuntime;
 };
 }  // namespace Matcha

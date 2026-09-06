@@ -19,6 +19,8 @@ int main(int argc, char** argv);
 
 namespace Matcha
 {
+class PythonRuntime;
+
 struct ApplicationCommandLineArgs
 {
     int m_Count = 0;
@@ -108,6 +110,19 @@ private:
     std::unique_ptr<RendererAPI> m_RendererAPI;
     ResourceManager m_ResourceManager;
     Renderer m_Renderer;
+
+    // Forward-declared/unique_ptr, same reason as m_RendererAPI above: PythonRuntime.h pulls in
+    // <pybind11/embed.h>, which needs Python's own headers/libs available to whoever includes it -
+    // fine for Application.cpp, not something every consumer of this widely-included header
+    // (most of MatchaEditor, via EngineContext/Application) should be forced to link against.
+    //
+    // Must be declared (and therefore destroyed) after every Scene-owning member above it and
+    // before every one below - members destroy in reverse declaration order, and a
+    // PythonScriptComponent still holding a live Python object when this interpreter shuts down
+    // is undefined behavior. m_SceneManager (below) outlives every Scene it owns, so this only
+    // needs to precede m_SceneManager itself, not enumerate every Scene-owning member individually.
+    std::unique_ptr<PythonRuntime> m_PythonRuntime;
+
     SceneManager m_SceneManager;
     EngineContext m_Context;
 

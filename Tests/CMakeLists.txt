@@ -15,7 +15,9 @@ add_executable(${TARGET_NAME}
     Code/CameraSystemTests.cpp
     Code/FileWatcherTests.cpp
     Code/HierarchyComponentTests.cpp
+    Code/MatchaPythonBindingsTests.cpp
     Code/MatrixTests.cpp
+    Code/PythonRuntimeTests.cpp
     Code/QuaternionTests.cpp
     Code/RendererTests.cpp
     Code/SceneTests.cpp
@@ -26,7 +28,14 @@ add_executable(${TARGET_NAME}
 
 target_include_directories(${TARGET_NAME} PUBLIC Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
-target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine gtest_main gmock_main)
+
+# pybind11::embed is a PRIVATE dependency of MatchaEngine (doesn't propagate its include dirs/link
+# requirements to consumers) - PythonRuntimeTests.cpp includes Scripting/PythonRuntime.h directly,
+# so Tests needs its own find_package/link for the same reason MatchaEditor or any other consumer
+# of MatchaEngine would.
+find_package(pybind11 CONFIG REQUIRED)
+
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine gtest_main gmock_main pybind11::embed)
 
 gtest_discover_tests(${TARGET_NAME})
 
