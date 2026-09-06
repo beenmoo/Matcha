@@ -8,7 +8,9 @@
 #include "Widgets/EnumFieldWidget.h"
 #include "Utility/EntityUtils.h"
 #include "Core/CommandManager.h"
+#include "Core/Commands/AddComponentCommand.h"
 #include "Core/Commands/PropertyEditCommand.h"
+#include "Core/Commands/RemoveComponentCommand.h"
 #include "Scene/Component/PythonScriptComponent.h"
 #include "Scene/Component/TagComponent.h"
 
@@ -66,6 +68,24 @@ QString GuessClassNameFromFileStem(const QString& stem)
     }
 
     return result;
+}
+
+// A script's live Python instance is untrusted input the same way a scene file is - reading or
+// writing one of its attributes can throw (a custom __setattr__, an attribute deleted since the
+// field widget was built) at a point this file has no other exception boundary around (a Qt
+// signal handler triggered from user interaction or the sync timer). Mirrors
+// PythonScriptSystem::Update's own py::error_already_set boundary.
+template <typename Func>
+void SafeCall(Func&& func)
+{
+    try
+    {
+        func();
+    }
+    catch (const py::error_already_set& e)
+    {
+        MT_CORE_ERROR("Python script field access failed: {}", e.what());
+    }
 }
 
 // Thin horizontal rule for splitting a component box's fields into visually distinct groups
@@ -144,16 +164,66 @@ void InspectorPanel::SetSelectedEntities(std::vector<Entity> entities)
 
 void InspectorPanel::OnSceneChanged()
 {
-    // Not a general "refresh on every scene change" - that would fight in-progress edits in
-    // the spin boxes below. This only catches a selected entity having been deleted out from
-    // under the panel (e.g. via the Scene Hierarchy panel), pruning it so the panel falls back
-    // to "No entity selected" (or keeps editing whatever in the selection is still alive)
-    // instead of showing controls for a dead entity.
+    // Deliberately not a blanket "refresh on every scene change" - that would fight in-progress
+    // edits, destroying and rebuilding the very widget the user is typing in on every keystroke
+    // that dirties the scene. Only two kinds of change actually invalidate what's on screen:
+
+    // A selected entity was deleted out from under the panel (e.g. via the Scene Hierarchy
+    // panel) - prune it so the panel falls back to "No entity selected" (or keeps editing
+    // whatever in the selection is still alive) instead of showing controls for a dead entity.
     size_t countBefore = m_SelectedEntities.size();
     std::erase_if(m_SelectedEntities, [](const Entity& entity) { return !entity.IsValid(); });
 
     if (m_SelectedEntities.size() != countBefore)
+    {
         Refresh();
+        return;
+    }
+
+    // The selection is unchanged but its *components* aren't - a box appeared or disappeared, or
+    // a Python binding was added/removed. Undo/redo is the case that matters here: unlike the Add
+    // Component menu and the (x) button, which drive this panel directly, an undo comes from the
+    // Edit menu or Ctrl+Z with no idea this panel exists, so before this the panel just kept
+    // showing boxes for components that were no longer there (and vice versa) until the user
+    // reselected the entity. Individual field *values* need no rebuild - SyncLiveValues() already
+    // pushes those into their widgets every tick, which is why this compares only structure.
+    if (ComputeLayoutSignature() != m_LayoutSignature)
+        Refresh();
+}
+
+std::string InspectorPanel::ComputeLayoutSignature() const
+{
+    std::string signature;
+
+    for (const ComponentInspectorEntry& entry : m_ComponentInspectors)
+    {
+        if (!entry.allHave())
+            continue;
+
+        signature += entry.name;
+        signature += ';';
+    }
+
+    // PythonScriptComponent is the one component whose box contents vary with scene data rather
+    // than just with the component's presence: one Module/Class field pair (plus that binding's
+    // auto-generated script fields) per binding. Its draw lambda reads only the front selected
+    // entity, so that's all this needs to fingerprint.
+    //
+    // Deliberately the binding *count* and not each binding's module/class text: those are what
+    // this box's own Module/Class fields edit, and folding them in here would mean every commit in
+    // one of those fields rebuilt the box out from under the user mid-edit. Nothing changes a
+    // binding's text without also changing the count on any undoable path anyway (the Module/Class
+    // fields don't push commands), so the count catches every case that matters - a binding added
+    // via Browse..., and a whole component's worth of bindings coming and going through Add/
+    // RemoveComponentCommand.
+    if (!m_SelectedEntities.empty() && m_SelectedEntities.front().HasComponent<PythonScriptComponent>())
+    {
+        signature += "bindings=";
+        signature += std::to_string(m_SelectedEntities.front().GetComponent<PythonScriptComponent>().bindings.size());
+        signature += ';';
+    }
+
+    return signature;
 }
 
 void InspectorPanel::SyncLiveValues()
@@ -167,13 +237,29 @@ void InspectorPanel::SyncLiveValues()
 
 void InspectorPanel::Refresh()
 {
+    // Recorded before anything is built (m_SelectedEntities is already final by here) so
+    // OnSceneChanged has an accurate picture of what ended up on screen, including the
+    // "No entity selected" case below.
+    m_LayoutSignature = ComputeLayoutSignature();
     m_LiveSyncCallbacks.clear();
 
-    // Clear layout items safely...
+    // deleteLater() rather than a plain delete: Refresh() is routinely reached from inside one of
+    // these very widgets' signal handlers - the (x) button's RemoveRequested, a Browse... click -
+    // by way of the command it runs calling Scene::NotifyChanged(), and destroying a widget while
+    // it's still emitting leaves Qt returning into freed memory. Reparenting to nullptr first (and
+    // hiding, so an unparented widget doesn't flash as a top-level window) takes them off screen
+    // immediately, with the actual destruction deferred to the next event-loop turn, once the
+    // emitting widget's own call stack has unwound.
     QLayoutItem* item;
     while ((item = m_MainLayout->takeAt(0)) != nullptr)
     {
-        delete item->widget();
+        if (QWidget* widget = item->widget())
+        {
+            widget->hide();
+            widget->setParent(nullptr);
+            widget->deleteLater();
+        }
+
         delete item;
     }
 
@@ -205,13 +291,13 @@ void InspectorPanel::Refresh()
 
 void InspectorPanel::RegisterComponentInspectors()
 {
-    RegisterComponentInspector<TagComponent>("Entity Properties", false, [this](ComponentBoxWidget* box) {
+    RegisterComponentInspector<TagComponent>("Entity Properties", "", false, [this](ComponentBoxWidget* box) {
         TagComponent& tagComponent = m_SelectedEntities.front().GetComponent<TagComponent>();
         AddBoolField<TagComponent>(box, "Active", tagComponent.isActive, &TagComponent::isActive);
         AddStringField<TagComponent>(box, "Name", QString::fromStdString(tagComponent.name), &TagComponent::name);
     });
 
-    RegisterComponentInspector<TransformComponent>("Transform", false, [this](ComponentBoxWidget* box) {
+    RegisterComponentInspector<TransformComponent>("Transform", "", false, [this](ComponentBoxWidget* box) {
         TransformComponent& transformComponent = m_SelectedEntities.front().GetComponent<TransformComponent>();
         AddVec3Field(
             box, "Position", transformComponent.transform.GetPosition(),
@@ -228,7 +314,7 @@ void InspectorPanel::RegisterComponentInspectors()
             &Transform::SetScale);
     });
 
-    RegisterComponentInspector<LightComponent>("Light", true, [this](ComponentBoxWidget* box) {
+    RegisterComponentInspector<LightComponent>("Light", "light", true, [this](ComponentBoxWidget* box) {
         LightComponent& light = m_SelectedEntities.front().GetComponent<LightComponent>();
         AddEnumField<LightComponent>(box, "Type", {"Directional", "Point", "Spot"}, light.type, &LightComponent::type);
         box->SetContent(CreateSectionLabel("General", box));
@@ -248,7 +334,7 @@ void InspectorPanel::RegisterComponentInspectors()
         AddBoolField<LightComponent>(box, "Cast Shadows", light.castShadows, &LightComponent::castShadows);
     });
 
-    RegisterComponentInspector<CameraComponent>("Camera", true, [this](ComponentBoxWidget* box) {
+    RegisterComponentInspector<CameraComponent>("Camera", "camera", true, [this](ComponentBoxWidget* box) {
         CameraComponent& camera = m_SelectedEntities.front().GetComponent<CameraComponent>();
         AddEnumField<CameraComponent>(box, "Projection", {"Perspective", "Orthographic"}, camera.projectionType,
                                       &CameraComponent::projectionType);
@@ -265,7 +351,7 @@ void InspectorPanel::RegisterComponentInspectors()
         AddBoolField<CameraComponent>(box, "Fixed Aspect", camera.fixedAspectRatio, &CameraComponent::fixedAspectRatio);
     });
 
-    RegisterComponentInspector<MaterialComponent>("Material", true, [this](ComponentBoxWidget* box) {
+    RegisterComponentInspector<MaterialComponent>("Material", "material", true, [this](ComponentBoxWidget* box) {
         MaterialComponent& material = m_SelectedEntities.front().GetComponent<MaterialComponent>();
         AddVec4Field<MaterialComponent>(box, "Albedo", material.albedoColor, &MaterialComponent::albedoColor);
         AddFloatField<MaterialComponent>(box, "Specular", material.specularStrength, &MaterialComponent::specularStrength);
@@ -273,7 +359,7 @@ void InspectorPanel::RegisterComponentInspectors()
         // Shader/texture are resource handles - no asset picker UI exists yet, so they aren't editable here.
     });
 
-    RegisterComponentInspector<MeshComponent>("Mesh", true, [this](ComponentBoxWidget* box) {
+    RegisterComponentInspector<MeshComponent>("Mesh", "mesh", true, [this](ComponentBoxWidget* box) {
         MeshComponent& meshComponent = m_SelectedEntities.front().GetComponent<MeshComponent>();
         // No asset picker UI exists yet, so the mesh handle is shown read-only rather than editable.
         QString info = meshComponent.mesh.IsValid() ? QString("Handle #%1").arg(meshComponent.mesh.GetID()) : "None";
@@ -282,7 +368,7 @@ void InspectorPanel::RegisterComponentInspectors()
         box->SetContent(label);
     });
 
-    RegisterComponentInspector<PythonScriptComponent>("Python Script", true, [this](ComponentBoxWidget* box) {
+    RegisterComponentInspector<PythonScriptComponent>("Python Script", "pythonScript", true, [this](ComponentBoxWidget* box) {
         // Unlike every other field in this file, editing only applies to the front-most selected
         // entity, not the whole selection - the Add*Field family assumes one pointer-to-member
         // shared across every selected entity's Component, which doesn't describe "the i-th
@@ -297,16 +383,23 @@ void InspectorPanel::RegisterComponentInspectors()
             const PythonScriptComponent::Binding& binding = script.bindings[i];
 
             StringFieldWidget* moduleField = new StringFieldWidget("Module", QString::fromStdString(binding.moduleName), box);
-            connect(moduleField, &StringFieldWidget::ValueChanged, this, [entity, i](const QString& value) mutable {
+            connect(moduleField, &StringFieldWidget::ValueChanged, this, [this, entity, i](const QString& value) mutable {
                 entity.GetComponent<PythonScriptComponent>().bindings[i].moduleName = value.toStdString();
+                m_Context.GetScene().NotifyChanged();
             });
             box->SetContent(moduleField);
 
             StringFieldWidget* classField = new StringFieldWidget("Class", QString::fromStdString(binding.className), box);
-            connect(classField, &StringFieldWidget::ValueChanged, this, [entity, i](const QString& value) mutable {
+            connect(classField, &StringFieldWidget::ValueChanged, this, [this, entity, i](const QString& value) mutable {
                 entity.GetComponent<PythonScriptComponent>().bindings[i].className = value.toStdString();
+                m_Context.GetScene().NotifyChanged();
             });
             box->SetContent(classField);
+
+            AddPythonScriptFields(box, entity, i);
+
+            if (i + 1 < script.bindings.size())
+                box->SetContent(CreateSeparator(box));
         }
 
         QPushButton* browseButton = CreateAddButton("Browse...", box);
@@ -328,11 +421,140 @@ void InspectorPanel::BrowseForScript(Entity entity)
     m_Context.GetPythonRuntime().RegisterScriptDirectory(fileInfo.absolutePath().toStdString());
 
     entity.GetComponent<PythonScriptComponent>().Bind(fileInfo.baseName().toStdString(), GuessClassNameFromFileStem(fileInfo.baseName()).toStdString());
-    Refresh();
+    // Adds a Binding to an already-existing PythonScriptComponent, so entry.addToSelection's own
+    // NotifyChanged() (which only fires for a component this entity didn't have yet) doesn't
+    // cover this call - moduleName/className are real, serialized scene data either way. That
+    // notification is also what rebuilds the box to show the new binding, since the layout
+    // signature OnSceneChanged compares includes each binding's module/class.
+    m_Context.GetScene().NotifyChanged();
+}
+
+void InspectorPanel::AddPythonScriptFields(ComponentBoxWidget* box, Entity entity, size_t bindingIndex)
+{
+    // Deliberately doesn't call Scene::NotifyChanged() anywhere below, unlike every other edit in
+    // this file (including this same box's own Module/Class fields): a live instance's attributes
+    // aren't serialized at all - ComponentRegistry only writes moduleName/className - so editing
+    // one here doesn't produce anything Save could actually capture. Marking the scene dirty for
+    // an edit Save can't persist would be a false "you have unsaved changes" signal, worse than
+    // this field simply not affecting the dirty flag.
+    py::object instance = entity.GetComponent<PythonScriptComponent>().bindings[bindingIndex].instance;
+
+    // Nothing to draw until PythonScriptSystem's first Update() has actually instantiated this
+    // binding (on_create() is what would set any fields beyond what __init__ already did) - an
+    // entity added this frame, or one that's inactive, has no instance yet. Refreshing the
+    // Inspector (reselecting, or any other change that triggers Refresh()) after the next tick
+    // picks the fields up once it exists.
+    if (!instance || instance.is_none())
+    {
+        QLabel* notRunningLabel = new QLabel("(fields appear once this script is running)", box);
+        notRunningLabel->setObjectName("ReadOnlyInfoLabel");
+        box->SetContent(notRunningLabel);
+        return;
+    }
+
+    py::dict fields = instance.attr("__dict__").cast<py::dict>();
+    bool anyField = false;
+
+    for (auto item : fields)
+    {
+        std::string key = py::str(item.first).cast<std::string>();
+
+        // entity/context are engine plumbing PythonScriptSystem sets on every instance, not
+        // fields the script author exposed - and a leading underscore is the same "not public"
+        // convention Python itself already uses for anything meant to stay internal.
+        if (key == "entity" || key == "context" || (!key.empty() && key[0] == '_'))
+            continue;
+
+        anyField = true;
+        py::handle value = item.second;
+        QString label = QString::fromStdString(key);
+
+        // bool before int: in Python, bool is a subclass of int, so an isinstance<int_> check
+        // alone would misclassify every bool field as an integer one.
+        if (py::isinstance<py::bool_>(value))
+        {
+            BoolFieldWidget* field = new BoolFieldWidget(label, value.cast<bool>(), box);
+            connect(field, &BoolFieldWidget::ValueChanged, this, [entity, bindingIndex, key](bool newValue) mutable {
+                SafeCall([&] { entity.GetComponent<PythonScriptComponent>().bindings[bindingIndex].instance.attr(key.c_str()) = newValue; });
+            });
+            box->SetContent(field);
+
+            m_LiveSyncCallbacks.push_back([this, field, entity, bindingIndex, key]() mutable {
+                SafeCall([&] {
+                    py::object liveInstance = entity.GetComponent<PythonScriptComponent>().bindings[bindingIndex].instance;
+                    if (liveInstance && py::hasattr(liveInstance, key.c_str()))
+                        field->SetValue(liveInstance.attr(key.c_str()).cast<bool>());
+                });
+            });
+        }
+        else if (py::isinstance<py::int_>(value) || py::isinstance<py::float_>(value))
+        {
+            // Python int fields round-trip through this widget as float (QDoubleSpinBox is the
+            // only numeric widget in this file) - editing one turns it into a Python float from
+            // then on. Acceptable for the scripts this was built for (RotationComponent/
+            // CameraController's numeric fields are already float), not worth a dedicated
+            // int-only widget for yet.
+            bool isInt = py::isinstance<py::int_>(value);
+            FloatFieldWidget* field = new FloatFieldWidget(label, value.cast<float>(), box);
+            connect(field, &FloatFieldWidget::ValueChanged, this, [entity, bindingIndex, key, isInt](float newValue) mutable {
+                SafeCall([&] {
+                    PythonScriptComponent::Binding& binding = entity.GetComponent<PythonScriptComponent>().bindings[bindingIndex];
+                    if (isInt)
+                        binding.instance.attr(key.c_str()) = static_cast<int>(newValue);
+                    else
+                        binding.instance.attr(key.c_str()) = newValue;
+                });
+            });
+            box->SetContent(field);
+
+            m_LiveSyncCallbacks.push_back([this, field, entity, bindingIndex, key]() mutable {
+                SafeCall([&] {
+                    py::object liveInstance = entity.GetComponent<PythonScriptComponent>().bindings[bindingIndex].instance;
+                    if (liveInstance && py::hasattr(liveInstance, key.c_str()))
+                        field->SetValue(liveInstance.attr(key.c_str()).cast<float>());
+                });
+            });
+        }
+        else if (py::isinstance<py::str>(value))
+        {
+            StringFieldWidget* field = new StringFieldWidget(label, QString::fromStdString(value.cast<std::string>()), box);
+            connect(field, &StringFieldWidget::ValueChanged, this, [entity, bindingIndex, key](const QString& newValue) mutable {
+                SafeCall([&] {
+                    entity.GetComponent<PythonScriptComponent>().bindings[bindingIndex].instance.attr(key.c_str()) = newValue.toStdString();
+                });
+            });
+            box->SetContent(field);
+
+            m_LiveSyncCallbacks.push_back([this, field, entity, bindingIndex, key]() mutable {
+                SafeCall([&] {
+                    py::object liveInstance = entity.GetComponent<PythonScriptComponent>().bindings[bindingIndex].instance;
+                    if (liveInstance && py::hasattr(liveInstance, key.c_str()))
+                        field->SetValue(QString::fromStdString(liveInstance.attr(key.c_str()).cast<std::string>()));
+                });
+            });
+        }
+        else
+        {
+            // Anything else (a Vector3, a nested object, a list...) has no generic editable
+            // widget yet - shown read-only via Python's own str() so the field is at least
+            // visible rather than silently missing, matching MeshComponent's own read-only
+            // fallback above for a handle with no asset-picker UI yet.
+            QLabel* readOnlyLabel = new QLabel(QString("%1: %2").arg(label, QString::fromStdString(py::str(value).cast<std::string>())), box);
+            readOnlyLabel->setObjectName("ReadOnlyInfoLabel");
+            box->SetContent(readOnlyLabel);
+        }
+    }
+
+    if (!anyField)
+    {
+        QLabel* noFieldsLabel = new QLabel("(no public fields)", box);
+        noFieldsLabel->setObjectName("ReadOnlyInfoLabel");
+        box->SetContent(noFieldsLabel);
+    }
 }
 
 template <typename Component>
-void InspectorPanel::RegisterComponentInspector(const std::string& name, bool addable,
+void InspectorPanel::RegisterComponentInspector(const std::string& name, const std::string& componentKey, bool addable,
                                                 std::function<void(ComponentBoxWidget*)> draw)
 {
     ComponentInspectorEntry entry;
@@ -340,17 +562,32 @@ void InspectorPanel::RegisterComponentInspector(const std::string& name, bool ad
     entry.addable = addable;
     entry.allHave = [this] { return AllEntitiesHaveComponent<Component>(m_SelectedEntities); };
     entry.draw = std::move(draw);
-    entry.addToSelection = [this] {
+    entry.addToSelection = [this, name, componentKey] {
+        std::vector<UUID> entityIds;
         for (Entity entity : m_SelectedEntities)
             if (!entity.HasComponent<Component>())
-                entity.AddComponent<Component>();
-        Refresh();
+                entityIds.push_back(entity.GetComponent<TagComponent>().id);
+
+        if (!entityIds.empty())
+        {
+            m_CommandManager.ExecuteCommand(std::make_unique<AddComponentCommand<Component>>(
+                m_Context, "Add " + name + " Component", componentKey, std::move(entityIds)));
+        }
+        // No explicit Refresh() here (or in removeFromSelection below): the command's own
+        // Scene::NotifyChanged() reaches OnSceneChanged, which now rebuilds whenever the set of
+        // components on the selection changes - the same path an undo/redo of this command takes.
     };
-    entry.removeFromSelection = [this] {
+    entry.removeFromSelection = [this, name, componentKey] {
+        std::vector<Entity> entities;
         for (Entity entity : m_SelectedEntities)
             if (entity.HasComponent<Component>())
-                entity.RemoveComponent<Component>();
-        Refresh();
+                entities.push_back(entity);
+
+        if (!entities.empty())
+        {
+            m_CommandManager.ExecuteCommand(std::make_unique<RemoveComponentCommand<Component>>(
+                m_Context, "Remove " + name + " Component", componentKey, entities));
+        }
     };
     m_ComponentInspectors.push_back(std::move(entry));
 }

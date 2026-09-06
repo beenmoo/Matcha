@@ -29,9 +29,15 @@ class ResourceManager;
 // (ResourceManager::CreateTexture(width, height)) has no path and is skipped, same reasoning as
 // an imported mesh above.
 //
-// NativeScriptComponent is skipped for a similar reason: its bindings are type-erased function
-// pointers with no name->Bind<T>() registry yet to serialize a binding *as* data
-// (InspectorPanel::RegisterScripts() is still an empty stub).
+// PythonScriptComponent round-trips as a list of (moduleName, className) pairs per binding -
+// Python's own import system resolves that pair to a class at load time, so unlike the old
+// NativeScriptComponent (compiled function pointers with no registry to turn a binding into
+// data) there's nothing else here that needs serializing. A binding with no moduleName yet
+// (added via the Inspector's "Browse..." but not actually resolved) is skipped, same reasoning
+// as an imported mesh's unregeneratable handle above. Not restored: whatever script directory the
+// binding's moduleName resolves against - that's process-wide PythonRuntime state established by
+// RegisterScriptDirectory (Sandbox.cpp at startup, or the Inspector's own picker), not per-scene
+// data, so a scene loaded in a fresh session needs that directory registered again the same way.
 class SceneSerializer
 {
 public:
@@ -47,9 +53,12 @@ public:
     // In-memory equivalents of Serialize/Deserialize, scoped to an explicit entity list rather
     // than a whole Scene - used by the editor's undo system to snapshot a subtree before deleting
     // it (and reconstruct it on undo) without going through a file. Shares the exact same
-    // per-entity fidelity (and the same limitations - imported mesh geometry, procedural
-    // textures, NativeScriptComponent bindings aren't captured) as Serialize/Deserialize, since
-    // both go through the same SerializeEntity/DeserializeEntity underneath.
+    // per-entity fidelity (and the same limitations - imported mesh geometry and procedural
+    // textures aren't captured) as Serialize/Deserialize, since both go through the same
+    // SerializeEntity/DeserializeEntity underneath. PythonScriptComponent bindings round-trip
+    // through this path too (so undo/redo across a delete correctly restores them), but a
+    // script's process-wide registered directory (see the class comment above) obviously isn't
+    // part of what's being snapshotted here.
     //
     // DeserializeEntities resolves a "parent" id against every entity in entityNodes AND every
     // entity already live in scene - so a snapshot of a subtree whose root's parent lies outside

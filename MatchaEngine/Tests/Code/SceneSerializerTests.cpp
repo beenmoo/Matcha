@@ -6,6 +6,7 @@
 #include "Scene/Component/LightComponent.h"
 #include "Scene/Component/MaterialComponent.h"
 #include "Scene/Component/MeshComponent.h"
+#include "Scene/Component/PythonScriptComponent.h"
 #include "Scene/Component/TagComponent.h"
 #include "Scene/Component/TransformComponent.h"
 #include "Scene/Scene.h"
@@ -124,6 +125,64 @@ TEST(SceneSerializerTests, RoundTripsLightComponent)
     EXPECT_FLOAT_EQ(loaded.ambientStrength, 0.2f);
     EXPECT_EQ(loaded.ambientColor, Vector3(0.1f, 0.1f, 0.1f));
     EXPECT_TRUE(loaded.castShadows);
+}
+
+TEST(SceneSerializerTests, RoundTripsPythonScriptComponentBindings)
+{
+    TempFile file;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
+
+    Scene sourceScene;
+    Entity entity = sourceScene.CreateEntity("Camera");
+    PythonScriptComponent& script = entity.AddComponent<PythonScriptComponent>();
+    script.Bind("flashlight", "Flashlight");
+    script.Bind("camera_controller", "CameraController");
+
+    SceneSerializer::Serialize(file.GetPath(), &sourceScene, resourceManager);
+
+    Scene loadedScene;
+    SceneSerializer::Deserialize(file.GetPath(), &loadedScene, resourceManager);
+
+    std::vector<Entity> roots = loadedScene.GetRootEntities();
+    ASSERT_EQ(roots.size(), 1u);
+    ASSERT_TRUE(roots[0].HasComponent<PythonScriptComponent>());
+
+    const PythonScriptComponent& loaded = roots[0].GetComponent<PythonScriptComponent>();
+    ASSERT_EQ(loaded.bindings.size(), 2u);
+    EXPECT_EQ(loaded.bindings[0].moduleName, "flashlight");
+    EXPECT_EQ(loaded.bindings[0].className, "Flashlight");
+    EXPECT_EQ(loaded.bindings[1].moduleName, "camera_controller");
+    EXPECT_EQ(loaded.bindings[1].className, "CameraController");
+
+    // Deserializing never runs any script - the loaded instance should still be exactly what
+    // AddComponent<PythonScriptComponent>() default-constructs, not something LoadScriptModule
+    // touched.
+    EXPECT_FALSE(loaded.bindings[0].instance);
+    EXPECT_FALSE(loaded.bindings[1].instance);
+}
+
+TEST(SceneSerializerTests, PythonScriptComponentWithNoModuleNameIsNotSerialized)
+{
+    TempFile file;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
+
+    Scene sourceScene;
+    Entity entity = sourceScene.CreateEntity("Empty");
+    // Exactly what "Browse..." leaves behind if a user cancels partway, or the front-most-entity
+    // "+ Add Script" button before either field is filled in - see the write side's skip in
+    // ComponentRegistry.cpp.
+    entity.AddComponent<PythonScriptComponent>().Bind("", "");
+
+    SceneSerializer::Serialize(file.GetPath(), &sourceScene, resourceManager);
+
+    Scene loadedScene;
+    SceneSerializer::Deserialize(file.GetPath(), &loadedScene, resourceManager);
+
+    std::vector<Entity> roots = loadedScene.GetRootEntities();
+    ASSERT_EQ(roots.size(), 1u);
+    EXPECT_FALSE(roots[0].HasComponent<PythonScriptComponent>());
 }
 
 TEST(SceneSerializerTests, RoundTripsCameraComponent)

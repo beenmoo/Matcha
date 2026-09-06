@@ -25,4 +25,7 @@ target_sources(${TARGET_NAME} PRIVATE
     Commands/PropertyEditCommand.h
     Commands/ReparentEntitiesCommand.cpp
     Commands/ReparentEntitiesCommand.h
+    Commands/AddComponentCommand.h
+    Commands/RemoveComponentCommand.h
+    Commands/ComponentSnapshot.h
 )

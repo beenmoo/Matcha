@@ -37,6 +37,13 @@ private:
     void Refresh();
     void OnSceneChanged();
 
+    // A cheap fingerprint of everything Refresh() would lay out that comes from scene data rather
+    // than from the selection: which component boxes are shown, and (for the Python Script box,
+    // the one box whose *contents* are scene data too) how many bindings it has. Compared against
+    // m_LayoutSignature in OnSceneChanged() to decide whether a scene change actually needs the
+    // panel rebuilt.
+    [[nodiscard]] std::string ComputeLayoutSignature() const;
+
     // Subscribes to the *current* Scene's AddOnSceneChanged - called both at construction and
     // every time SceneManager::AddOnSceneReplaced fires, since a swapped-out Scene destroys its
     // own subscriber list along with it.
@@ -54,18 +61,30 @@ private:
     void SyncLiveValues();
 
     // Registers one component type's inspector: how to detect it, how to draw its fields, and
-    // (if `addable`) how to add it to entities missing it. Called once per component type from
-    // RegisterComponentInspectors(), keeping the type dispatch in one place instead of scattered
-    // across Refresh() and the Add Component menu.
+    // (if `addable`) how to add/remove it via undoable AddComponentCommand/RemoveComponentCommand.
+    // Called once per component type from RegisterComponentInspectors(), keeping the type dispatch
+    // in one place instead of scattered across Refresh() and the Add Component menu.
+    //
+    // componentKey is the ComponentRegistry.cpp string this component serializes under (e.g.
+    // "light", "mesh") - RemoveComponentCommand needs it to find the matching write()/read() pair
+    // to snapshot/restore. Meaningless (pass "") when addable is false: TagComponent/
+    // TransformComponent never go through either command.
     void RegisterComponentInspectors();
     template <typename Component>
-    void RegisterComponentInspector(const std::string& name, bool addable, std::function<void(ComponentBoxWidget*)> draw);
+    void RegisterComponentInspector(const std::string& name, const std::string& componentKey, bool addable,
+                                    std::function<void(ComponentBoxWidget*)> draw);
     void ShowAddComponentMenu(QPushButton* anchor);
 
     // The Python Script box's "Browse..." button adds a binding to the front-most selected entity
     // (see its RegisterComponentInspector call for why only the front entity, unlike every other
     // field in this file) from a .py file picked via a file dialog.
     void BrowseForScript(Entity entity);
+
+    // Auto-generates one editable field per "public" attribute on bindings[bindingIndex]'s live
+    // Python instance - i.e. Unity's Inspector auto-drawing a MonoBehaviour's public fields, but
+    // reading a running instance's __dict__ instead of static reflection, since Python doesn't
+    // have to declare fields ahead of time the way C# does.
+    void AddPythonScriptFields(ComponentBoxWidget* box, Entity entity, size_t bindingIndex);
 
     // Adds one Vec3ControlWidget to `box`, wired to apply edits (via `setter`) to every
     // currently-selected entity's TransformComponent, and to keep displaying the first selected
@@ -137,6 +156,10 @@ private:
     // field's widget. See SyncLiveValues().
     std::vector<std::function<void()>> m_LiveSyncCallbacks;
     QTimer* m_SyncTimer;
+
+    // What ComputeLayoutSignature() returned the last time Refresh() ran - i.e. what's currently
+    // on screen. See OnSceneChanged().
+    std::string m_LayoutSignature;
 
     QWidget* m_ContentWidget;
     QVBoxLayout* m_MainLayout;

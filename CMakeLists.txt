@@ -44,14 +44,27 @@ if (BUILD_QT_BACKEND)
     qt_standard_project_setup()
 endif()
 
+if (BUILD_TESTS)
+    # GoogleTest is fetched once here rather than from either module's Tests/CMakeLists.txt:
+    # MatchaEngine/Tests and MatchaEditor/Tests both need it, and FetchContent_MakeAvailable can
+    # only define the gtest/gmock targets once per build. Has to precede the add_subdirectory()
+    # calls below, since each module now pulls in its own Tests subdirectory.
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG release-1.12.1)
+    FetchContent_MakeAvailable(googletest)
+    set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "ThirdParty")
+
+    include(GoogleTest)
+    enable_testing()
+endif()
+
 add_subdirectory(Vendor)
 add_subdirectory(MatchaEngine)
 add_subdirectory(Sandbox)
 
 if (BUILD_EDITOR)
     add_subdirectory(MatchaEditor)
-endif()
-
-if (BUILD_TESTS)
-    add_subdirectory(Tests)
 endif()

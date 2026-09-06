@@ -70,9 +70,14 @@ function(matcha_copy_engine_assets target)
 endfunction()
 
 if (MSVC)
-    file(GLOB_RECURSE CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
-    file(GLOB_RECURSE HEADER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-    file(GLOB_RECURSE CMAKE_LISTS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
+    # Scoped to Code/ (plus this file) rather than the whole module directory: Tests/ is its own
+    # target with its own source_group block, and a recursive glob from the module root would pull
+    # its sources into this target's filters - and, via the target_sources() call below,
+    # Tests/CMakeLists.txt into this target outright.
+    file(GLOB_RECURSE CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/Code/*.cpp")
+    file(GLOB_RECURSE HEADER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/Code/*.h")
+    file(GLOB_RECURSE CMAKE_LISTS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/Code/CMakeLists.txt")
+    list(APPEND CMAKE_LISTS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Source Files" FILES ${CPP_SOURCES})
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Header Files" FILES ${HEADER_SOURCES})
     source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Shaders" PREFIX "Shaders" FILES ${SHADER_SOURCES})
@@ -89,3 +94,11 @@ set_target_properties(
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Lib"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Bin"
 )
+
+# Each module owns its own test target (MatchaEngineTests here, MatchaEditorTests under
+# MatchaEditor/Tests) so a module's tests live next to the code they cover. GoogleTest itself is
+# fetched once by the top-level CMakeLists.txt, which is also what guards BUILD_TESTS before
+# either module is added.
+if (BUILD_TESTS)
+    add_subdirectory(Tests)
+endif()

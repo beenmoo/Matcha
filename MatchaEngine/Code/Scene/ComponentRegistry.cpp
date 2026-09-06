@@ -7,6 +7,7 @@
 #include "Component/MaterialComponent.h"
 #include "Component/MeshComponent.h"
 #include "Component/LightComponent.h"
+#include "Component/PythonScriptComponent.h"
 #include "Component/TransformComponent.h"
 #include "Graphics/ResourceManager.h"
 #include "Graphics/Shader.h"
@@ -204,6 +205,41 @@ const std::vector<ComponentSerializer>& GetComponentSerializers()
 
              if (node.contains("texturePath"))
                  material.texture = resourceManager.CreateTexture(node.at("texturePath").get<std::string>());
+         }},
+
+        {"pythonScript",
+         [](nlohmann::json& entityNode, Entity entity, ResourceManager&) {
+             if (!entity.HasComponent<PythonScriptComponent>())
+                 return;
+
+             const PythonScriptComponent& script = entity.GetComponent<PythonScriptComponent>();
+
+             nlohmann::json bindingsNode = nlohmann::json::array();
+             for (const PythonScriptComponent::Binding& binding : script.bindings)
+             {
+                 // An empty moduleName means this binding was added via the Inspector's
+                 // "Browse..." flow but never actually resolved to anything - nothing meaningful
+                 // to write, same reasoning as an imported mesh's unregeneratable handle above.
+                 if (binding.moduleName.empty())
+                     continue;
+
+                 bindingsNode.push_back({{"module", binding.moduleName}, {"class", binding.className}});
+             }
+
+             if (!bindingsNode.empty())
+                 entityNode["pythonScript"] = std::move(bindingsNode);
+         },
+         [](const nlohmann::json& node, Entity entity, ResourceManager&) {
+             // (moduleName, className) is a name pair Python's own import system resolves, not a
+             // handle - unlike NativeScriptComponent's old compiled function pointers, there's
+             // nothing here that needs a registry to serialize as data. Deliberately doesn't
+             // re-register a script directory: the entity that added this binding already went
+             // through PythonRuntime::RegisterScriptDirectory once (Sandbox.cpp at startup, or the
+             // Inspector's "Browse..." picker), and that registration is process-wide, not
+             // per-scene state to restore.
+             PythonScriptComponent& script = entity.AddComponent<PythonScriptComponent>();
+             for (const nlohmann::json& bindingNode : node)
+                 script.Bind(bindingNode.at("module").get<std::string>(), bindingNode.at("class").get<std::string>());
          }},
     };
 

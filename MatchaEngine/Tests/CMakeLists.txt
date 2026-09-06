@@ -1,52 +1,34 @@
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG release-1.12.1)
-FetchContent_MakeAvailable(googletest)
-set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "ThirdParty")
+set(TARGET_NAME MatchaEngineTests)
 
-include(GoogleTest)
-enable_testing()
+add_executable(${TARGET_NAME})
 
-set(TARGET_NAME Tests)
-
-add_executable(${TARGET_NAME}
-    Code/CameraSystemTests.cpp
-    Code/FileWatcherTests.cpp
-    Code/HierarchyComponentTests.cpp
-    Code/MatchaPythonBindingsTests.cpp
-    Code/MatrixTests.cpp
-    Code/PythonRuntimeTests.cpp
-    Code/QuaternionTests.cpp
-    Code/RendererTests.cpp
-    Code/RenderSystemTests.cpp
-    Code/SandboxScriptsTests.cpp
-    Code/SceneTests.cpp
-    Code/SceneSerializerTests.cpp
-    Code/TransformSystemTests.cpp
-    Code/TransformTests.cpp
-    Code/VectorTests.cpp)
+add_subdirectory(Code)
 
 target_include_directories(${TARGET_NAME} PUBLIC Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
 
 # pybind11::embed is a PRIVATE dependency of MatchaEngine (doesn't propagate its include dirs/link
 # requirements to consumers) - PythonRuntimeTests.cpp includes Scripting/PythonRuntime.h directly,
-# so Tests needs its own find_package/link for the same reason MatchaEditor or any other consumer
-# of MatchaEngine would.
+# so this target needs its own find_package/link for the same reason MatchaEditor or any other
+# consumer of MatchaEngine would.
 find_package(pybind11 CONFIG REQUIRED)
 
 target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine gtest_main gmock_main pybind11::embed)
 
-gtest_discover_tests(${TARGET_NAME})
-
-add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
+# Inherited from MatchaEngine/CMakeLists.txt's own add_compile_definitions() (this directory is
+# added after it), but stated explicitly here so this target doesn't silently depend on where its
+# add_subdirectory() call happens to sit in that file - glm's experimental headers hard-#error
+# without it.
+target_compile_definitions(${TARGET_NAME} PRIVATE GLM_ENABLE_EXPERIMENTAL)
 
 # Points SandboxScriptsTests.cpp at the real scripts Sandbox actually ships (Sandbox/Assets/Scripts),
 # not a duplicated fixture copy - so the test proves the scripts players/Sandbox actually run work,
 # not just a paraphrase of them that could silently drift out of sync.
 target_compile_definitions(${TARGET_NAME} PRIVATE SANDBOX_SCRIPTS_DIR="${CMAKE_SOURCE_DIR}/Sandbox/Assets/Scripts")
+
+gtest_discover_tests(${TARGET_NAME})
+
+set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Tests")
 
 if (MSVC)
     file(GLOB_RECURSE CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
