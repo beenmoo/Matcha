@@ -8,9 +8,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Vendor)
 
-if (MSVC)
+if (MSVC AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Keeps Code Analysis (including the editor's live background analysis) from
     # reporting on third-party headers reached via /external:I (vcpkg packages, glad).
+    # clang-cl also sets MSVC (it's MSVC-ABI-compatible) but doesn't understand this
+    # MSVC-Code-Analysis-only flag, hence the extra compiler-id check.
     add_compile_options(/analyze:external-)
 endif()
 

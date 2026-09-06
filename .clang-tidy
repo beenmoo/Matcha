@@ -1,0 +1,196 @@
+---
+# clang-tidy config for Matcha (MatchaEngine/MatchaEditor/Sandbox/Tests).
+#
+# Scope: only project code is linted. HeaderFilterRegex below restricts diagnostics to headers
+# under a project Code/ directory, so anything reached transitively from SDL3/EnTT/Qt6/assimp/
+# nlohmann-json/spdlog/glm/imgui/efsw/pybind11 (all vcpkg-managed) is never reported on - mirrors
+# what /analyze:external- already does for MSVC's own Code Analysis (see root CMakeLists.txt).
+#
+# To run against a specific build (needs a compile_commands.json - the "Linux Clang" CMake preset
+# sets CMAKE_EXPORT_COMPILE_COMMANDS, or generate one for the VS build separately):
+#   clang-tidy -p Build/Clang MatchaEngine/Code/Scene/Scene.cpp
+# Or via run-clang-tidy across the whole tree:
+#   run-clang-tidy -p Build/Clang MatchaEngine/Code MatchaEditor/Code Sandbox/Code Tests/Code
+
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-vararg,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-avoid-c-arrays,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+  -portability-avoid-pragma-once,
+  -readability-braces-around-statements,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-uppercase-literal-suffix
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '(MatchaEngine|MatchaEditor|Sandbox|Tests)[\\/]Code[\\/].*'
+FormatStyle: file
+
+# Rationale for the disables above, grouped by why - not a blanket "quiet everything" pass:
+#
+# Conflicts with an established, deliberate pattern in this codebase:
+#   - cppcoreguidelines-non-private-member-variables-in-classes /
+#     misc-non-private-member-variables-in-classes: ECS components (TagComponent,
+#     TransformComponent, LightComponent, CameraComponent, MeshComponent, MaterialComponent, Mesh)
+#     are intentionally plain public-field structs, iterated by entt views - not encapsulated
+#     classes with invariants. HierarchyComponent is the deliberate exception (private fields,
+#     friend-only mutation via SetParent) and correctly reports clean either way.
+#   - misc-no-recursion: HierarchyComponent's CollectSubtree/DestroySubtree/DestroyEntityRecursive
+#     recurse over the entity tree by design.
+#   - readability-braces-around-statements: single-statement if/else bodies are written without
+#     braces throughout (e.g. "if (!isRoot) continue;") - enabling this would flag nearly every
+#     control-flow statement in the codebase.
+#   - modernize-use-trailing-return-type: not the house style; every declaration here is
+#     "ReturnType Name(...)".
+#   - modernize-use-nodiscard: [[nodiscard]] is already applied by hand, deliberately (present on
+#     GetComponent, absent on AddComponent, whose return value is often legitimately discarded -
+#     see HierarchyComponent.h's SetParent). Auto-suggesting it everywhere a function returns
+#     non-void would fight that judgment call rather than support it.
+#
+# Noisy for this codebase's domain (graphics/math), not indicative of a real problem:
+#   - bugprone-easily-swappable-parameters: routine for vector/color/transform APIs
+#     (SetPosition(float x, float y, float z), GL attribute binding) where same-typed adjacent
+#     parameters are the whole point.
+#   - cppcoreguidelines-avoid-magic-numbers / readability-magic-numbers: GL enums, small pixel/
+#     buffer literals (e.g. Renderer's whitePixel[4]) and math constants are pervasive and
+#     already-obvious in context.
+#   - cppcoreguidelines-avoid-c-arrays / modernize-avoid-c-arrays (two independent checks, not
+#     aliases - both need disabling): small fixed-size stack buffers (whitePixel[4]) and legacy
+#     C-array members (e.g. SDLInput's keyboard-state buffer) aren't worth flagging wholesale.
+#   - readability-uppercase-literal-suffix: confirmed by an actual run - every float literal in
+#     Vector.h/Quaternion.h/Matrix.h uses lowercase 'f' (1.0f, not 1.0F), with no exceptions found;
+#     this would relitigate a settled, universal style choice on every floating-point literal in
+#     the codebase.
+#   - cppcoreguidelines-pro-bounds-pointer-arithmetic / -array-to-pointer-decay: GL interop code
+#     works with raw buffers and pointer offsets by necessity.
+#   - cppcoreguidelines-pro-type-vararg: printf-style logging (spdlog) and assimp/vararg-shaped
+#     third-party APIs reached from project code trigger this without a real bug.
+#   - cppcoreguidelines-owning-memory: Qt widgets are parent-owned by convention (e.g.
+#     `new QtViewportWidget()` handed to a layout/parent), not smart-pointer-owned - normal Qt
+#     idiom, not a leak.
+#   - cppcoreguidelines-avoid-non-const-global-variables: UUID.cpp's file-scope RNG state
+#     (s_RandomDevice, s_Engine, s_UniformDistribution) is intentional.
+#   - cppcoreguidelines-macro-usage: MT_ASSERT/MT_CORE_ERROR/MT_PROFILE_SCOPE need macros for
+#     source-location capture and conditional (BUILD_PROFILING) compilation.
+#   - readability-identifier-length: short math/index names (x, y, z, id) are the clearest option,
+#     not a readability problem.
+#   - readability-function-cognitive-complexity: a handful of functions (deserialization, shader
+#     parsing) are unavoidably branchy; worth tuning a threshold for deliberately later rather than
+#     guessing one now.
+#   - misc-include-cleaner: this project pulls from ten-plus vcpkg packages with deep transitive
+#     includes; strict include-what-you-use hygiene is a separate, opt-in effort, not a default-on
+#     lint.
+#   - portability-avoid-pragma-once: every header in this codebase opens with "#pragma once" (not
+#     traditional include guards) - confirmed by an actual run, which flagged it on every header it
+#     touched. Universally supported by the three compilers this project already targets
+#     (MSVC, Clang, GCC), so there's no real portability gap being flagged here.
+
+CheckOptions:
+  # Naming mirrors what's already consistently used across the codebase - this section describes
+  # the existing convention, it doesn't introduce a new one.
+  - key: readability-identifier-naming.NamespaceCase
+    value: CamelCase
+  # "detail" (HierarchyComponent.h's implementation-only namespace) follows the near-universal
+  # C++ idiom of a lowercase nested namespace for "not part of the public API" - not a name this
+  # codebase chose to violate its own convention with.
+  - key: readability-identifier-naming.NamespaceIgnoredRegexp
+    value: '^(detail|internal)$'
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionIgnoredRegexp
+    value: '^main$'
+
+  - key: readability-identifier-naming.MethodCase
+    value: CamelCase
+  # Overrides of Qt virtuals (QWidget/QObject event handlers) keep Qt's own lowerCamelCase names -
+  # e.g. SceneHierarchyWidget::dropEvent/mousePressEvent/keyPressEvent/focusOutEvent. These aren't
+  # names this codebase chose; they're required to match the base class signature being overridden.
+  - key: readability-identifier-naming.MethodIgnoredRegexp
+    value: '^(mouse|key|drag|drop|focus|paint|resize|close|wheel|show|hide|context)[A-Za-z]*Event$|^event$|^eventFilter$|^event$'
+
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterPackCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+
+  # Private/protected data members: m_PascalCase (m_RendererAPI, m_ChangeBatchDepth, ...).
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: CamelCase
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: m_
+  - key: readability-identifier-naming.ProtectedMemberCase
+    value: CamelCase
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: m_
+
+  # Public data members: plain camelBack, no prefix - the deliberate signal that these are
+  # ECS-component-style plain data (MeshComponent::mesh, HierarchyComponent's own GetChildrenCount
+  # etc. return these), not implementation state (see the non-private-member-variables disable
+  # above for why that's intentional here rather than an oversight).
+  - key: readability-identifier-naming.PublicMemberCase
+    value: camelBack
+
+  # File-scope/class-static state: s_PascalCase (UUID.cpp's s_RandomDevice/s_Engine/
+  # s_UniformDistribution; the removed RendererAPI::s_ActiveRendererAPI followed the same pattern).
+  - key: readability-identifier-naming.StaticVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.StaticVariablePrefix
+    value: s_
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: s_
+
+  # Deliberately left unconstrained: compile-time constants are named two different ways in the
+  # existing code (Renderer.h's "MAX_LIGHTS" all-caps vs. Renderer.cpp's "kLightArrayOffset")
+  # with no single rule to describe both without flagging one of them as wrong. Pick one and
+  # enable ConstexprVariableCase/GlobalConstantCase/StaticConstantCase once the team settles on a
+  # single style, rather than have this file silently declare a winner.
+
+  - key: readability-redundant-member-init.IgnoreBaseInCopyConstructors
+    value: 'true'
+  - key: modernize-loop-convert.UseCxx20ReverseRanges
+    value: 'true'
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: 'true'
