@@ -15,39 +15,48 @@ void PythonScriptSystem::Update(Scene& scene, EngineContext& context)
     {
         Entity entity(handle, &scene);
 
-        // Same reasoning as ScriptSystem::Update: skip the whole binding (including first-time
-        // instantiation/on_create) while inactive, and use the uncached walk since this runs
-        // before TransformSystem for the frame - see that comment for the full explanation.
+        // Skips every binding on this entity (including first-time instantiation/on_create)
+        // while inactive - a script on an entity that's never been active shouldn't run side
+        // effects (e.g. Flashlight creating its light entity) until it actually goes active.
+        //
+        // Deliberately the uncached walk: this runs from Application::Update(), before Render()
+        // runs TransformSystem, so TransformComponent::activeInHierarchy still holds last frame's
+        // answer here. A one-frame lag is harmless for skipping a draw; it isn't for gating
+        // whether a script instantiates and runs side effects.
         if (!IsActiveInHierarchy(entity))
             continue;
 
         PythonScriptComponent& script = entity.GetComponent<PythonScriptComponent>();
 
-        try
+        for (PythonScriptComponent::Binding& binding : script.bindings)
         {
-            if (!script.instance || script.instance.is_none())
+            try
             {
-                py::module_ module = context.GetPythonRuntime().LoadScriptModule(script.moduleName);
-                if (!module)
-                    continue;
+                if (!binding.instance || binding.instance.is_none())
+                {
+                    py::module_ module = context.GetPythonRuntime().LoadScriptModule(binding.moduleName);
+                    if (!module)
+                        continue;
 
-                py::object cls = module.attr(script.className.c_str());
-                script.instance = cls();
-                script.instance.attr("entity") = py::cast(entity);
+                    py::object cls = module.attr(binding.className.c_str());
+                    binding.instance = cls();
+                    binding.instance.attr("entity") = py::cast(entity);
+                    binding.instance.attr("context") = py::cast(&context);
 
-                if (py::hasattr(script.instance, "on_create"))
-                    script.instance.attr("on_create")();
+                    if (py::hasattr(binding.instance, "on_create"))
+                        binding.instance.attr("on_create")();
+                }
+
+                if (py::hasattr(binding.instance, "on_update"))
+                    binding.instance.attr("on_update")();
             }
-
-            if (py::hasattr(script.instance, "on_update"))
-                script.instance.attr("on_update")();
-        }
-        catch (const py::error_already_set& e)
-        {
-            // A broken script is untrusted input the same way a bad shader source file is - log
-            // and skip this entity's binding for the frame rather than let a Python exception
-            // unwind into the engine's own frame loop.
-            MT_CORE_ERROR("Python script '{}.{}' raised: {}", script.moduleName, script.className, e.what());
+            catch (const py::error_already_set& e)
+            {
+                // A broken script is untrusted input the same way a bad shader source file is -
+                // log and skip this binding for the frame rather than let a Python exception
+                // unwind into the engine's own frame loop.
+                MT_CORE_ERROR("Python script '{}.{}' raised: {}", binding.moduleName, binding.className, e.what());
+            }
         }
     }
 }

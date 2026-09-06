@@ -29,6 +29,13 @@ add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
 # would leave the macros silently expanding to nothing outside MatchaEngine's own .cpp files.
 target_compile_definitions(${TARGET_NAME} PUBLIC $<$<CONFIG:Debug>:MT_DEBUG=1>)
 
+# pybind11's per-binding template instantiations generate more COFF sections than MSVC's default
+# object format allows for a file with this many .def() calls in one translation unit - confirmed
+# by an actual build failure (C1128) once the binding surface grew past a handful of types.
+if (MSVC)
+    set_source_files_properties(Code/Scripting/MatchaPythonBindings.cpp PROPERTIES COMPILE_OPTIONS "/bigobj")
+endif()
+
 if (BUILD_PROFILING)
     # Deliberately not tied to MT_DEBUG/Config: profiling needs to answer "is this actually slow"
     # in Release too, not just Debug (where Debug-STL overhead alone can dominate).

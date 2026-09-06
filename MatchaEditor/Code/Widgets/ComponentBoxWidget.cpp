@@ -1,26 +1,48 @@
 #include "ComponentBoxWidget.h"
 
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QFrame>
 #include <QPushButton>
 
 namespace MatchaEditor
 {
-ComponentBoxWidget::ComponentBoxWidget(const QString& title, bool isCollapsed, QWidget* parent)
+ComponentBoxWidget::ComponentBoxWidget(const QString& title, bool isCollapsed, bool removable, QWidget* parent)
     : QWidget(parent)
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 2, 0, 2);
     mainLayout->setSpacing(0);
 
+    // Header row: the collapse-toggle button (stretched to fill) plus, if removable, a small "x"
+    // button beside it - previously the header button alone filled this whole row, so it now
+    // lives inside its own horizontal layout instead of being added to mainLayout directly.
+    QWidget* headerRow = new QWidget(this);
+    QHBoxLayout* headerLayout = new QHBoxLayout(headerRow);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setSpacing(0);
+
     // 1. Create the header as a clickable button so it handles clicks natively
-    m_HeaderButton = new QPushButton(QString("  ▼  %1").arg(title), this);
+    m_HeaderButton = new QPushButton(QString("  ▼  %1").arg(title), headerRow);
     m_HeaderButton->setCursor(Qt::PointingHandCursor);
     // Left-aligned text (Fusion centers QPushButton text by default) - see Editor.qss's
     // QPushButton#ComponentHeaderButton rule.
     m_HeaderButton->setObjectName("ComponentHeaderButton");
-    mainLayout->addWidget(m_HeaderButton);
+    headerLayout->addWidget(m_HeaderButton, 1);
+
+    if (removable)
+    {
+        QPushButton* removeButton = new QPushButton("x", headerRow);
+        removeButton->setCursor(Qt::PointingHandCursor);
+        removeButton->setObjectName("ComponentRemoveButton");
+        removeButton->setToolTip("Remove component");
+        removeButton->setFixedWidth(24);
+        connect(removeButton, &QPushButton::clicked, this, &ComponentBoxWidget::RemoveRequested);
+        headerLayout->addWidget(removeButton);
+    }
+
+    mainLayout->addWidget(headerRow);
 
     // 2. Content container widget that holds your properties.
     m_ContentContainer = new QWidget(this);

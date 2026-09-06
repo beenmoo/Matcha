@@ -3,7 +3,6 @@
 #include "Scene/System/LightSystem.h"
 #include "Scene/System/RenderSystem.h"
 #include "Scene/System/TransformSystem.h"
-#include "Scene/System/ScriptSystem.h"
 #include "Scene/System/PythonScriptSystem.h"
 #include "Scripting/PythonRuntime.h"
 #include "PlatformDetection.h"
@@ -144,7 +143,6 @@ void Application::RegisterSystems()
     // Each lambda re-fetches m_SceneManager.GetScene() on every call (they run once per frame
     // regardless), rather than capturing a Scene& up front - so a scene swapped out mid-session
     // (SceneManager::NewScene()/OpenScene()) takes effect on the very next frame automatically.
-    m_UpdateSystems.push_back([this] { ScriptSystem::Update(m_SceneManager.GetScene(), m_Context); });
     m_UpdateSystems.push_back([this] { PythonScriptSystem::Update(m_SceneManager.GetScene(), m_Context); });
 
     // Run in this order: Transform before Camera/Light/Render (which read world-space transforms

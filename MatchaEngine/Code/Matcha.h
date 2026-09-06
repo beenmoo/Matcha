@@ -33,7 +33,6 @@
 #include "Math/Vector.h"
 
 #include "Scene/Entity.h"
-#include "Scene/ScriptableEntity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneSerializer.h"
@@ -43,13 +42,20 @@
 #include "Scene/Component/MaterialComponent.h"
 #include "Scene/Component/MeshComponent.h"
 #include "Scene/Component/TransformComponent.h"
-#include "Scene/Component/NativeScriptComponent.h"
 #include "Scene/Component/TagComponent.h"
 #include "Scene/System/CameraSystem.h"
 #include "Scene/System/LightSystem.h"
 #include "Scene/System/RenderSystem.h"
 #include "Scene/System/TransformSystem.h"
-#include "Scene/System/ScriptSystem.h"
+#include "Scene/System/PythonScriptSystem.h"
+
+// Deliberately not included here (unlike everything above): PythonScriptComponent.h and
+// Scripting/PythonRuntime.h both pull in pybind11 headers (and therefore need Python's own
+// headers findable), and this umbrella is pulled in by MatchaEditor's precompiled header - adding
+// either here would force every single MatchaEditor translation unit to need Python's dev headers
+// just to build, the same leaky-header mistake Application.h made and was fixed for (see its
+// forward-declare + unique_ptr<PythonRuntime>). Code that actually needs PythonScriptComponent's
+// fields or PythonRuntime's methods (Sandbox.cpp, InspectorPanel.cpp) includes them directly.
 
 using namespace Matcha;
 

@@ -1,9 +1,8 @@
 #include "Sandbox.h"
-#include "Flashlight.h"
-#include "RotationComponent.h"
-#include "CameraController.h"
 
 #include <Matcha.h>
+#include <Scene/Component/PythonScriptComponent.h>
+#include <Scripting/PythonRuntime.h>
 #include <Utility/Profiler.h>
 
 Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
@@ -12,6 +11,12 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     ResourceManager& resourceManager = GetContext().GetResourceManager();
     Scene& scene = GetContext().GetScene();
     Window& window = GetContext().GetWindow();
+
+    // Working directory is the executable's own output directory (see matcha_copy_engine_assets'
+    // VS_DEBUGGER_WORKING_DIRECTORY), which is where Sandbox's Assets/ (Shaders, Models, and now
+    // Scripts) gets copied to post-build - so this is the same relative-path convention every
+    // other asset reference in this constructor already uses.
+    GetContext().GetPythonRuntime().RegisterScriptDirectory("Assets/Scripts");
 
     ShaderHandle shader = resourceManager.CreateShader(
         "StandardMesh",
@@ -26,7 +31,7 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
 
     m_Cube = scene.CreateEntity();
     m_Cube.AddComponent<MeshComponent>().mesh = mesh;
-    m_Cube.AddComponent<NativeScriptComponent>().Bind<RotationComponent>();
+    m_Cube.AddComponent<PythonScriptComponent>().Bind("rotation_component", "RotationComponent");
 
     MaterialComponent& material = m_Cube.AddComponent<MaterialComponent>();
     material.shader = shader;
@@ -52,9 +57,9 @@ Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     camera.GetComponent<TransformComponent>().transform.SetPosition(0.0f, 0.0f, 3.0f);
     camera.AddComponent<CameraComponent>().aspectRatio = window.GetAspectRatio();
 
-    NativeScriptComponent& cameraScripts = camera.AddComponent<NativeScriptComponent>();
-    cameraScripts.Bind<Flashlight>();
-    cameraScripts.Bind<CameraController>();
+    PythonScriptComponent& cameraScripts = camera.AddComponent<PythonScriptComponent>();
+    cameraScripts.Bind("flashlight", "Flashlight");
+    cameraScripts.Bind("camera_controller", "CameraController");
 
     // Points down and off to one side - rotating this entity is what aims the light, same as
     // rotating the camera entity aims the camera (LightSystem reads Transform::GetForward()).

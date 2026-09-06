@@ -9,12 +9,17 @@
 #include "Utility/EntityUtils.h"
 #include "Core/CommandManager.h"
 #include "Core/Commands/PropertyEditCommand.h"
+#include "Scene/Component/PythonScriptComponent.h"
 #include "Scene/Component/TagComponent.h"
+
+#include <Scripting/PythonRuntime.h>
 
 #include <DockManager.h>
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
@@ -37,6 +42,30 @@ QPushButton* CreateAddButton(const QString& text, QWidget* parent)
     QPushButton* button = new QPushButton(text, parent);
     button->setCursor(Qt::PointingHandCursor);
     return button;
+}
+
+// Best-effort default for the Class field after picking a .py file - every script Sandbox ships
+// follows "snake_case_file.py" -> "PascalCaseClass" (rotation_component.py -> RotationComponent),
+// so this guesses that and leaves it for the user to correct via the Class field if their script
+// doesn't follow it (e.g. a file with multiple classes, or a different naming convention).
+QString GuessClassNameFromFileStem(const QString& stem)
+{
+    QString result;
+    bool capitalizeNext = true;
+
+    for (QChar c : stem)
+    {
+        if (c == '_')
+        {
+            capitalizeNext = true;
+            continue;
+        }
+
+        result += capitalizeNext ? c.toUpper() : c;
+        capitalizeNext = false;
+    }
+
+    return result;
 }
 
 // Thin horizontal rule for splitting a component box's fields into visually distinct groups
@@ -84,7 +113,6 @@ InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, EngineContext& co
     setWidget(scrollArea);
 
     RegisterComponentInspectors();
-    RegisterScripts();
 
     m_Context.GetSceneManager().AddOnSceneReplaced([this] { OnSceneReplaced(); });
     BindScene();
@@ -163,7 +191,9 @@ void InspectorPanel::Refresh()
         if (!entry.allHave())
             continue;
 
-        ComponentBoxWidget* box = CreateComponentBox(entry.name);
+        ComponentBoxWidget* box = CreateComponentBox(entry.name, entry.addable);
+        if (entry.addable)
+            connect(box, &ComponentBoxWidget::RemoveRequested, this, entry.removeFromSelection);
         entry.draw(box);
         m_MainLayout->addWidget(box);
     }
@@ -252,17 +282,53 @@ void InspectorPanel::RegisterComponentInspectors()
         box->SetContent(label);
     });
 
-    RegisterComponentInspector<NativeScriptComponent>("Native Script", true, [this](ComponentBoxWidget* box) {
-        NativeScriptComponent& script = m_SelectedEntities.front().GetComponent<NativeScriptComponent>();
+    RegisterComponentInspector<PythonScriptComponent>("Python Script", true, [this](ComponentBoxWidget* box) {
+        // Unlike every other field in this file, editing only applies to the front-most selected
+        // entity, not the whole selection - the Add*Field family assumes one pointer-to-member
+        // shared across every selected entity's Component, which doesn't describe "the i-th
+        // element of a per-entity vector that can differ in length between entities". No undo
+        // support here either, unlike the templated fields below - both worth revisiting once
+        // this box has settled more.
+        Entity entity = m_SelectedEntities.front();
+        PythonScriptComponent& script = entity.GetComponent<PythonScriptComponent>();
 
-        QLabel* countLabel = new QLabel(QString("%1 script(s) bound").arg(script.bindings.size()), box);
-        countLabel->setObjectName("ReadOnlyInfoLabel");
-        box->SetContent(countLabel);
+        for (size_t i = 0; i < script.bindings.size(); ++i)
+        {
+            const PythonScriptComponent::Binding& binding = script.bindings[i];
 
-        QPushButton* addScriptButton = CreateAddButton("+ Add Script", box);
-        connect(addScriptButton, &QPushButton::clicked, this, [this, addScriptButton] { ShowAddScriptMenu(addScriptButton); });
-        box->SetContent(addScriptButton);
+            StringFieldWidget* moduleField = new StringFieldWidget("Module", QString::fromStdString(binding.moduleName), box);
+            connect(moduleField, &StringFieldWidget::ValueChanged, this, [entity, i](const QString& value) mutable {
+                entity.GetComponent<PythonScriptComponent>().bindings[i].moduleName = value.toStdString();
+            });
+            box->SetContent(moduleField);
+
+            StringFieldWidget* classField = new StringFieldWidget("Class", QString::fromStdString(binding.className), box);
+            connect(classField, &StringFieldWidget::ValueChanged, this, [entity, i](const QString& value) mutable {
+                entity.GetComponent<PythonScriptComponent>().bindings[i].className = value.toStdString();
+            });
+            box->SetContent(classField);
+        }
+
+        QPushButton* browseButton = CreateAddButton("Browse...", box);
+        connect(browseButton, &QPushButton::clicked, this, [this, entity]() mutable { BrowseForScript(entity); });
+        box->SetContent(browseButton);
     });
+}
+
+void InspectorPanel::BrowseForScript(Entity entity)
+{
+    QString path = QFileDialog::getOpenFileName(this, "Add Python Script", QString(), "Python Scripts (*.py)");
+    if (path.isEmpty())
+        return;
+
+    QFileInfo fileInfo(path);
+
+    // The picked file can be anywhere, not necessarily under a directory already registered -
+    // register its own directory so LoadScriptModule's import-by-name can actually resolve it.
+    m_Context.GetPythonRuntime().RegisterScriptDirectory(fileInfo.absolutePath().toStdString());
+
+    entity.GetComponent<PythonScriptComponent>().Bind(fileInfo.baseName().toStdString(), GuessClassNameFromFileStem(fileInfo.baseName()).toStdString());
+    Refresh();
 }
 
 template <typename Component>
@@ -278,6 +344,12 @@ void InspectorPanel::RegisterComponentInspector(const std::string& name, bool ad
         for (Entity entity : m_SelectedEntities)
             if (!entity.HasComponent<Component>())
                 entity.AddComponent<Component>();
+        Refresh();
+    };
+    entry.removeFromSelection = [this] {
+        for (Entity entity : m_SelectedEntities)
+            if (entity.HasComponent<Component>())
+                entity.RemoveComponent<Component>();
         Refresh();
     };
     m_ComponentInspectors.push_back(std::move(entry));
@@ -300,40 +372,6 @@ void InspectorPanel::ShowAddComponentMenu(QPushButton* anchor)
 
     if (!anyAddable)
         menu.addAction("All components added")->setEnabled(false);
-
-    menu.exec(anchor->mapToGlobal(QPoint(0, anchor->height())));
-}
-
-void InspectorPanel::RegisterScripts()
-{
-}
-
-template <typename Script>
-void InspectorPanel::RegisterScript(const std::string& name)
-{
-    ScriptInspectorEntry entry;
-    entry.name = name;
-    entry.bind = [](Entity entity) { entity.GetComponent<NativeScriptComponent>().Bind<Script>(); };
-    m_ScriptInspectors.push_back(std::move(entry));
-}
-
-void InspectorPanel::ShowAddScriptMenu(QPushButton* anchor)
-{
-    // Every selected entity already has a NativeScriptComponent here - this box only draws when
-    // entry.allHave() (NativeScriptComponent) is true for the whole selection.
-    std::vector<Entity> entities = m_SelectedEntities;
-
-    QMenu menu(this);
-
-    for (ScriptInspectorEntry& entry : m_ScriptInspectors)
-    {
-        QAction* action = menu.addAction(QString::fromStdString(entry.name));
-        connect(action, &QAction::triggered, this, [this, entities, &entry] {
-            for (Entity entity : entities)
-                entry.bind(entity);
-            Refresh();
-        });
-    }
 
     menu.exec(anchor->mapToGlobal(QPoint(0, anchor->height())));
 }
@@ -523,11 +561,11 @@ void InspectorPanel::AddEnumField(ComponentBoxWidget* box, const QString& label,
     m_LiveSyncCallbacks.push_back([this, field, getter] { field->SetValue(getter(m_SelectedEntities.front())); });
 }
 
-ComponentBoxWidget* InspectorPanel::CreateComponentBox(const std::string& name)
+ComponentBoxWidget* InspectorPanel::CreateComponentBox(const std::string& name, bool removable)
 {
     bool isCollapsed = m_ComponentCollapseStates[name];
 
-    ComponentBoxWidget* box = new ComponentBoxWidget(QString::fromStdString(name), isCollapsed, m_ContentWidget);
+    ComponentBoxWidget* box = new ComponentBoxWidget(QString::fromStdString(name), isCollapsed, removable, m_ContentWidget);
     connect(box, &ComponentBoxWidget::CollapseStateChanged, this, [this, name](bool collapsed) {
         m_ComponentCollapseStates[name] = collapsed;
     });

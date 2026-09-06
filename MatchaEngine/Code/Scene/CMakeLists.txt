@@ -1,12 +1,10 @@
 target_sources(${TARGET_NAME} PRIVATE
     Entity.h
-    ScriptableEntity.h
     Component/CameraComponent.h
     Component/HierarchyComponent.h
     Component/MaterialComponent.h
     Component/MeshComponent.h
     Component/TransformComponent.h
-    Component/NativeScriptComponent.h
     Component/PythonScriptComponent.h
     Component/LightComponent.h
     Component/TagComponent.h
@@ -24,8 +22,6 @@ target_sources(${TARGET_NAME} PRIVATE
     System/RenderSystem.h
     System/TransformSystem.cpp
     System/TransformSystem.h
-    System/ScriptSystem.cpp
-    System/ScriptSystem.h
     System/PythonScriptSystem.cpp
     System/PythonScriptSystem.h
     System/LightSystem.cpp

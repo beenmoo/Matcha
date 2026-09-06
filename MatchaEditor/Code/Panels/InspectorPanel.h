@@ -62,14 +62,10 @@ private:
     void RegisterComponentInspector(const std::string& name, bool addable, std::function<void(ComponentBoxWidget*)> draw);
     void ShowAddComponentMenu(QPushButton* anchor);
 
-    // Scripts bindable onto a NativeScriptComponent via the "Native Script" box's own "+ Add
-    // Script" menu - a second, smaller registry alongside m_ComponentInspectors, since binding a
-    // script isn't "add a component with defaults" (NativeScriptComponent holds a list of
-    // type-erased bindings, not fields).
-    void RegisterScripts();
-    template <typename Script>
-    void RegisterScript(const std::string& name);
-    void ShowAddScriptMenu(QPushButton* anchor);
+    // The Python Script box's "Browse..." button adds a binding to the front-most selected entity
+    // (see its RegisterComponentInspector call for why only the front entity, unlike every other
+    // field in this file) from a .py file picked via a file dialog.
+    void BrowseForScript(Entity entity);
 
     // Adds one Vec3ControlWidget to `box`, wired to apply edits (via `setter`) to every
     // currently-selected entity's TransformComponent, and to keep displaying the first selected
@@ -101,7 +97,7 @@ private:
     void AddEnumField(ComponentBoxWidget* box, const QString& label, const QStringList& options, Enum initialValue,
                       Enum Component::*member);
 
-    ComponentBoxWidget* CreateComponentBox(const std::string& name);
+    ComponentBoxWidget* CreateComponentBox(const std::string& name, bool removable);
 
     // Shared choke point every Add*Field routes through to get undo support: snapshots each
     // entity's current value (via `getter`) as the PropertyEditCommand's "before" state at field-
@@ -121,23 +117,20 @@ private:
     struct ComponentInspectorEntry
     {
         std::string name;
+        // Doubles as "removable": TagComponent/TransformComponent (every entity's guaranteed
+        // baseline, added by Scene::CreateEntity()) pass false to both add and remove; nothing
+        // else has a reason to allow one but not the other.
         bool addable = true;
         std::function<bool()> allHave;
         std::function<void(ComponentBoxWidget*)> draw;
         std::function<void()> addToSelection;
-    };
-
-    struct ScriptInspectorEntry
-    {
-        std::string name;
-        std::function<void(Entity)> bind;
+        std::function<void()> removeFromSelection;
     };
 
     EngineContext& m_Context;
     CommandManager& m_CommandManager;
     std::vector<Entity> m_SelectedEntities;
     std::vector<ComponentInspectorEntry> m_ComponentInspectors;
-    std::vector<ScriptInspectorEntry> m_ScriptInspectors;
 
     // Rebuilt every Refresh() alongside the widgets themselves - one entry per field currently
     // shown, each reading the first selected entity's current value and pushing it into that

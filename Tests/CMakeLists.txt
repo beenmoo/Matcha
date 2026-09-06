@@ -20,6 +20,8 @@ add_executable(${TARGET_NAME}
     Code/PythonRuntimeTests.cpp
     Code/QuaternionTests.cpp
     Code/RendererTests.cpp
+    Code/RenderSystemTests.cpp
+    Code/SandboxScriptsTests.cpp
     Code/SceneTests.cpp
     Code/SceneSerializerTests.cpp
     Code/TransformSystemTests.cpp
@@ -40,6 +42,11 @@ target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine gtest_main gmock_main 
 gtest_discover_tests(${TARGET_NAME})
 
 add_compile_definitions(GLM_ENABLE_EXPERIMENTAL)
+
+# Points SandboxScriptsTests.cpp at the real scripts Sandbox actually ships (Sandbox/Assets/Scripts),
+# not a duplicated fixture copy - so the test proves the scripts players/Sandbox actually run work,
+# not just a paraphrase of them that could silently drift out of sync.
+target_compile_definitions(${TARGET_NAME} PRIVATE SANDBOX_SCRIPTS_DIR="${CMAKE_SOURCE_DIR}/Sandbox/Assets/Scripts")
 
 if (MSVC)
     file(GLOB_RECURSE CPP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")

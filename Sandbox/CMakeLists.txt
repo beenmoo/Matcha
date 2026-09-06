@@ -4,7 +4,13 @@ add_executable(${TARGET_NAME} Code/main.cpp)
 
 add_subdirectory(Code/Core)
 
-target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine)
+# pybind11::embed is a PRIVATE dependency of MatchaEngine (doesn't propagate its include dirs to
+# consumers) - Sandbox.cpp includes Scripting/PythonRuntime.h and
+# Scene/Component/PythonScriptComponent.h directly, so it needs the same find_package/link any
+# other consumer of those headers does (see Tests/CMakeLists.txt for the same reasoning).
+find_package(pybind11 CONFIG REQUIRED)
+
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine pybind11::embed)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
 

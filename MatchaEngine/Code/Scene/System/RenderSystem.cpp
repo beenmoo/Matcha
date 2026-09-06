@@ -39,6 +39,13 @@ void RenderSystem::Draw(Scene& scene, Renderer& renderer)
         if (!transform.activeInHierarchy)
             continue;
 
+        // A MeshComponent with no mesh assigned yet is a legitimate, reachable state (e.g. freshly
+        // added via the Inspector's "+ Add Component", which has no asset picker to assign one
+        // from) - not a programming error worth asserting on. Renderer::Flush() has no way to draw
+        // an unassigned handle, so skip submitting it rather than crashing the whole render loop.
+        if (!mesh.mesh.IsValid())
+            continue;
+
         RenderData renderData;
         renderData.mesh = mesh.mesh;
         renderData.shader = material.shader;

@@ -89,6 +89,14 @@ public:
     // any specific light source.
     void SetAmbient(float strength, const Vector3& color);
 
+    // How many Submit() calls are pending the next Flush() - lets a test verify what got
+    // submitted (or, as importantly, didn't) without needing to observe Flush()'s actual draw
+    // calls, which would need a real graphics context.
+    [[nodiscard]] size_t GetPendingRenderDataCount() const
+    {
+        return m_RenderData.size();
+    }
+
 private:
     void SortRenderData();
 

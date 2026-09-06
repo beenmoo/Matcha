@@ -34,7 +34,13 @@ add_subdirectory(Code/Utility)
 # own target propagating its INTERFACE_COMPILE_DEFINITIONS (SPDLOG_COMPILED_LIB/SPDLOG_SHARED_LIB,
 # since vcpkg builds it as spdlogd.dll here) those headers fall back to embedding full symbol
 # definitions in this target's objects, which then collide with the DLL's exported ones at link time.
-target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets Qt6::Svg spdlog::spdlog ads::qtadvanceddocking-qt6)
+# pybind11::embed (not just MatchaEngine, which only links it PRIVATE) is needed directly here for
+# the same reason spdlog is above: InspectorPanel.cpp includes Scene/Component/PythonScriptComponent.h
+# itself (to show/edit the Python Script box), which needs pybind11's headers findable in this
+# target's own compilation, not just MatchaEngine's.
+find_package(pybind11 CONFIG REQUIRED)
+
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets Qt6::Svg spdlog::spdlog ads::qtadvanceddocking-qt6 pybind11::embed)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
 
