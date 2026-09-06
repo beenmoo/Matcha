@@ -20,6 +20,8 @@ target_sources(${TARGET_NAME} PRIVATE
     Commands/DeleteEntitiesCommand.h
     Commands/RenameEntitiesCommand.cpp
     Commands/RenameEntitiesCommand.h
+    Commands/PasteEntitiesCommand.cpp
+    Commands/PasteEntitiesCommand.h
     Commands/PropertyEditCommand.h
     Commands/ReparentEntitiesCommand.cpp
     Commands/ReparentEntitiesCommand.h

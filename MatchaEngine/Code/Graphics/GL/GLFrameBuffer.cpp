@@ -75,11 +75,6 @@ void GLFrameBuffer::Invalidate()
     MT_ASSERT(glCheckNamedFramebufferStatus(m_Handle, GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is incomplete!");
 }
 
-uint32_t GLFrameBuffer::GetHandle() const
-{
-    return m_Handle;
-}
-
 uint32_t GLFrameBuffer::GetColorAttachmentID() const
 {
     return m_ColorAttachmentID;

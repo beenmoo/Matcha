@@ -20,7 +20,6 @@ public:
 
     void Invalidate() override;
 
-    [[nodiscard]] uint32_t GetHandle() const override;
     [[nodiscard]] uint32_t GetColorAttachmentID() const override;
     [[nodiscard]] uint32_t GetDepthAttachmentID() const override;
 

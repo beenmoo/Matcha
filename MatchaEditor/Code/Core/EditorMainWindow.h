@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Core/CommandManager.h"
+#include "Panels/MenuChrome.h"
 
 #include <QMainWindow>
 
 #include <memory>
+#include <optional>
 
 class QCloseEvent;
 
@@ -51,6 +53,13 @@ private:
     CommandManager m_CommandManager;
 
     ads::CDockManager* m_DockManager;
+
+    // A member, not a constructor local: it registers a callback into m_CommandManager that keeps
+    // running for the window's whole lifetime (updating the Edit menu's enabled state and labels),
+    // so the object owning the QActions that callback touches has to outlive the constructor too.
+    // std::optional because it's built partway through the constructor body, after m_DockManager.
+    std::optional<MenuChrome> m_MenuChrome;
+
     std::shared_ptr<ConsoleSink> m_ConsoleSink;
 };
 }  // namespace Matcha

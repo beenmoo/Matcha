@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GLIndexBuffer.h"
+#include "GLVertexBuffer.h"
 #include "Graphics/ShaderDataType.h"
 #include "Graphics/VertexArray.h"
 
@@ -31,7 +33,11 @@ private:
 private:
     GLuint m_Handle;
 
-    std::vector<std::shared_ptr<VertexBuffer>> m_VertexBuffers;
-    std::shared_ptr<IndexBuffer> m_IndexBuffer = nullptr;
+    // Concrete GL types, not the abstract VertexBuffer/IndexBuffer: a GL VAO can only ever bind GL
+    // buffer objects (GetHandle() lives only on the GL classes now, not the abstract interfaces -
+    // see VertexBuffer.h/IndexBuffer.h), and every buffer reaching AddVertexBuffer/SetIndexBuffer
+    // below was created by this same GL backend, so narrowing here is safe.
+    std::vector<std::shared_ptr<GLVertexBuffer>> m_VertexBuffers;
+    std::shared_ptr<GLIndexBuffer> m_IndexBuffer = nullptr;
 };
 }  // namespace Matcha

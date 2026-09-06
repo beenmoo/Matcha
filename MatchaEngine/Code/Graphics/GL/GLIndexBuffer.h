@@ -15,8 +15,11 @@ public:
     GLIndexBuffer(const GLIndexBuffer&) = delete;
     GLIndexBuffer& operator=(const GLIndexBuffer&) = delete;
 
-    [[nodiscard]] uint32_t GetHandle() const override;
     [[nodiscard]] uint32_t GetCount() const override;
+
+    // Not part of the abstract IndexBuffer interface - only GLVertexArray, which works with
+    // GLIndexBuffer directly, needs the underlying GL buffer object.
+    [[nodiscard]] uint32_t GetHandle() const;
 
 private:
     GLuint m_Handle;

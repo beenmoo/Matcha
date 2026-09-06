@@ -8,27 +8,6 @@
 
 namespace MatchaEditor
 {
-namespace
-{
-// Mirrors the traversal shape of HierarchyComponent.h's own detail::DestroySubtree, but collects
-// into a flat list instead of destroying - root first, then each child's own subtree in turn.
-void CollectSubtree(Entity entity, std::vector<Entity>& out)
-{
-    out.push_back(entity);
-
-    if (entity.HasComponent<HierarchyComponent>())
-    {
-        entt::entity childHandle = entity.GetComponent<HierarchyComponent>().firstChild;
-        while (childHandle != entt::null)
-        {
-            Entity child = entity.WithHandle(childHandle);
-            CollectSubtree(child, out);
-            childHandle = child.GetComponent<HierarchyComponent>().nextSibling;
-        }
-    }
-}
-}  // namespace
-
 DeleteEntitiesCommand::DeleteEntitiesCommand(EngineContext& context, std::string description,
                                              const std::vector<Entity>& subtreeRoots)
     : m_Context(context),
@@ -47,6 +26,7 @@ DeleteEntitiesCommand::DeleteEntitiesCommand(EngineContext& context, std::string
 void DeleteEntitiesCommand::Execute()
 {
     Scene& scene = m_Context.GetScene();
+    Scene::ChangeBatch batch(scene);
 
     for (UUID id : m_RootIds)
     {
@@ -58,6 +38,8 @@ void DeleteEntitiesCommand::Execute()
 
 void DeleteEntitiesCommand::Undo()
 {
+    Scene::ChangeBatch batch(m_Context.GetScene());
+
     SceneSerializer::DeserializeEntities(m_Snapshot, &m_Context.GetScene(), m_Context.GetResourceManager());
 }
 }  // namespace MatchaEditor

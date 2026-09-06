@@ -44,7 +44,7 @@ void GLVertexArray::InitAttributes(const GLuint vbIndex)
 
     auto layout = buffer->GetLayout();
 
-    for (const auto& layoutElement : layout->GetElements())
+    for (const BufferLayout::BufferElement& layoutElement : layout->GetElements())
     {
         if (layoutElement.type == ShaderDataType::Mat3 ||
             layoutElement.type == ShaderDataType::Mat4)
@@ -73,15 +73,15 @@ void GLVertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer> buffer)
 {
     MT_ASSERT(buffer->GetLayout(), "Vertex Buffer has no layout!");
 
-    m_VertexBuffers.emplace_back(buffer);
+    m_VertexBuffers.emplace_back(std::static_pointer_cast<GLVertexBuffer>(buffer));
 
     InitAttributes(static_cast<GLuint>(m_VertexBuffers.size() - 1));
 }
 
 void GLVertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer> buffer)
 {
-    m_IndexBuffer = buffer;
+    m_IndexBuffer = std::static_pointer_cast<GLIndexBuffer>(buffer);
 
-    glVertexArrayElementBuffer(m_Handle, buffer->GetHandle());
+    glVertexArrayElementBuffer(m_Handle, m_IndexBuffer->GetHandle());
 }
 }  // namespace Matcha

@@ -31,12 +31,10 @@ public:
 
     virtual void Invalidate() = 0;
 
-    [[nodiscard]] virtual uint32_t GetHandle() const = 0;
     [[nodiscard]] virtual uint32_t GetColorAttachmentID() const = 0;
     [[nodiscard]] virtual uint32_t GetDepthAttachmentID() const = 0;
 
     [[nodiscard]] virtual const FrameBufferSpecification& GetSpecification() const = 0;
 
-    [[nodiscard]] static std::unique_ptr<FrameBuffer> Create(const FrameBufferSpecification& spec);
 };
 }  // namespace Matcha

@@ -29,9 +29,9 @@ void Renderer::Init()
 {
     // std140 pads a vec3 following a mat4 out to a full vec4 (16 bytes), even though only 12 are
     // used - the buffer has to be sized for that padded layout, not the tight C++ one.
-    m_CameraUniformBuffer = UniformBuffer::Create(sizeof(Matrix4) + sizeof(Vector4), 0);
+    m_CameraUniformBuffer = m_RendererAPI.CreateUniformBuffer(sizeof(Matrix4) + sizeof(Vector4), 0);
 
-    m_LightUniformBuffer = UniformBuffer::Create(kLightArrayOffset + MAX_LIGHTS * sizeof(LightData), 1);
+    m_LightUniformBuffer = m_RendererAPI.CreateUniformBuffer(kLightArrayOffset + MAX_LIGHTS * sizeof(LightData), 1);
 
     SetLights({});
     SetAmbient(0.1f, Vector3(1.0f));

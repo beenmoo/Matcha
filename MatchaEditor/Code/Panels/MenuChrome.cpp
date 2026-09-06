@@ -120,10 +120,10 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context, 
 
     // Keeps enabled state and label text ("Undo <description>") in sync with the stack - invoked
     // once immediately below for the initial (empty) state, then again on every ExecuteCommand()/
-    // Undo()/Redo()/Clear(). Captures the QAction pointers directly (not `this`): MenuChrome
-    // itself is a short-lived local in EditorMainWindow's constructor (see that call site), while
-    // this callback is held by CommandManager for the rest of the editor's lifetime - the QAction
-    // objects it needs to keep updating outlive MenuChrome because they're owned by m_EditMenu.
+    // Undo()/Redo()/Clear(). Captures the QAction pointers rather than `this` so the callback
+    // depends only on the actions themselves (owned by m_EditMenu, and so by the main window),
+    // not on MenuChrome's own lifetime - CommandManager holds this callback for as long as the
+    // editor runs.
     QAction* undoAction = m_UndoAction;
     QAction* redoAction = m_RedoAction;
     auto updateEditMenu = [undoAction, redoAction, &commandManager] {

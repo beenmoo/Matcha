@@ -1,8 +1,11 @@
 #pragma once
 
 #include "Scene/Component/TagComponent.h"
+#include "Scene/Component/TransformComponent.h"
 #include "Scene/Entity.h"
 #include "Scene/Scene.h"
+
+#include <vector>
 
 namespace Matcha
 {
@@ -12,6 +15,19 @@ namespace Matcha
 // owns this component, so there's nothing to gain from four Entity-sized fields here).
 struct HierarchyComponent
 {
+    // Read-only for everyone: every system that walks the hierarchy (TransformSystem,
+    // SceneSerializer, the Scene Hierarchy panel, ...) only ever needs to query these links, never
+    // set them directly - SetParent below is the sole place that may mutate them, since it's the
+    // only code that knows how to keep the doubly-linked list consistent.
+    [[nodiscard]] size_t GetChildrenCount() const { return childrenCount; }
+    [[nodiscard]] entt::entity GetParent() const { return parent; }
+    [[nodiscard]] entt::entity GetFirstChild() const { return firstChild; }
+    [[nodiscard]] entt::entity GetPrevSibling() const { return prevSibling; }
+    [[nodiscard]] entt::entity GetNextSibling() const { return nextSibling; }
+
+private:
+    friend void SetParent(Entity child, Entity newParent);
+
     size_t childrenCount = 0;
     entt::entity parent = entt::null;
     entt::entity firstChild = entt::null;
@@ -91,10 +107,46 @@ inline bool IsActiveInHierarchy(Entity entity)
         if (entity.HasComponent<TagComponent>() && !entity.GetComponent<TagComponent>().isActive)
             return false;
 
-        entity = entity.HasComponent<HierarchyComponent>() ? entity.WithHandle(entity.GetComponent<HierarchyComponent>().parent) : Entity();
+        entity = entity.HasComponent<HierarchyComponent>() ? entity.WithHandle(entity.GetComponent<HierarchyComponent>().GetParent()) : Entity();
     }
 
     return true;
+}
+
+// Appends `entity` and every descendant beneath it to `out`, parents before children. Shares the
+// traversal shape of detail::DestroySubtree below, but collects instead of destroying - for
+// callers that need the whole subtree as data first (copying it to a clipboard, snapshotting it
+// before a delete so the delete can be undone).
+inline void CollectSubtree(Entity entity, std::vector<Entity>& out)
+{
+    out.push_back(entity);
+
+    if (entity.HasComponent<HierarchyComponent>())
+    {
+        entt::entity childHandle = entity.GetComponent<HierarchyComponent>().GetFirstChild();
+
+        while (childHandle != entt::null)
+        {
+            Entity child = entity.WithHandle(childHandle);
+            CollectSubtree(child, out);
+            childHandle = child.GetComponent<HierarchyComponent>().GetNextSibling();
+        }
+    }
+}
+
+// The cached form of IsActiveInHierarchy(), for systems running after TransformSystem has already
+// computed it for this frame (every system does - see Application::RegisterSystems). Prefer reading
+// TransformComponent::activeInHierarchy directly where the system's view already includes the
+// transform; this exists for views that don't (CameraSystem, ScriptSystem).
+//
+// Falls back to the uncached walk for an entity with no TransformComponent - Scene::CreateEntity
+// always adds one, so that only happens for an entity assembled by hand.
+inline bool IsActiveInHierarchyCached(Entity entity)
+{
+    if (entity.HasComponent<TransformComponent>())
+        return entity.GetComponent<TransformComponent>().activeInHierarchy;
+
+    return IsActiveInHierarchy(entity);
 }
 
 namespace detail
@@ -106,7 +158,7 @@ inline void DestroySubtree(Scene& scene, Entity entity)
 {
     if (entity.HasComponent<HierarchyComponent>())
     {
-        entt::entity childHandle = entity.GetComponent<HierarchyComponent>().firstChild;
+        entt::entity childHandle = entity.GetComponent<HierarchyComponent>().GetFirstChild();
 
         while (childHandle != entt::null)
         {
@@ -114,7 +166,7 @@ inline void DestroySubtree(Scene& scene, Entity entity)
 
             // Capture the next sibling before destroying this child, since destroying it also
             // destroys its HierarchyComponent (and thus invalidates childHandle's own data).
-            childHandle = child.GetComponent<HierarchyComponent>().nextSibling;
+            childHandle = child.GetComponent<HierarchyComponent>().GetNextSibling();
 
             DestroySubtree(scene, child);
         }

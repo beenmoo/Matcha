@@ -28,7 +28,7 @@ void LightSystem::Update(Scene& scene, Renderer& renderer)
         if (lightCount >= MAX_LIGHTS)
             break;
 
-        if (!IsActiveInHierarchy(Entity(handle, &scene)))
+        if (!transform.activeInHierarchy)
             continue;
 
         LightData& data = lights[lightCount++];

@@ -137,11 +137,6 @@ void GLShader::SetInt(std::string_view name, int value)
     glProgramUniform1i(m_Handle, location, value);
 }
 
-GLuint GLShader::GetHandle() const
-{
-    return m_Handle;
-}
-
 std::expected<void, std::string> GLShader::ParseFile(const std::string& path)
 {
     std::filesystem::path filePath(path);

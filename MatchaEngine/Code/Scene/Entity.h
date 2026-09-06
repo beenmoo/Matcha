@@ -39,7 +39,14 @@ public:
         return m_Handle;
     }
 
-    [[nodiscard]] Scene* GetScene() const
+    // Mirrors the const/non-const split GetComponent<T>() already uses above: a const Entity - the
+    // handle itself isn't being reassigned - shouldn't be a backdoor to a fully mutable Scene*.
+    [[nodiscard]] Scene* GetScene()
+    {
+        return m_Scene;
+    }
+
+    [[nodiscard]] const Scene* GetScene() const
     {
         return m_Scene;
     }

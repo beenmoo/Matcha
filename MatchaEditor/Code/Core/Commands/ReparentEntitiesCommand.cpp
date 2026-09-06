@@ -17,6 +17,7 @@ ReparentEntitiesCommand::ReparentEntitiesCommand(EngineContext& context, std::st
 void ReparentEntitiesCommand::Execute()
 {
     Scene& scene = m_Context.GetScene();
+    Scene::ChangeBatch batch(scene);
 
     Entity newParent = m_NewParentId ? scene.FindEntityByUUID(*m_NewParentId) : Entity();
 
@@ -31,6 +32,7 @@ void ReparentEntitiesCommand::Execute()
 void ReparentEntitiesCommand::Undo()
 {
     Scene& scene = m_Context.GetScene();
+    Scene::ChangeBatch batch(scene);
 
     for (const Reparent& reparent : m_Reparents)
     {

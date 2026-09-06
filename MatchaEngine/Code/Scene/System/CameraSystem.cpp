@@ -13,7 +13,7 @@ void CameraSystem::Update(Scene& scene)
 
     for (auto handle : view)
     {
-        if (!IsActiveInHierarchy(Entity(handle, &scene)))
+        if (!IsActiveInHierarchyCached(Entity(handle, &scene)))
             continue;
 
         CameraComponent& camera = view.get<CameraComponent>(handle);

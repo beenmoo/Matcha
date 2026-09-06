@@ -15,6 +15,7 @@ RenameEntitiesCommand::RenameEntitiesCommand(EngineContext& context, std::string
 void RenameEntitiesCommand::Execute()
 {
     Scene& scene = m_Context.GetScene();
+    Scene::ChangeBatch batch(scene);
 
     for (const Rename& rename : m_Renames)
     {
@@ -29,6 +30,7 @@ void RenameEntitiesCommand::Execute()
 void RenameEntitiesCommand::Undo()
 {
     Scene& scene = m_Context.GetScene();
+    Scene::ChangeBatch batch(scene);
 
     for (const Rename& rename : m_Renames)
     {

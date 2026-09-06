@@ -40,7 +40,30 @@ public:
     // Multi-subscriber: both the Scene Hierarchy panel (rebuilds its tree) and the Inspector
     // panel (re-checks whether its selected entity is still valid) observe this.
     void AddOnSceneChanged(std::function<void()> callback);
+
+    // Coalesced while a ChangeBatch is open (see below), so a caller making several mutations in a
+    // row notifies once at the end rather than once per mutation.
     void NotifyChanged();
+
+    // Suppresses NotifyChanged() for its lifetime, then fires a single notification on destruction
+    // if anything asked to notify while it was open. For operations that mutate many entities at
+    // once - reparenting a multi-selection, restoring a deleted subtree - where every individual
+    // SetParent()/CreateEntity() would otherwise trigger a full Scene Hierarchy tree rebuild
+    // in turn, N times for one user-visible action.
+    //
+    // Nesting is safe: only the outermost batch notifies.
+    class ChangeBatch
+    {
+    public:
+        explicit ChangeBatch(Scene& scene);
+        ~ChangeBatch();
+
+        ChangeBatch(const ChangeBatch&) = delete;
+        ChangeBatch& operator=(const ChangeBatch&) = delete;
+
+    private:
+        Scene& m_Scene;
+    };
 
     template <typename... Components>
     [[nodiscard]] auto View()
@@ -53,6 +76,11 @@ private:
 
     entt::registry m_Registry;
     std::vector<std::function<void()>> m_OnSceneChanged;
+
+    // Depth of open ChangeBatch scopes, and whether anything called NotifyChanged() while they
+    // were open (so an empty batch stays silent).
+    int m_ChangeBatchDepth = 0;
+    bool m_ChangeBatchPending = false;
 };
 
 // Entity's members that need Scene to be a complete type are defined here rather than in

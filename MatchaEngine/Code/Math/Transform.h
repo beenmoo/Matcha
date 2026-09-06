@@ -27,12 +27,7 @@ public:
 
     void SetPosition(const Vector3& position);
     void SetPosition(float x, float y, float z);
-
-    template <typename Self>
-    [[nodiscard]] auto& GetPosition(this Self& self)
-    {
-        return self.m_Position;
-    }
+    [[nodiscard]] const Vector3& GetPosition() const;
 
     void SetRotation(const Quaternion& rotation);
     void SetRotationEuler(const Vector3& eulers);

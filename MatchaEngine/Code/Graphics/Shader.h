@@ -28,14 +28,11 @@ public:
     virtual void SetFloat4(std::string_view name, const Vector4& value) = 0;
     virtual void SetInt(std::string_view name, int value) = 0;
 
-    [[nodiscard]] virtual uint32_t GetHandle() const = 0;
-
     [[nodiscard]] const std::vector<std::string>& GetPaths() const
     {
         return m_Paths;
     }
 
-    [[nodiscard]] static std::unique_ptr<Shader> Create(std::string_view name, std::span<const std::string> paths);
 
 protected:
     void SetPaths(std::vector<std::string> paths)

@@ -116,7 +116,7 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     m_DockManager->setStyleSheet(m_DockManager->styleSheet() + DockChromeStyleSheetOverrides());
     setCentralWidget(m_DockManager);
 
-    MenuChrome menuChrome(this, context, m_CommandManager);
+    m_MenuChrome.emplace(this, context, m_CommandManager);
 
     // Unlike Scene::AddOnSceneChanged (which InspectorPanel/SceneHierarchyWidget have to
     // re-subscribe to on every scene swap, since it dies with the Scene it's attached to), these
@@ -135,20 +135,20 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
 
     SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(m_DockManager, context, m_CommandManager, this);
     ads::CDockAreaWidget* sceneHierarchyArea = m_DockManager->addDockWidget(ads::LeftDockWidgetArea, sceneHierarchyPanel);
-    menuChrome.AddPanel(sceneHierarchyPanel);
+    m_MenuChrome->AddPanel(sceneHierarchyPanel);
 
     ViewportPanel* viewportPanel = new ViewportPanel(m_DockManager, viewport, this);
     ads::CDockAreaWidget* viewportArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, viewportPanel, sceneHierarchyArea);
-    menuChrome.AddPanel(viewportPanel);
+    m_MenuChrome->AddPanel(viewportPanel);
 
     InspectorPanel* inspectorPanel = new InspectorPanel(m_DockManager, context, m_CommandManager, this);
     ads::CDockAreaWidget* inspectorArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, inspectorPanel, viewportArea);
-    menuChrome.AddPanel(inspectorPanel);
+    m_MenuChrome->AddPanel(inspectorPanel);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);
 
     ConsolePanel* consolePanel = new ConsolePanel(m_DockManager, this);
     ads::CDockAreaWidget* consoleArea = m_DockManager->addDockWidget(ads::BottomDockWidgetArea, consolePanel);
-    menuChrome.AddPanel(consolePanel);
+    m_MenuChrome->AddPanel(consolePanel);
 
     m_DockManager->setSplitterSizes(sceneHierarchyArea, {250, 1000, 350});
     m_DockManager->setSplitterSizes(consoleArea, {700, 200});

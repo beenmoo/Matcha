@@ -20,13 +20,13 @@ std::vector<Entity> GetChildren(Entity parent)
     if (!parent.HasComponent<HierarchyComponent>())
         return children;
 
-    entt::entity handle = parent.GetComponent<HierarchyComponent>().firstChild;
+    entt::entity handle = parent.GetComponent<HierarchyComponent>().GetFirstChild();
 
     while (handle != entt::null)
     {
         Entity child = parent.WithHandle(handle);
         children.push_back(child);
-        handle = child.GetComponent<HierarchyComponent>().nextSibling;
+        handle = child.GetComponent<HierarchyComponent>().GetNextSibling();
     }
 
     return children;
@@ -41,7 +41,7 @@ TEST(HierarchyComponentTests, SetParentLinksBothSides)
 
     SetParent(child, parent);
 
-    EXPECT_EQ(child.GetComponent<HierarchyComponent>().parent, parent.GetHandle());
+    EXPECT_EQ(child.GetComponent<HierarchyComponent>().GetParent(), parent.GetHandle());
     EXPECT_EQ(GetChildren(parent), std::vector<Entity>{child});
 }
 
@@ -86,7 +86,7 @@ TEST(HierarchyComponentTests, ReparentingMovesChildOutOfOldParent)
     SetParent(child, oldParent);
     SetParent(child, newParent);
 
-    EXPECT_EQ(child.GetComponent<HierarchyComponent>().parent, newParent.GetHandle());
+    EXPECT_EQ(child.GetComponent<HierarchyComponent>().GetParent(), newParent.GetHandle());
     EXPECT_TRUE(GetChildren(oldParent).empty());
     EXPECT_EQ(GetChildren(newParent), std::vector<Entity>{child});
 }
@@ -100,7 +100,7 @@ TEST(HierarchyComponentTests, DetachingClearsParentAndRemovesFromChildren)
     SetParent(child, parent);
     SetParent(child, Entity());
 
-    EXPECT_TRUE(child.GetComponent<HierarchyComponent>().parent == entt::null);
+    EXPECT_TRUE(child.GetComponent<HierarchyComponent>().GetParent() == entt::null);
     EXPECT_TRUE(GetChildren(parent).empty());
 }
 
@@ -123,7 +123,7 @@ TEST(HierarchyComponentTests, RemovingMiddleChildRelinksRemainingSiblings)
     SetParent(b, Entity());
 
     EXPECT_EQ(GetChildren(parent), (std::vector<Entity>{c, a}));
-    EXPECT_TRUE(b.GetComponent<HierarchyComponent>().parent == entt::null);
+    EXPECT_TRUE(b.GetComponent<HierarchyComponent>().GetParent() == entt::null);
 }
 
 TEST(HierarchyComponentTests, ChildrenCountTracksAttachAndDetach)
@@ -136,11 +136,11 @@ TEST(HierarchyComponentTests, ChildrenCountTracksAttachAndDetach)
     SetParent(a, parent);
     SetParent(b, parent);
 
-    EXPECT_EQ(parent.GetComponent<HierarchyComponent>().childrenCount, 2u);
+    EXPECT_EQ(parent.GetComponent<HierarchyComponent>().GetChildrenCount(), 2u);
 
     SetParent(a, Entity());
 
-    EXPECT_EQ(parent.GetComponent<HierarchyComponent>().childrenCount, 1u);
+    EXPECT_EQ(parent.GetComponent<HierarchyComponent>().GetChildrenCount(), 1u);
 }
 
 TEST(HierarchyComponentTests, ChildrenCountUpdatesOnReparent)
@@ -153,8 +153,8 @@ TEST(HierarchyComponentTests, ChildrenCountUpdatesOnReparent)
     SetParent(child, oldParent);
     SetParent(child, newParent);
 
-    EXPECT_EQ(oldParent.GetComponent<HierarchyComponent>().childrenCount, 0u);
-    EXPECT_EQ(newParent.GetComponent<HierarchyComponent>().childrenCount, 1u);
+    EXPECT_EQ(oldParent.GetComponent<HierarchyComponent>().GetChildrenCount(), 0u);
+    EXPECT_EQ(newParent.GetComponent<HierarchyComponent>().GetChildrenCount(), 1u);
 }
 
 TEST(HierarchyComponentTests, DestroyEntityRecursiveWithNoHierarchyJustDestroysIt)
@@ -180,7 +180,7 @@ TEST(HierarchyComponentTests, DestroyEntityRecursiveRemovesLeafFromParentButKeep
     EXPECT_FALSE(child.IsValid());
     EXPECT_TRUE(parent.IsValid());
     EXPECT_TRUE(GetChildren(parent).empty());
-    EXPECT_EQ(parent.GetComponent<HierarchyComponent>().childrenCount, 0u);
+    EXPECT_EQ(parent.GetComponent<HierarchyComponent>().GetChildrenCount(), 0u);
 }
 
 TEST(HierarchyComponentTests, DestroyEntityRecursiveDestroysWholeSubtree)
@@ -240,5 +240,5 @@ TEST(HierarchyComponentTests, DestroyEntityRecursiveLeavesSiblingSubtreeIntact)
     EXPECT_FALSE(doomedChild.IsValid());
     EXPECT_TRUE(survivor.IsValid());
     EXPECT_EQ(GetChildren(parent), std::vector<Entity>{survivor});
-    EXPECT_EQ(parent.GetComponent<HierarchyComponent>().childrenCount, 1u);
+    EXPECT_EQ(parent.GetComponent<HierarchyComponent>().GetChildrenCount(), 1u);
 }

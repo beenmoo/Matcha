@@ -4,23 +4,6 @@
 
 namespace Matcha
 {
-namespace
-{
-RendererAPI* s_ActiveRendererAPI = nullptr;
-}
-
-RendererAPI& GetActiveRendererAPI()
-{
-    MT_ASSERT(s_ActiveRendererAPI, "No RendererAPI is currently active - SetActiveRendererAPI() must be called first!");
-
-    return *s_ActiveRendererAPI;
-}
-
-void SetActiveRendererAPI(RendererAPI& api)
-{
-    s_ActiveRendererAPI = &api;
-}
-
 std::unique_ptr<RendererAPI> RendererAPI::Create(API api)
 {
     switch (api)

@@ -23,8 +23,6 @@ public:
         return m_Path;
     }
 
-    [[nodiscard]] static std::unique_ptr<Texture> Create(uint32_t width, uint32_t height);
-    [[nodiscard]] static std::unique_ptr<Texture> Create(std::string_view path);
 
 protected:
     void SetPath(std::string_view path)

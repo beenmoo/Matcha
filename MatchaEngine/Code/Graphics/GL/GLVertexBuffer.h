@@ -18,8 +18,11 @@ public:
     void SetLayout(const std::shared_ptr<BufferLayout> layout) override;
     [[nodiscard]] const BufferLayout* GetLayout() const override;
 
-    [[nodiscard]] uint32_t GetHandle() const override;
     [[nodiscard]] uint32_t GetSizeInBytes() const override;
+
+    // Not part of the abstract VertexBuffer interface - only GLVertexArray, which works with
+    // GLVertexBuffer directly, needs the underlying GL buffer object.
+    [[nodiscard]] uint32_t GetHandle() const;
 
 private:
     GLuint m_Handle;

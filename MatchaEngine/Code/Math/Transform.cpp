@@ -63,6 +63,11 @@ void Transform::SetPosition(float x, float y, float z)
     SetPosition({x, y, z});
 }
 
+const Vector3& Transform::GetPosition() const
+{
+    return m_Position;
+}
+
 void Transform::SetRotation(const Quaternion& rotation)
 {
     m_Rotation = rotation;

@@ -18,9 +18,7 @@ target_sources(${TARGET_NAME} PRIVATE
     GL/GLVertexBuffer.cpp
     GL/GLVertexBuffer.h
     stb_image_impl.cpp
-    FrameBuffer.cpp
     FrameBuffer.h
-    IndexBuffer.cpp
     IndexBuffer.h
     Mesh.h
     Primitives.h
@@ -31,16 +29,12 @@ target_sources(${TARGET_NAME} PRIVATE
     ResourceManager.cpp
     ResourceManager.h
     RenderHandles.h
-    Shader.cpp
     Shader.h
     ShaderDataType.h
     ShaderHotReloader.cpp
     ShaderHotReloader.h
-    Texture.cpp
     Texture.h
-    UniformBuffer.cpp
     UniformBuffer.h
-    VertexArray.cpp
     VertexArray.h
     VertexBuffer.cpp
     VertexBuffer.h)

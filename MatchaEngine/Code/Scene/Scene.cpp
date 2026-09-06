@@ -51,7 +51,7 @@ std::vector<Entity> Scene::GetRootEntities()
 
         Entity entity(handle, this);
 
-        if (!entity.HasComponent<HierarchyComponent>() || entity.GetComponent<HierarchyComponent>().parent == entt::null)
+        if (!entity.HasComponent<HierarchyComponent>() || entity.GetComponent<HierarchyComponent>().GetParent() == entt::null)
             roots.push_back(entity);
     }
 
@@ -77,7 +77,30 @@ void Scene::AddOnSceneChanged(std::function<void()> callback)
 
 void Scene::NotifyChanged()
 {
+    if (m_ChangeBatchDepth > 0)
+    {
+        m_ChangeBatchPending = true;
+        return;
+    }
+
     for (auto& callback : m_OnSceneChanged)
         callback();
+}
+
+Scene::ChangeBatch::ChangeBatch(Scene& scene)
+    : m_Scene(scene)
+{
+    ++m_Scene.m_ChangeBatchDepth;
+}
+
+Scene::ChangeBatch::~ChangeBatch()
+{
+    if (--m_Scene.m_ChangeBatchDepth > 0)
+        return;
+
+    if (!std::exchange(m_Scene.m_ChangeBatchPending, false))
+        return;
+
+    m_Scene.NotifyChanged();
 }
 }  // namespace Matcha

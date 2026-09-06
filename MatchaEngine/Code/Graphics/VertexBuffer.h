@@ -11,7 +11,7 @@ namespace Matcha
 {
 class BufferLayout
 {
-private:
+public:
     struct BufferElement
     {
         ShaderDataType type = ShaderDataType::None;
@@ -47,9 +47,6 @@ public:
     virtual void SetLayout(const std::shared_ptr<BufferLayout> layout) = 0;
     [[nodiscard]] virtual const BufferLayout* GetLayout() const = 0;
 
-    [[nodiscard]] virtual uint32_t GetHandle() const = 0;
     [[nodiscard]] virtual uint32_t GetSizeInBytes() const = 0;
-
-    [[nodiscard]] static std::shared_ptr<VertexBuffer> Create(const float* vertices, uint32_t sizeInBytes);
 };
 }  // namespace Matcha

@@ -58,6 +58,17 @@ public:
     static nlohmann::json SerializeEntities(const std::vector<Entity>& entities, ResourceManager& resourceManager);
     static std::vector<Entity> DeserializeEntities(const nlohmann::json& entityNodes, Scene* scene, ResourceManager& resourceManager);
 
+    // Returns a copy of entityNodes with every entity's "id" replaced by a freshly generated UUID,
+    // and every "parent" reference pointing *within* the set rewritten to match. A "parent" that
+    // points outside the set is left alone, so it still resolves against the live scene the way
+    // DeserializeEntities already handles.
+    //
+    // Needed because DeserializeEntities preserves serialized ids verbatim: deserializing a
+    // snapshot whose originals are still alive (duplicating/pasting, as opposed to restoring a
+    // deleted subtree) would otherwise produce UUID collisions. This is the one piece that turns
+    // "restore these entities" into "make copies of these entities".
+    static nlohmann::json RemapEntityIds(const nlohmann::json& entityNodes);
+
 private:
     static void SerializeEntity(nlohmann::json& out, Entity entity, ResourceManager& resourceManager);
 

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Graphics/ResourceManager.h"
+#include "NullRendererAPI.h"
 #include "Scene/Component/CameraComponent.h"
 #include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Component/LightComponent.h"
@@ -20,6 +21,7 @@
 #include <vector>
 
 using namespace Matcha;
+using namespace MatchaTests;
 
 namespace
 {
@@ -53,7 +55,8 @@ private:
 TEST(SceneSerializerTests, RoundTripsTagAndTransform)
 {
     TempFile file;
-    ResourceManager resourceManager;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
 
     Scene sourceScene;
     Entity entity = sourceScene.CreateEntity("Player");
@@ -86,7 +89,8 @@ TEST(SceneSerializerTests, RoundTripsTagAndTransform)
 TEST(SceneSerializerTests, RoundTripsLightComponent)
 {
     TempFile file;
-    ResourceManager resourceManager;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
 
     Scene sourceScene;
     Entity entity = sourceScene.CreateEntity("Sun");
@@ -125,7 +129,8 @@ TEST(SceneSerializerTests, RoundTripsLightComponent)
 TEST(SceneSerializerTests, RoundTripsCameraComponent)
 {
     TempFile file;
-    ResourceManager resourceManager;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
 
     Scene sourceScene;
     Entity entity = sourceScene.CreateEntity("MainCamera");
@@ -160,7 +165,8 @@ TEST(SceneSerializerTests, RoundTripsCameraComponent)
 TEST(SceneSerializerTests, RoundTripsHierarchy)
 {
     TempFile file;
-    ResourceManager resourceManager;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
 
     Scene sourceScene;
     Entity parent = sourceScene.CreateEntity("Parent");
@@ -178,15 +184,15 @@ TEST(SceneSerializerTests, RoundTripsHierarchy)
     ASSERT_EQ(roots.size(), 1u);
     EXPECT_EQ(roots[0].GetComponent<TagComponent>().name, "Parent");
     ASSERT_TRUE(roots[0].HasComponent<HierarchyComponent>());
-    EXPECT_EQ(roots[0].GetComponent<HierarchyComponent>().childrenCount, 2u);
+    EXPECT_EQ(roots[0].GetComponent<HierarchyComponent>().GetChildrenCount(), 2u);
 
     std::vector<std::string> childNames;
-    entt::entity childHandle = roots[0].GetComponent<HierarchyComponent>().firstChild;
+    entt::entity childHandle = roots[0].GetComponent<HierarchyComponent>().GetFirstChild();
     while (childHandle != entt::null)
     {
         Entity child = roots[0].WithHandle(childHandle);
         childNames.push_back(child.GetComponent<TagComponent>().name);
-        childHandle = child.GetComponent<HierarchyComponent>().nextSibling;
+        childHandle = child.GetComponent<HierarchyComponent>().GetNextSibling();
     }
 
     EXPECT_EQ(childNames.size(), 2u);
@@ -196,7 +202,8 @@ TEST(SceneSerializerTests, RoundTripsHierarchy)
 
 TEST(SceneSerializerTests, DeserializeOfMissingFileLeavesSceneEmpty)
 {
-    ResourceManager resourceManager;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
     Scene scene;
     SceneSerializer::Deserialize("this/path/does/not/exist.json", &scene, resourceManager);
 
@@ -211,7 +218,8 @@ TEST(SceneSerializerTests, DeserializeOfMissingFileLeavesSceneEmpty)
 TEST(SceneSerializerTests, MeshWithUnknownHandleIsNotSerialized)
 {
     TempFile file;
-    ResourceManager resourceManager;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
 
     Scene sourceScene;
     Entity entity = sourceScene.CreateEntity("UnknownMesh");
@@ -234,7 +242,8 @@ TEST(SceneSerializerTests, MeshWithUnknownHandleIsNotSerialized)
 TEST(SceneSerializerTests, RoundTripsMaterialPlainFieldsWithoutHandles)
 {
     TempFile file;
-    ResourceManager resourceManager;
+    NullRendererAPI rendererAPI;
+    ResourceManager resourceManager(rendererAPI);
 
     Scene sourceScene;
     Entity entity = sourceScene.CreateEntity("UnlitQuad");

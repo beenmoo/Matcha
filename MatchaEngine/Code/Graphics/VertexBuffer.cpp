@@ -74,9 +74,4 @@ void BufferLayout::CalculateOffsetsAndStride()
         m_Stride += element.size;
     }
 }
-
-std::shared_ptr<VertexBuffer> VertexBuffer::Create(const float* vertices, uint32_t sizeInBytes)
-{
-    return GetActiveRendererAPI().CreateVertexBuffer(vertices, sizeInBytes);
-}
 }  // namespace Matcha

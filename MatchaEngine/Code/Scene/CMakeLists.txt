@@ -13,6 +13,8 @@ target_sources(${TARGET_NAME} PRIVATE
     Scene.h
     SceneManager.cpp
     SceneManager.h
+    ComponentRegistry.cpp
+    ComponentRegistry.h
     SceneSerializer.cpp
     SceneSerializer.h
     System/CameraSystem.cpp

@@ -17,6 +17,12 @@ void ScriptSystem::Update(Scene& scene, EngineContext& context)
         // Skips the whole binding while inactive, including first-time instantiation/OnCreate() -
         // a script on an entity that's never been active shouldn't run side effects (e.g.
         // Flashlight creating its light entity) until it actually goes active.
+        //
+        // Deliberately the uncached walk, unlike the render-side systems: this runs from
+        // Application::Update(), which happens *before* Render() runs TransformSystem, so
+        // TransformComponent::activeInHierarchy still holds last frame's answer here. A one-frame
+        // lag is harmless for skipping a draw; it isn't for gating whether a script instantiates
+        // and runs side effects.
         if (!IsActiveInHierarchy(entity))
             continue;
 

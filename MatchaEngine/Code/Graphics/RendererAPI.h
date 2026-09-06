@@ -54,10 +54,4 @@ public:
 
     [[nodiscard]] static std::string ToString(API api);
 };
-
-// The one RendererAPI instance Application owns (set once, from Application's constructor) -
-// resource types' Create() functions dispatch to this instance's virtual CreateXxx() methods
-// instead of switching on an API enum themselves.
-[[nodiscard]] RendererAPI& GetActiveRendererAPI();
-void SetActiveRendererAPI(RendererAPI& api);
 }  // namespace Matcha

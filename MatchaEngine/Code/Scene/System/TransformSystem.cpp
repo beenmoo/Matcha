@@ -19,12 +19,18 @@ void TransformSystem::Update(Scene& scene)
 {
     auto view = scene.View<TransformComponent>();
 
+    // Cleared up front, then set true only for entities the cascade below actually reaches. An
+    // entity skipped for being inactive (or sitting under one that is) is simply never visited, so
+    // without this pass its flag would keep whatever value it held when it was last active.
+    for (auto handle : view)
+        view.template get<TransformComponent>(handle).activeInHierarchy = false;
+
     for (auto handle : view)
     {
         Entity entity(handle, &scene);
 
         // Non-root entities are reached and written by their ancestor's CascadeHierarchy walk instead.
-        if (entity.HasComponent<HierarchyComponent>() && entity.GetComponent<HierarchyComponent>().parent != entt::null)
+        if (entity.HasComponent<HierarchyComponent>() && entity.GetComponent<HierarchyComponent>().GetParent() != entt::null)
             continue;
 
         // A root has no parent to inherit inactivity from, so its own flag is the whole story -
@@ -33,8 +39,11 @@ void TransformSystem::Update(Scene& scene)
         if (!IsActiveSelf(entity))
             continue;
 
-        Matrix4 worldMatrix = entity.GetComponent<TransformComponent>().transform.GetLocalMatrix();
-        entity.GetComponent<TransformComponent>().worldMatrix = worldMatrix;
+        TransformComponent& transformComponent = entity.GetComponent<TransformComponent>();
+
+        Matrix4 worldMatrix = transformComponent.transform.GetLocalMatrix();
+        transformComponent.worldMatrix = worldMatrix;
+        transformComponent.activeInHierarchy = true;
 
         if (entity.HasComponent<HierarchyComponent>())
             CascadeHierarchy(scene, entity, worldMatrix);
@@ -43,7 +52,7 @@ void TransformSystem::Update(Scene& scene)
 
 void TransformSystem::CascadeHierarchy(Scene& scene, Entity entity, const Matrix4& parentWorldMatrix)
 {
-    entt::entity childHandle = entity.GetComponent<HierarchyComponent>().firstChild;
+    entt::entity childHandle = entity.GetComponent<HierarchyComponent>().GetFirstChild();
 
     while (childHandle != entt::null)
     {
@@ -54,13 +63,19 @@ void TransformSystem::CascadeHierarchy(Scene& scene, Entity entity, const Matrix
         // reached, since this recursion is the only thing that visits them.
         if (IsActiveSelf(child))
         {
-            Matrix4 worldMatrix = parentWorldMatrix * child.GetComponent<TransformComponent>().transform.GetLocalMatrix();
-            child.GetComponent<TransformComponent>().worldMatrix = worldMatrix;
+            TransformComponent& childTransform = child.GetComponent<TransformComponent>();
+
+            Matrix4 worldMatrix = parentWorldMatrix * childTransform.transform.GetLocalMatrix();
+            childTransform.worldMatrix = worldMatrix;
+
+            // Reached only via an active parent (this recursion is the sole path here), so being
+            // active itself is the whole remaining condition for being active in the hierarchy.
+            childTransform.activeInHierarchy = true;
 
             CascadeHierarchy(scene, child, worldMatrix);
         }
 
-        childHandle = child.GetComponent<HierarchyComponent>().nextSibling;
+        childHandle = child.GetComponent<HierarchyComponent>().GetNextSibling();
     }
 }
 }  // namespace Matcha

@@ -18,7 +18,7 @@ void RenderSystem::Update(Scene& scene, Renderer& renderer)
         if (!camera.primary)
             continue;
 
-        if (!IsActiveInHierarchy(Entity(handle, &scene)))
+        if (!transform.activeInHierarchy)
             continue;
 
         Matrix4 viewProjection = camera.projection * Inverse(transform.worldMatrix);
@@ -36,7 +36,7 @@ void RenderSystem::Draw(Scene& scene, Renderer& renderer)
 
     for (auto&& [handle, mesh, material, transform] : view.each())
     {
-        if (!IsActiveInHierarchy(Entity(handle, &scene)))
+        if (!transform.activeInHierarchy)
             continue;
 
         RenderData renderData;
