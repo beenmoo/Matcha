@@ -8,4 +8,6 @@ target_sources(${TARGET_NAME} PRIVATE
 	ViewportPanel.cpp
 	ViewportPanel.h
 	MenuChrome.cpp
-	MenuChrome.h)
+	MenuChrome.h
+	AssetBrowserPanel.cpp
+	AssetBrowserPanel.h)

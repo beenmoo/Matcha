@@ -17,4 +17,6 @@ target_sources(${TARGET_NAME} PRIVATE
 	EnumFieldWidget.cpp
 	EnumFieldWidget.h
 	Vec4ControlWidget.cpp
-	Vec4ControlWidget.h)
+	Vec4ControlWidget.h
+	AssetBrowserWidget.cpp
+	AssetBrowserWidget.h)

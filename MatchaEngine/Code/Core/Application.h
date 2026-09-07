@@ -11,6 +11,7 @@
 #include "Graphics/ResourceManager.h"
 #include "Scene/SceneManager.h"
 
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -37,7 +38,17 @@ struct ApplicationCommandLineArgs
 struct ApplicationSpecification
 {
     std::string title = "Application";
-    std::string workingDirectory;
+
+    // Where Application::GetAssetsPath() resolves to. Left empty (the default) falls back to
+    // "<current working directory>/Assets" - the convention every asset load in this codebase
+    // already assumes (Sandbox.cpp/Editor.cpp's RegisterScriptDirectory("Assets/Scripts"), the
+    // post-build matcha_copy_engine_assets() step that puts an "Assets" folder next to the
+    // executable). Set this when that assumption doesn't hold - a build that runs from a
+    // directory other than its own output directory, or a future multi-project editor that needs
+    // to point at whichever project is currently open. A relative path here is resolved against
+    // the current working directory at construction time, same as the empty-path default is.
+    std::filesystem::path assetsPath;
+
     ApplicationCommandLineArgs commandLineArgs;
     WindowBackend windowBackend = WindowBackend::SDL;
     RendererAPI::API rendererAPI = GetDefaultRendererAPI();
@@ -63,6 +74,22 @@ public:
 
     // One frame: PollEvents, Update, Render.
     void Tick();
+
+    // Absolute path to this application's "Assets" directory, resolved once at construction -
+    // ApplicationSpecification::assetsPath if the caller set one, otherwise "<current working
+    // directory>/Assets", the convention every asset load in this codebase already assumes
+    // (Sandbox.cpp/Editor.cpp's own RegisterScriptDirectory("Assets/Scripts"), MaterialComponent's
+    // serialized shaderPaths, the post-build matcha_copy_engine_assets() step that puts an
+    // "Assets" folder next to the executable in the first place). Exists so editor UI that deals
+    // in absolute filesystem paths (AssetBrowserWidget's QFileSystemModel, a QFileDialog result)
+    // has one place to resolve against, instead of every call site reconstructing
+    // "current_path() / Assets" - or worse, hardcoding "Assets" as a relative literal the way the
+    // engine-side call sites above still do, which only works if nothing has ever chdir'd or
+    // asked for a different assets root, an assumption this makes explicit exactly once.
+    [[nodiscard]] const std::filesystem::path& GetAssetsPath() const
+    {
+        return m_AssetsPath;
+    }
 
 protected:
     template <typename Self>
@@ -102,6 +129,7 @@ private:
 
 private:
     ApplicationSpecification m_AppSpec;
+    std::filesystem::path m_AssetsPath;
 
     std::unique_ptr<Input> m_Input;
     Logger m_Logger;

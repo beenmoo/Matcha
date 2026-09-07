@@ -10,6 +10,8 @@
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
 
+#include <filesystem>
+
 #ifdef MT_ENABLE_QT_BACKEND
 #include <QtGlobal>
 #endif
@@ -28,6 +30,7 @@ RendererAPI::API ApplicationSpecification::GetDefaultRendererAPI() const
 
 Application::Application(const ApplicationSpecification& spec)
     : m_AppSpec(spec),
+      m_AssetsPath(spec.assetsPath.empty() ? std::filesystem::current_path() / "Assets" : std::filesystem::absolute(spec.assetsPath)),
       m_Input(Input::Create(spec.windowBackend)),
       m_Window(Window::Create(spec.windowBackend, WindowSpecification{.m_Title = spec.title}, m_Input.get())),
       m_RendererAPI(RendererAPI::Create(spec.rendererAPI)),

@@ -1,12 +1,16 @@
 #include "EditorMainWindow.h"
 #include "ConsoleSink.h"
+#include "Panels/AssetBrowserPanel.h"
 #include "Panels/ConsolePanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
 #include "Panels/ViewportPanel.h"
 #include "Panels/MenuChrome.h"
+#include "Widgets/AssetBrowserWidget.h"
 #include "Core/Logger.h"
 #include "Core/Qt/QtViewportWidget.h"
+
+#include <Matcha.h>
 
 #include <spdlog/spdlog.h>
 
@@ -14,10 +18,12 @@
 #include <DockManager.h>
 
 #include <QCloseEvent>
+#include <QDesktopServices>
 #include <QFileInfo>
 #include <QPainter>
 #include <QPixmap>
 #include <QString>
+#include <QUrl>
 
 #include <algorithm>
 
@@ -149,6 +155,36 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     ConsolePanel* consolePanel = new ConsolePanel(m_DockManager, this);
     ads::CDockAreaWidget* consoleArea = m_DockManager->addDockWidget(ads::BottomDockWidgetArea, consolePanel);
     m_MenuChrome->AddPanel(consolePanel);
+
+    // Tabbed alongside the Console rather than its own split area - CenterDockWidgetArea plus an
+    // existing area is ADS's documented way to add a dock widget as a sibling tab of that area
+    // instead of splitting it. Matches the Project/Console pairing this editor's layout is
+    // otherwise modeled on (Unity, Unreal): both are "browse project state" panels that only need
+    // to be visible one at a time, unlike Scene Hierarchy/Viewport/Inspector, which all want to
+    // stay on screen together.
+    AssetBrowserPanel* assetBrowserPanel = new AssetBrowserPanel(m_DockManager, context, this);
+    m_DockManager->addDockWidget(ads::CenterDockWidgetArea, assetBrowserPanel, consoleArea);
+    m_MenuChrome->AddPanel(assetBrowserPanel);
+
+    connect(assetBrowserPanel->GetBrowserWidget(), &AssetBrowserWidget::AssetDoubleClicked, this,
+            [this](const QString& assetPath) {
+                // A scene switches SceneManager to it, through the same unsaved-changes guard
+                // File > Open Scene already uses - a double-click shouldn't be a lower-friction
+                // way to discard unsaved work than the menu action for the exact same operation.
+                if (QFileInfo(assetPath).suffix().compare("matcha", Qt::CaseInsensitive) == 0)
+                {
+                    if (ConfirmDiscardUnsavedChanges(this, m_Context))
+                        m_Context.GetSceneManager().OpenScene(assetPath.toStdString());
+
+                    return;
+                }
+
+                // Everything else (scripts, shaders, models, textures) has no in-editor viewer/
+                // editor yet - hand it to whatever the OS already has associated with the
+                // extension, the same "open in your configured external editor" convention
+                // Unity's Project window uses for a script double-click.
+                QDesktopServices::openUrl(QUrl::fromLocalFile(assetPath));
+            });
 
     m_DockManager->setSplitterSizes(sceneHierarchyArea, {250, 1000, 350});
     m_DockManager->setSplitterSizes(consoleArea, {700, 200});
