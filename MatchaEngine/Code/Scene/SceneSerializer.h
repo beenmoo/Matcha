@@ -34,10 +34,11 @@ class ResourceManager;
 // NativeScriptComponent (compiled function pointers with no registry to turn a binding into
 // data) there's nothing else here that needs serializing. A binding with no moduleName yet
 // (added via the Inspector's "Browse..." but not actually resolved) is skipped, same reasoning
-// as an imported mesh's unregeneratable handle above. Not restored: whatever script directory the
-// binding's moduleName resolves against - that's process-wide PythonRuntime state established by
-// RegisterScriptDirectory (Sandbox.cpp at startup, or the Inspector's own picker), not per-scene
-// data, so a scene loaded in a fresh session needs that directory registered again the same way.
+// as an imported mesh's unregeneratable handle above. Not stored: the directory that moduleName
+// resolves against. That's process-wide PythonRuntime state (RegisterScriptDirectory), so a
+// binding only reloads in a later session if some host application registered its directory at
+// startup - which Sandbox.cpp and Editor.cpp do for their own "Assets/Scripts", and which nothing
+// does for a script picked from elsewhere through the Inspector's "Browse..." dialog.
 class SceneSerializer
 {
 public:

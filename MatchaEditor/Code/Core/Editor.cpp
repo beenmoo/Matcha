@@ -4,6 +4,8 @@
 #include "Core/Qt/QtWindow.h"
 #include "Scene/System/RenderSystem.h"
 
+#include <Scripting/PythonRuntime.h>
+
 #include <QTimer>
 
 namespace MatchaEditor
@@ -16,6 +18,17 @@ Editor::Editor(const Application::ApplicationSpecification& spec)
     MT_ASSERT(qtWindow, "Editor requires ApplicationSpecification::m_WindowBackend == WindowBackend::Qt");
 
     m_EditorCamera.SetAspectRatio(GetContext().GetWindow().GetAspectRatio());
+
+    // Same relative-path convention (and reasoning) as Sandbox's own call: the working directory
+    // is the executable's output directory, which is where MatchaEditor's Assets/ - Scripts
+    // included - gets copied post-build.
+    //
+    // Registered here at startup, before any scene can be opened, rather than left to whenever
+    // the Inspector's "Browse..." picker happens to register a directory: a scene stores a
+    // binding as a (module, class) name pair for Python's import system to resolve, so opening
+    // one in a fresh session fails with ModuleNotFoundError unless something has already put the
+    // directory holding that module on the interpreter's path.
+    GetContext().GetPythonRuntime().RegisterScriptDirectory("Assets/Scripts");
 
     m_MainWindow = std::make_unique<EditorMainWindow>(GetContext(), qtWindow->GetViewportWidget());
 

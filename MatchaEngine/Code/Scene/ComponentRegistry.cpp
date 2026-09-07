@@ -232,11 +232,16 @@ const std::vector<ComponentSerializer>& GetComponentSerializers()
          [](const nlohmann::json& node, Entity entity, ResourceManager&) {
              // (moduleName, className) is a name pair Python's own import system resolves, not a
              // handle - unlike NativeScriptComponent's old compiled function pointers, there's
-             // nothing here that needs a registry to serialize as data. Deliberately doesn't
-             // re-register a script directory: the entity that added this binding already went
-             // through PythonRuntime::RegisterScriptDirectory once (Sandbox.cpp at startup, or the
-             // Inspector's "Browse..." picker), and that registration is process-wide, not
-             // per-scene state to restore.
+             // nothing here that needs a registry to serialize as data.
+             //
+             // Resolving that pair is somebody else's job: this signature has no PythonRuntime to
+             // register a directory on, so the module only imports if the host application put
+             // its directory on the interpreter's path at startup (Sandbox.cpp and Editor.cpp
+             // both register their own "Assets/Scripts"). A binding pointing at a script outside
+             // those directories - one picked through the Inspector's "Browse..." dialog, which
+             // registers the chosen folder for that session only - still loads fine while the
+             // session lasts, but comes back as ModuleNotFoundError in a later one, since the
+             // directory isn't part of what the scene stores.
              PythonScriptComponent& script = entity.AddComponent<PythonScriptComponent>();
              for (const nlohmann::json& bindingNode : node)
                  script.Bind(bindingNode.at("module").get<std::string>(), bindingNode.at("class").get<std::string>());
