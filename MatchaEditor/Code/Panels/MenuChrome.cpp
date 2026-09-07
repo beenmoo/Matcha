@@ -79,6 +79,15 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context, 
         if (path.isEmpty())
             return;
 
+        // Deserializing a scene issues GL calls - every MeshComponent regenerates its primitive
+        // (VAO/VBO) and every MaterialComponent compiles its shader, both through ResourceManager.
+        // Under the Qt backend the viewport's context is only current inside initializeGL/
+        // resizeGL/paintGL, and this runs from a menu action instead, so without this the whole
+        // scene's meshes and shaders are built against no context at all and nothing draws - a
+        // black viewport, with no error to point at it. Same reasoning (and same fix) as
+        // SceneHierarchyWidget::EnsureStandardMeshShader, which is the other place editor UI
+        // creates GL resources outside the render loop.
+        context.GetWindow().MakeContextCurrent();
         context.GetSceneManager().OpenScene(path.toStdString());
     });
 
