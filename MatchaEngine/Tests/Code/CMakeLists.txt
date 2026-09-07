@@ -15,6 +15,7 @@ target_sources(${TARGET_NAME} PRIVATE
     SandboxScriptsTests.cpp
     SceneSerializerTests.cpp
     SceneTests.cpp
+    StaleEntityBindingTests.cpp
     TransformSystemTests.cpp
     TransformTests.cpp
     VectorTests.cpp

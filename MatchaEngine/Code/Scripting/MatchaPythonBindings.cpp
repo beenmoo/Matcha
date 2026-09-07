@@ -32,6 +32,9 @@
 #include <pybind11/embed.h>
 #include <pybind11/operators.h>
 
+#include <stdexcept>
+#include <string>
+
 namespace py = pybind11;
 
 namespace Matcha
@@ -40,6 +43,26 @@ void ForceLinkMatchaPythonBindings()
 {
 }
 }  // namespace Matcha
+
+namespace
+{
+// A script can hold an Entity across frames - Flashlight caches the light entity it spawns in
+// on_create() and re-pins it every on_update() - and nothing stops that entity being deleted in
+// the meantime, from the editor's Scene Hierarchy or by another script. Reaching into the stale
+// handle trips entt's own "Set does not contain entity" assertion deep inside registry.get<T>(),
+// which takes the whole editor down with no indication of which script did it.
+//
+// So every accessor checks first and raises a Python exception instead. PythonScriptSystem
+// already wraps each binding's on_create/on_update in a py::error_already_set catch, so a script
+// touching a dead entity gets logged (naming the module and class) and skipped for the frame -
+// the same treatment any other broken script gets, rather than crashing the process.
+void RequireValidEntity(const Matcha::Entity& entity, const char* operation)
+{
+    if (!entity.IsValid())
+        throw std::runtime_error(std::string(operation) +
+                                 ": this entity no longer exists (it was deleted). Guard with entity.is_valid().");
+}
+}  // namespace
 
 PYBIND11_EMBEDDED_MODULE(matcha_engine, m)
 {
@@ -110,13 +133,29 @@ PYBIND11_EMBEDDED_MODULE(matcha_engine, m)
         // reference, not reference_internal, throughout: components are owned by the Scene's
         // registry, not by the Entity handle (a lightweight (handle, Scene*) pair) - there's
         // nothing for pybind11's keep-alive machinery to tie the returned reference's lifetime to.
+        //
+        // is_valid() is what lets a script hold an Entity across frames responsibly - see
+        // RequireValidEntity above for what happens to one that doesn't check.
+        .def("is_valid", &Entity::IsValid)
         .def(
             "get_transform",
-            [](Entity& self) -> Transform& { return self.GetComponent<TransformComponent>().transform; },
+            [](Entity& self) -> Transform& {
+                RequireValidEntity(self, "get_transform");
+                return self.GetComponent<TransformComponent>().transform;
+            },
             py::return_value_policy::reference)
         .def(
             "add_light_component",
-            [](Entity& self) -> LightComponent& { return self.AddComponent<LightComponent>(); },
+            [](Entity& self) -> LightComponent& {
+                RequireValidEntity(self, "add_light_component");
+
+                // entt's emplace<T> asserts rather than replacing when the component is already
+                // there, so this reports the double-add as a script error instead of crashing.
+                if (self.HasComponent<LightComponent>())
+                    throw std::runtime_error("add_light_component: this entity already has a light component.");
+
+                return self.AddComponent<LightComponent>();
+            },
             py::return_value_policy::reference);
 
     py::class_<Scene>(m, "Scene")
