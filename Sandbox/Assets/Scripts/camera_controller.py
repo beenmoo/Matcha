@@ -8,6 +8,10 @@ MOVE_SPEED = 2.0
 
 
 class CameraController:
+    # See RotationComponent's own copy of this comment for why these are bare annotations.
+    entity: matcha_engine.Entity
+    context: matcha_engine.EngineContext
+
     def __init__(self):
         # Accumulated separately (degrees) and rebuilt into the camera's rotation from scratch
         # each time, rather than incrementally composing rotations onto the running quaternion

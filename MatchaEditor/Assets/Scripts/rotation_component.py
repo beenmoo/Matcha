@@ -5,6 +5,13 @@ import matcha_engine
 
 
 class RotationComponent:
+    # Set by PythonScriptSystem right after construction, before on_create() runs - not
+    # assigned in __init__ (nothing here to initialize them to yet), so they're declared as
+    # bare annotations instead: enough for Pylance to type self.entity/self.context, with no
+    # runtime effect (an annotation with no value adds nothing to __dict__ or __init__).
+    entity: matcha_engine.Entity
+    context: matcha_engine.EngineContext
+
     def __init__(self):
         self.degrees_per_second = 45.0
 
