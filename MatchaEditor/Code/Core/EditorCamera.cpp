@@ -2,9 +2,9 @@
 
 namespace MatchaEditor
 {
-void EditorCamera::Update(EngineContext& context)
+void EditorCamera::Update(Input& input, Time& time)
 {
-    m_CameraController.Update(context, m_Transform);
+    m_CameraController.Update(input, time, m_Transform);
 }
 
 void EditorCamera::SetAspectRatio(float aspectRatio)

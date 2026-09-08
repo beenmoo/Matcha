@@ -16,7 +16,7 @@ class AssetBrowserPanel : public ads::CDockWidget
 {
     Q_OBJECT
 public:
-    explicit AssetBrowserPanel(ads::CDockManager* dockManager, EngineContext& context, QWidget* parent = nullptr);
+    explicit AssetBrowserPanel(ads::CDockManager* dockManager, Application& application, QWidget* parent = nullptr);
 
     AssetBrowserWidget* GetBrowserWidget() const
     {

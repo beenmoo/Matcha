@@ -49,10 +49,10 @@ void WriteFile(const std::filesystem::path& path, std::string_view contents)
     file << contents;
 }
 
-// Runs Sandbox's actual, shipped scripts (not a paraphrased copy) against a hand-rolled fake
-// EngineContext/Input written in Python - duck typing means these only need to implement the
-// handful of methods each script actually calls, without a real C++ Input/EngineContext or the
-// full Application dependency graph ScriptSystem's tests always lacked one for.
+// Runs Sandbox's actual, shipped scripts (not a paraphrased copy) against hand-rolled fake
+// Time/Input objects written in Python - duck typing means these only need to implement the
+// handful of methods each script actually calls, without a real C++ Input/Time or the full
+// Application dependency graph ScriptSystem's tests always lacked one for.
 class SandboxScriptsTest : public ::testing::Test
 {
 protected:
@@ -83,19 +83,7 @@ protected:
                   "    def get_axis(self, axis_type):\n"
                   "        return matcha_engine.Vector2Int(0, 0)\n"
                   "    def set_cursor_lock_state(self, state):\n"
-                  "        pass\n"
-                  "\n"
-                  "class FakeContext:\n"
-                  "    def __init__(self, scene=None, delta_time=1.0, keys_held=()):\n"
-                  "        self.scene = scene\n"
-                  "        self.time = FakeTime(delta_time)\n"
-                  "        self.input = FakeInput(keys_held)\n"
-                  "    def get_time(self):\n"
-                  "        return self.time\n"
-                  "    def get_input(self):\n"
-                  "        return self.input\n"
-                  "    def get_scene(self):\n"
-                  "        return self.scene\n");
+                  "        pass\n");
         runtime.RegisterScriptDirectory(fixtureDir.GetPath().string());
     }
 
@@ -103,12 +91,13 @@ protected:
     TempDirectory fixtureDir;
 };
 
-// Instantiates `className` from `moduleName`, wires up entity/context the same way
+// Instantiates `className` from `moduleName`, wires up entity/input/time/scene the same way
 // PythonScriptSystem::Update does, and returns the live instance so the test can call
 // on_create()/on_update() and inspect whatever the script stored on itself (e.g. Flashlight's
-// self.light).
+// self.light). Every attribute is always set, matching PythonScriptSystem::Update's own
+// unconditional sets, regardless of whether the script under test happens to read all of them.
 py::object Instantiate(PythonRuntime& runtime, const std::string& moduleName, const std::string& className, Entity entity,
-                        py::object context)
+                        py::object input, py::object time, py::object scene)
 {
     py::module_ module = runtime.LoadScriptModule(moduleName);
     if (!module)
@@ -117,7 +106,9 @@ py::object Instantiate(PythonRuntime& runtime, const std::string& moduleName, co
     py::object cls = module.attr(className.c_str());
     py::object instance = cls();
     instance.attr("entity") = py::cast(entity);
-    instance.attr("context") = std::move(context);
+    instance.attr("input") = std::move(input);
+    instance.attr("time") = std::move(time);
+    instance.attr("scene") = std::move(scene);
     return instance;
 }
 }  // namespace
@@ -129,9 +120,10 @@ TEST_F(SandboxScriptsTest, RotationComponentRotatesAroundYByDegreesPerSecondTime
 
     py::module_ fakes = runtime.LoadScriptModule("fakes");
     ASSERT_TRUE(static_cast<bool>(fakes));
-    py::object context = fakes.attr("FakeContext")(py::none(), 1.0f);
+    py::object time = fakes.attr("FakeTime")(1.0f);
+    py::object input = fakes.attr("FakeInput")();
 
-    py::object instance = Instantiate(runtime, "rotation_component", "RotationComponent", entity, context);
+    py::object instance = Instantiate(runtime, "rotation_component", "RotationComponent", entity, input, time, py::none());
     ASSERT_TRUE(static_cast<bool>(instance));
 
     instance.attr("on_update")();
@@ -155,9 +147,10 @@ TEST_F(SandboxScriptsTest, FlashlightCreatesASpotLightAndFollowsItsHost)
 
     py::module_ fakes = runtime.LoadScriptModule("fakes");
     ASSERT_TRUE(static_cast<bool>(fakes));
-    py::object context = fakes.attr("FakeContext")(py::cast(&scene), 1.0f);
+    py::object time = fakes.attr("FakeTime")(1.0f);
+    py::object input = fakes.attr("FakeInput")();
 
-    py::object instance = Instantiate(runtime, "flashlight", "Flashlight", host, context);
+    py::object instance = Instantiate(runtime, "flashlight", "Flashlight", host, input, time, py::cast(&scene));
     ASSERT_TRUE(static_cast<bool>(instance));
 
     instance.attr("on_create")();
@@ -188,9 +181,10 @@ TEST_F(SandboxScriptsTest, CameraControllerMovesForwardWhenWIsHeld)
     ASSERT_TRUE(static_cast<bool>(fakes));
     py::list keysHeld;
     keysHeld.append(KeyCode::W);
-    py::object context = fakes.attr("FakeContext")(py::none(), 1.0f, keysHeld);
+    py::object time = fakes.attr("FakeTime")(1.0f);
+    py::object input = fakes.attr("FakeInput")(keysHeld);
 
-    py::object instance = Instantiate(runtime, "camera_controller", "CameraController", camera, context);
+    py::object instance = Instantiate(runtime, "camera_controller", "CameraController", camera, input, time, py::none());
     ASSERT_TRUE(static_cast<bool>(instance));
 
     instance.attr("on_update")();

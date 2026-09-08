@@ -5,9 +5,9 @@
 
 namespace MatchaEditor
 {
-ReparentEntitiesCommand::ReparentEntitiesCommand(EngineContext& context, std::string description,
+ReparentEntitiesCommand::ReparentEntitiesCommand(SceneManager& sceneManager, std::string description,
                                                  std::vector<Reparent> reparents, std::optional<UUID> newParentId)
-    : m_Context(context),
+    : m_SceneManager(sceneManager),
       m_Description(std::move(description)),
       m_Reparents(std::move(reparents)),
       m_NewParentId(newParentId)
@@ -16,7 +16,7 @@ ReparentEntitiesCommand::ReparentEntitiesCommand(EngineContext& context, std::st
 
 void ReparentEntitiesCommand::Execute()
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
     Scene::ChangeBatch batch(scene);
 
     Entity newParent = m_NewParentId ? scene.FindEntityByUUID(*m_NewParentId) : Entity();
@@ -31,7 +31,7 @@ void ReparentEntitiesCommand::Execute()
 
 void ReparentEntitiesCommand::Undo()
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
     Scene::ChangeBatch batch(scene);
 
     for (const Reparent& reparent : m_Reparents)

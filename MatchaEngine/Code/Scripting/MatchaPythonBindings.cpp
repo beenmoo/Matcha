@@ -17,7 +17,6 @@
 // actually reads (A/S/D/W/SPACE/LCTRL out of ~200 in KeyCodes.h) - add more as real scripts need
 // them.
 #include "MatchaPythonBindings.h"
-#include "Core/EngineContext.h"
 #include "Core/Input.h"
 #include "Core/KeyCodes.h"
 #include "Core/Time.h"
@@ -194,12 +193,4 @@ PYBIND11_EMBEDDED_MODULE(matcha_engine, m)
 
     py::class_<Time>(m, "Time")
         .def("get_delta_time", &Time::GetDeltaTime);
-
-    py::class_<EngineContext>(m, "EngineContext")
-        .def(
-            "get_input", [](EngineContext& self) -> Input& { return self.GetInput(); }, py::return_value_policy::reference)
-        .def(
-            "get_time", [](EngineContext& self) -> Time& { return self.GetTime(); }, py::return_value_policy::reference)
-        .def(
-            "get_scene", [](EngineContext& self) -> Scene& { return self.GetScene(); }, py::return_value_policy::reference);
 }

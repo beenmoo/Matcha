@@ -18,8 +18,8 @@ class SceneHierarchyPanel : public ads::CDockWidget
 {
     Q_OBJECT
 public:
-    explicit SceneHierarchyPanel(ads::CDockManager* dockManager, EngineContext& context, CommandManager& commandManager,
-                                 QWidget* parent = nullptr);
+    explicit SceneHierarchyPanel(ads::CDockManager* dockManager, SceneManager& sceneManager, ResourceManager& resourceManager,
+                                 Window& window, CommandManager& commandManager, QWidget* parent = nullptr);
 
 signals:
     void SelectionChanged(std::vector<Entity> entities);

@@ -8,15 +8,15 @@
 Sandbox::Sandbox(const Application::ApplicationSpecification& spec)
     : Application(spec)
 {
-    ResourceManager& resourceManager = GetContext().GetResourceManager();
-    Scene& scene = GetContext().GetScene();
-    Window& window = GetContext().GetWindow();
+    ResourceManager& resourceManager = GetResourceManager();
+    Scene& scene = GetScene();
+    Window& window = GetWindow();
 
     // Working directory is the executable's own output directory (see matcha_copy_engine_assets'
     // VS_DEBUGGER_WORKING_DIRECTORY), which is where Sandbox's Assets/ (Shaders, Models, and now
     // Scripts) gets copied to post-build - so this is the same relative-path convention every
     // other asset reference in this constructor already uses.
-    GetContext().GetPythonRuntime().RegisterScriptDirectory("Assets/Scripts");
+    GetPythonRuntime().RegisterScriptDirectory("Assets/Scripts");
 
     ShaderHandle shader = resourceManager.CreateShader(
         "StandardMesh",

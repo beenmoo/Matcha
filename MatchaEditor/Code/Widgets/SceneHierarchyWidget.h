@@ -28,7 +28,8 @@ class SceneHierarchyWidget : public QTreeWidget
     Q_OBJECT
 
 public:
-    explicit SceneHierarchyWidget(EngineContext& context, CommandManager& commandManager, QWidget* parent = nullptr);
+    explicit SceneHierarchyWidget(SceneManager& sceneManager, ResourceManager& resourceManager, Window& window,
+                                  CommandManager& commandManager, QWidget* parent = nullptr);
 
     [[nodiscard]] std::vector<Entity> GetSelectedEntities() const;
 
@@ -119,7 +120,9 @@ private:
     [[nodiscard]] static bool IsAncestorOrSelf(Entity ancestor, Entity entity);
 
 private:
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
+    ResourceManager& m_ResourceManager;
+    Window& m_Window;
     CommandManager& m_CommandManager;
 
     ShaderHandle m_StandardMeshShader;

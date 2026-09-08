@@ -55,9 +55,10 @@ void WriteFile(const std::filesystem::path& path, std::string_view contents)
 }
 
 // Mirrors PythonScriptSystem::Update's per-binding body (lazy instantiate + on_create, then
-// on_update) - inlined here because that function needs a real EngineContext, which can't be
-// built in this test binary (Application's constructor unconditionally opens a real OS window).
-void TickBinding(PythonScriptComponent::Binding& binding, PythonRuntime& runtime, Entity entity, py::object context)
+// on_update) - inlined here because that function needs a real Input/Time, which can't be built
+// in this test binary (Application's constructor unconditionally opens a real OS window).
+void TickBinding(PythonScriptComponent::Binding& binding, PythonRuntime& runtime, Entity entity, py::object input,
+                 py::object time, py::object scene)
 {
     if (!binding.instance || binding.instance.is_none())
     {
@@ -66,7 +67,9 @@ void TickBinding(PythonScriptComponent::Binding& binding, PythonRuntime& runtime
         py::object cls = module.attr(binding.className.c_str());
         binding.instance = cls();
         binding.instance.attr("entity") = py::cast(entity);
-        binding.instance.attr("context") = context;
+        binding.instance.attr("input") = input;
+        binding.instance.attr("time") = time;
+        binding.instance.attr("scene") = scene;
 
         if (py::hasattr(binding.instance, "on_create"))
             binding.instance.attr("on_create")();
@@ -76,8 +79,8 @@ void TickBinding(PythonScriptComponent::Binding& binding, PythonRuntime& runtime
         binding.instance.attr("on_update")();
 }
 
-// Stands in for the engine's real EngineContext-provided context object, which the scripts under
-// test reach through self.context. Same shape as SandboxScriptsTests.cpp's own fixture.
+// Stands in for the engine's real Input/Time, which the scripts under test reach through
+// self.input/self.time. Same shape as SandboxScriptsTests.cpp's own fixture.
 constexpr std::string_view kFakesModule =
     "import matcha_engine\n"
     "\n"
@@ -97,19 +100,7 @@ constexpr std::string_view kFakesModule =
     "    def get_axis(self, axis_type):\n"
     "        return matcha_engine.Vector2Int(0, 0)\n"
     "    def set_cursor_lock_state(self, state):\n"
-    "        pass\n"
-    "\n"
-    "class FakeContext:\n"
-    "    def __init__(self, scene):\n"
-    "        self.scene = scene\n"
-    "        self.time = FakeTime()\n"
-    "        self.input = FakeInput()\n"
-    "    def get_time(self):\n"
-    "        return self.time\n"
-    "    def get_input(self):\n"
-    "        return self.input\n"
-    "    def get_scene(self):\n"
-    "        return self.scene\n";
+    "        pass\n";
 }  // namespace
 
 // The bug this covers: adding a Python Script component, binding a script to it, undoing, then
@@ -230,11 +221,13 @@ TEST(ComponentSnapshotTests, RestoredBindingsAreStillRunnableForATwoScriptEntity
 
     py::module_ fakes = runtime.LoadScriptModule("fakes");
     ASSERT_TRUE(static_cast<bool>(fakes));
-    py::object context = fakes.attr("FakeContext")(py::cast(&scene));
+    py::object input = fakes.attr("FakeInput")();
+    py::object time = fakes.attr("FakeTime")();
+    py::object sceneObj = py::cast(&scene);
 
     // Get both scripts actually running - Flashlight's on_create() spawns its own light entity.
     for (PythonScriptComponent::Binding& binding : camera.GetComponent<PythonScriptComponent>().bindings)
-        TickBinding(binding, runtime, camera, context);
+        TickBinding(binding, runtime, camera, input, time, sceneObj);
 
     ASSERT_EQ(scene.GetRootEntities().size(), 2u);  // Camera + Flashlight's spawned light
 
@@ -263,7 +256,7 @@ TEST(ComponentSnapshotTests, RestoredBindingsAreStillRunnableForATwoScriptEntity
     // Binding::instance is empty) and run on_create() again, then settle into on_update only.
     for (int frame = 0; frame < 2; ++frame)
         for (PythonScriptComponent::Binding& binding : restoredCamera.GetComponent<PythonScriptComponent>().bindings)
-            TickBinding(binding, runtime, restoredCamera, context);
+            TickBinding(binding, runtime, restoredCamera, input, time, sceneObj);
 
     SUCCEED();
 }

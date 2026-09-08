@@ -2,7 +2,6 @@
 
 #include "Core/Application.h"
 #include "Core/Assert.h"
-#include "Core/EngineContext.h"
 #include "Core/Event.h"
 #include "Core/Input.h"
 #include "Core/KeyCodes.h"

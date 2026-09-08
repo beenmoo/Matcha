@@ -3,8 +3,6 @@ target_sources(${TARGET_NAME} PRIVATE
     Application.h
     Assert.h
     Debug.h
-    EngineContext.cpp
-    EngineContext.h
     EntryPoint.h
     Event.h
     Handle.h

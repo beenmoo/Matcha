@@ -5,8 +5,8 @@
 
 namespace MatchaEditor
 {
-RenameEntitiesCommand::RenameEntitiesCommand(EngineContext& context, std::string description, std::vector<Rename> renames)
-    : m_Context(context),
+RenameEntitiesCommand::RenameEntitiesCommand(SceneManager& sceneManager, std::string description, std::vector<Rename> renames)
+    : m_SceneManager(sceneManager),
       m_Description(std::move(description)),
       m_Renames(std::move(renames))
 {
@@ -14,7 +14,7 @@ RenameEntitiesCommand::RenameEntitiesCommand(EngineContext& context, std::string
 
 void RenameEntitiesCommand::Execute()
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
     Scene::ChangeBatch batch(scene);
 
     for (const Rename& rename : m_Renames)
@@ -29,7 +29,7 @@ void RenameEntitiesCommand::Execute()
 
 void RenameEntitiesCommand::Undo()
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
     Scene::ChangeBatch batch(scene);
 
     for (const Rename& rename : m_Renames)

@@ -12,7 +12,8 @@ class CDockWidget;
 
 namespace Matcha
 {
-class EngineContext;
+class SceneManager;
+class Window;
 }  // namespace Matcha
 
 namespace MatchaEditor
@@ -25,7 +26,7 @@ class CommandManager;
 // Cancel; Save routes through the same "prompt for a path if none is set yet" flow the File menu's
 // own Save action uses. Declared here (not just used internally by MenuChrome's own actions)
 // since EditorMainWindow's closeEvent() needs the identical check for the window's X button/Exit.
-[[nodiscard]] bool ConfirmDiscardUnsavedChanges(QWidget* parent, Matcha::EngineContext& context);
+[[nodiscard]] bool ConfirmDiscardUnsavedChanges(QWidget* parent, Matcha::SceneManager& sceneManager);
 
 // Owns the editor's top-level menu bar structure (File/Edit/View, and View's Panels submenu).
 // Deliberately just exposes each QMenu rather than wrapping menu-building in its own API -
@@ -36,7 +37,8 @@ class CommandManager;
 class MenuChrome
 {
 public:
-    explicit MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context, CommandManager& commandManager);
+    explicit MenuChrome(QMainWindow* mainWindow, Matcha::SceneManager& sceneManager, Matcha::Window& window,
+                        CommandManager& commandManager);
 
     QMenuBar* GetMenuBar() const { return m_MenuBar; }
     QMenu* GetFileMenu() const { return m_FileMenu; }

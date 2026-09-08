@@ -4,9 +4,9 @@
 
 namespace MatchaEditor
 {
-CreateEntityCommand::CreateEntityCommand(EngineContext& context, std::string description, std::string name,
+CreateEntityCommand::CreateEntityCommand(SceneManager& sceneManager, std::string description, std::string name,
                                          std::optional<UUID> parentId, std::function<void(Entity)> populate)
-    : m_Context(context),
+    : m_SceneManager(sceneManager),
       m_Description(std::move(description)),
       m_Name(std::move(name)),
       m_ParentId(parentId),
@@ -16,7 +16,7 @@ CreateEntityCommand::CreateEntityCommand(EngineContext& context, std::string des
 
 void CreateEntityCommand::Execute()
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
 
     Entity entity = scene.CreateEntity(m_Id, m_Name);
 
@@ -33,7 +33,7 @@ void CreateEntityCommand::Execute()
 
 void CreateEntityCommand::Undo()
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
 
     Entity entity = scene.FindEntityByUUID(m_Id);
     if (entity.IsValid())

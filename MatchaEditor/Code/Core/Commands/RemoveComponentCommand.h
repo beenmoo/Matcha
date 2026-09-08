@@ -23,14 +23,13 @@ template <typename Component>
 class RemoveComponentCommand : public Command
 {
 public:
-    RemoveComponentCommand(EngineContext& context, std::string description, std::string componentKey,
-                           const std::vector<Entity>& entities)
-        : m_Context(context),
+    RemoveComponentCommand(SceneManager& sceneManager, ResourceManager& resourceManager, std::string description,
+                           std::string componentKey, const std::vector<Entity>& entities)
+        : m_SceneManager(sceneManager),
+          m_ResourceManager(resourceManager),
           m_Description(std::move(description)),
           m_ComponentKey(std::move(componentKey))
     {
-        ResourceManager& resourceManager = context.GetResourceManager();
-
         for (Entity entity : entities)
         {
             if (!entity.HasComponent<Component>())
@@ -38,7 +37,7 @@ public:
 
             Snapshot snapshot;
             snapshot.id = entity.GetComponent<TagComponent>().id;
-            snapshot.data = CaptureComponent(entity, m_ComponentKey, resourceManager);
+            snapshot.data = CaptureComponent(entity, m_ComponentKey, m_ResourceManager);
 
             m_Snapshots.push_back(std::move(snapshot));
         }
@@ -46,7 +45,7 @@ public:
 
     void Execute() override
     {
-        Scene& scene = m_Context.GetScene();
+        Scene& scene = m_SceneManager.GetScene();
 
         for (const Snapshot& snapshot : m_Snapshots)
         {
@@ -60,8 +59,7 @@ public:
 
     void Undo() override
     {
-        Scene& scene = m_Context.GetScene();
-        ResourceManager& resourceManager = m_Context.GetResourceManager();
+        Scene& scene = m_SceneManager.GetScene();
 
         for (const Snapshot& snapshot : m_Snapshots)
         {
@@ -69,7 +67,7 @@ public:
             if (!entity.IsValid() || entity.HasComponent<Component>())
                 continue;
 
-            RestoreComponent<Component>(entity, snapshot.data, m_ComponentKey, resourceManager);
+            RestoreComponent<Component>(entity, snapshot.data, m_ComponentKey, m_ResourceManager);
         }
 
         scene.NotifyChanged();
@@ -88,7 +86,8 @@ private:
     };
 
 private:
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
+    ResourceManager& m_ResourceManager;
     std::string m_Description;
     std::string m_ComponentKey;
     std::vector<Snapshot> m_Snapshots;

@@ -19,7 +19,7 @@ public:
     // id is fixed at construction (not generated fresh in Execute()) so that Redo() - which just
     // calls Execute() again - recreates the entity under the exact same identity as the first
     // Execute(), rather than a new random one every time.
-    CreateEntityCommand(EngineContext& context, std::string description, std::string name,
+    CreateEntityCommand(SceneManager& sceneManager, std::string description, std::string name,
                         std::optional<UUID> parentId, std::function<void(Entity)> populate = {});
 
     void Execute() override;
@@ -27,7 +27,7 @@ public:
     [[nodiscard]] std::string GetDescription() const override { return m_Description; }
 
 private:
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
     std::string m_Description;
     std::string m_Name;
     UUID m_Id;

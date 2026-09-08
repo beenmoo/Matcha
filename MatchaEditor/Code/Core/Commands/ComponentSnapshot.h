@@ -15,9 +15,9 @@ namespace MatchaEditor
 // blank default. This is the same "snapshot, then replay" shape DeleteEntitiesCommand already uses
 // for whole entities via SceneSerializer::SerializeEntities, scoped down to one component.
 //
-// Free functions taking Entity/ResourceManager rather than members on either command (or anything
-// taking EngineContext&) so they can be called - and tested - without an EngineContext, which
-// can't be constructed outside a running Application.
+// Free functions taking Entity/ResourceManager rather than members on either command so they can
+// be called - and tested - without needing an Application, SceneManager, or anything else only a
+// running Application can construct.
 //
 // componentKey is the string ComponentRegistry.cpp registers the type under (e.g. "mesh",
 // "light", "pythonScript"): the snapshot has to go through that specific entry's write()/read()

@@ -1,13 +1,14 @@
 #include "PythonScriptSystem.h"
-#include "Core/EngineContext.h"
+#include "Core/Input.h"
 #include "Core/Logger.h"
+#include "Core/Time.h"
 #include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Component/PythonScriptComponent.h"
 #include "Scripting/PythonRuntime.h"
 
 namespace Matcha
 {
-void PythonScriptSystem::Update(Scene& scene, EngineContext& context)
+void PythonScriptSystem::Update(Scene& scene, Input& input, Time& time, PythonRuntime& pythonRuntime)
 {
     auto view = scene.View<PythonScriptComponent>();
 
@@ -34,14 +35,16 @@ void PythonScriptSystem::Update(Scene& scene, EngineContext& context)
             {
                 if (!binding.instance || binding.instance.is_none())
                 {
-                    py::module_ module = context.GetPythonRuntime().LoadScriptModule(binding.moduleName);
+                    py::module_ module = pythonRuntime.LoadScriptModule(binding.moduleName);
                     if (!module)
                         continue;
 
                     py::object cls = module.attr(binding.className.c_str());
                     binding.instance = cls();
                     binding.instance.attr("entity") = py::cast(entity);
-                    binding.instance.attr("context") = py::cast(&context);
+                    binding.instance.attr("input") = py::cast(&input);
+                    binding.instance.attr("time") = py::cast(&time);
+                    binding.instance.attr("scene") = py::cast(&scene);
 
                     if (py::hasattr(binding.instance, "on_create"))
                         binding.instance.attr("on_create")();

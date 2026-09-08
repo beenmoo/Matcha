@@ -2,7 +2,6 @@
 
 #include "Core/Assert.h"
 #include "Core/Logger.h"
-#include "EngineContext.h"
 #include "Input.h"
 #include "Time.h"
 #include "Window.h"
@@ -92,11 +91,23 @@ public:
     }
 
 protected:
-    template <typename Self>
-    [[nodiscard]] auto& GetContext(this Self& self)
-    {
-        return self.m_Context;
-    }
+    // Every member below is privately owned by Application, so a subclass (Editor, Sandbox) has
+    // no other way to reach them - these exist purely for that, not for anything outside the
+    // inheritance hierarchy (EditorMainWindow and every Panel/Command below it takes the specific
+    // reference(s) it needs directly as constructor parameters instead, resolved once by whichever
+    // subclass constructs them).
+    [[nodiscard]] Input& GetInput() { return *m_Input; }
+    [[nodiscard]] Time& GetTime() { return m_Time; }
+    [[nodiscard]] Window& GetWindow() { return *m_Window; }
+    [[nodiscard]] Renderer& GetRenderer() { return m_Renderer; }
+    [[nodiscard]] ResourceManager& GetResourceManager() { return m_ResourceManager; }
+    [[nodiscard]] PythonRuntime& GetPythonRuntime() { return *m_PythonRuntime; }
+    [[nodiscard]] SceneManager& GetSceneManager() { return m_SceneManager; }
+
+    // Delegates to m_SceneManager rather than returning a cached Scene& - the Scene it returns can
+    // be swapped out from under any caller that holds onto it (SceneManager::NewScene()/
+    // OpenScene()), so this must re-fetch the live one every call rather than caching it.
+    [[nodiscard]] Scene& GetScene() { return m_SceneManager.GetScene(); }
 
     virtual void OnUpdate();
     virtual void OnRender();
@@ -142,7 +153,7 @@ private:
     // Forward-declared/unique_ptr, same reason as m_RendererAPI above: PythonRuntime.h pulls in
     // <pybind11/embed.h>, which needs Python's own headers/libs available to whoever includes it -
     // fine for Application.cpp, not something every consumer of this widely-included header
-    // (most of MatchaEditor, via EngineContext/Application) should be forced to link against.
+    // (most of MatchaEditor, via Application.h) should be forced to link against.
     //
     // Must be declared (and therefore destroyed) after every Scene-owning member above it and
     // before every one below - members destroy in reverse declaration order, and a
@@ -152,7 +163,6 @@ private:
     std::unique_ptr<PythonRuntime> m_PythonRuntime;
 
     SceneManager m_SceneManager;
-    EngineContext m_Context;
 
     // Run in registration order every Update()/Render() - see RegisterSystems().
     std::vector<std::function<void()>> m_UpdateSystems;

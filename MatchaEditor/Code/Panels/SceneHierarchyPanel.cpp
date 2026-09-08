@@ -5,13 +5,13 @@
 
 namespace MatchaEditor
 {
-SceneHierarchyPanel::SceneHierarchyPanel(ads::CDockManager* dockManager, EngineContext& context, CommandManager& commandManager,
-                                         QWidget* parent)
+SceneHierarchyPanel::SceneHierarchyPanel(ads::CDockManager* dockManager, SceneManager& sceneManager, ResourceManager& resourceManager,
+                                         Window& window, CommandManager& commandManager, QWidget* parent)
     : ads::CDockWidget(dockManager, "Scene Hierarchy Panel", parent)
 {
     setObjectName("SceneHierarchyPanel");
 
-    m_TreeWidget = new SceneHierarchyWidget(context, commandManager, this);
+    m_TreeWidget = new SceneHierarchyWidget(sceneManager, resourceManager, window, commandManager, this);
     connect(m_TreeWidget, &SceneHierarchyWidget::SelectionChanged, this, &SceneHierarchyPanel::SelectionChanged);
 
     setWidget(m_TreeWidget);

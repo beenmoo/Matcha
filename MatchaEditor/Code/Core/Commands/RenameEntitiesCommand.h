@@ -22,14 +22,14 @@ public:
         std::string newName;
     };
 
-    RenameEntitiesCommand(EngineContext& context, std::string description, std::vector<Rename> renames);
+    RenameEntitiesCommand(SceneManager& sceneManager, std::string description, std::vector<Rename> renames);
 
     void Execute() override;
     void Undo() override;
     [[nodiscard]] std::string GetDescription() const override { return m_Description; }
 
 private:
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
     std::string m_Description;
     std::vector<Rename> m_Renames;
 };

@@ -12,8 +12,12 @@ class QCloseEvent;
 
 namespace Matcha
 {
+class Application;
+class PythonRuntime;
 class QtViewportWidget;
-class EngineContext;
+class ResourceManager;
+class SceneManager;
+class Window;
 }  // namespace Matcha
 
 namespace ads
@@ -30,7 +34,9 @@ class EditorMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit EditorMainWindow(Matcha::EngineContext& context, Matcha::QtViewportWidget* viewport, QWidget* parent = nullptr);
+    explicit EditorMainWindow(Matcha::Application& application, Matcha::SceneManager& sceneManager,
+                              Matcha::ResourceManager& resourceManager, Matcha::PythonRuntime& pythonRuntime,
+                              Matcha::Window& window, Matcha::QtViewportWidget* viewport, QWidget* parent = nullptr);
     ~EditorMainWindow() override;
 
 protected:
@@ -45,7 +51,7 @@ private:
     void UpdateWindowTitle();
 
 private:
-    Matcha::EngineContext& m_Context;
+    Matcha::SceneManager& m_SceneManager;
 
     // Constructed before every panel/MenuChrome below (all of which take a reference to it) and
     // cleared whenever the scene is replaced (New/Open) - see the constructor - since a Command's

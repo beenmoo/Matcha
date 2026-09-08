@@ -42,9 +42,12 @@ entt::entity VariantToHandle(const QVariant& variant)
 }
 }  // namespace
 
-SceneHierarchyWidget::SceneHierarchyWidget(EngineContext& context, CommandManager& commandManager, QWidget* parent)
+SceneHierarchyWidget::SceneHierarchyWidget(SceneManager& sceneManager, ResourceManager& resourceManager, Window& window,
+                                           CommandManager& commandManager, QWidget* parent)
     : QTreeWidget(parent),
-      m_Context(context),
+      m_SceneManager(sceneManager),
+      m_ResourceManager(resourceManager),
+      m_Window(window),
       m_CommandManager(commandManager)
 {
     setHeaderHidden(true);
@@ -64,19 +67,19 @@ SceneHierarchyWidget::SceneHierarchyWidget(EngineContext& context, CommandManage
 
     // Re-subscribes to whatever Scene is current whenever SceneManager swaps it out (New/Open) -
     // a swapped-out Scene's own AddOnSceneChanged subscriber list is destroyed along with it.
-    context.GetSceneManager().AddOnSceneReplaced([this] { BindScene(); });
+    sceneManager.AddOnSceneReplaced([this] { BindScene(); });
     BindScene();
 }
 
 void SceneHierarchyWidget::BindScene()
 {
-    m_Context.GetScene().AddOnSceneChanged([this] { Refresh(); });
+    m_SceneManager.GetScene().AddOnSceneChanged([this] { Refresh(); });
     Refresh();
 }
 
 std::vector<Entity> SceneHierarchyWidget::GetSelectedEntities() const
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
     std::vector<Entity> entities;
 
     for (QTreeWidgetItem* item : selectedItems())
@@ -106,7 +109,7 @@ void SceneHierarchyWidget::Refresh()
     clear();
     m_ItemsByHandle.clear();
 
-    for (Entity root : m_Context.GetScene().GetRootEntities())
+    for (Entity root : m_SceneManager.GetScene().GetRootEntities())
         AddEntityItem(nullptr, root.GetHandle());
 
     for (quint32 handle : previouslyExpanded)
@@ -120,7 +123,7 @@ void SceneHierarchyWidget::Refresh()
 
 void SceneHierarchyWidget::AddEntityItem(QTreeWidgetItem* parentItem, entt::entity handle)
 {
-    Entity entity(handle, &m_Context.GetScene());
+    Entity entity(handle, &m_SceneManager.GetScene());
 
     QString label = entity.HasComponent<TagComponent>() ? QString::fromStdString(entity.GetComponent<TagComponent>().name) : "Entity";
 
@@ -155,7 +158,7 @@ const std::vector<SceneHierarchyWidget::EntityTemplate>& SceneHierarchyWidget::E
              // the GL context made current, which only this menu-driven path arranges for - an
              // undo/redo replay runs the callback with no such guarantee.
              ShaderHandle shader = widget.EnsureStandardMeshShader();
-             MeshHandle mesh = widget.m_Context.GetResourceManager().GetOrCreatePrimitiveMesh("Cube");
+             MeshHandle mesh = widget.m_ResourceManager.GetOrCreatePrimitiveMesh("Cube");
 
              return [mesh, shader](Entity entity) {
                  entity.AddComponent<MeshComponent>().mesh = mesh;
@@ -167,7 +170,7 @@ const std::vector<SceneHierarchyWidget::EntityTemplate>& SceneHierarchyWidget::E
          }},
         {"Create Camera", "Create Camera", "Camera",
          [](SceneHierarchyWidget& widget) -> std::function<void(Entity)> {
-             float aspectRatio = widget.m_Context.GetWindow().GetAspectRatio();
+             float aspectRatio = widget.m_Window.GetAspectRatio();
              return [aspectRatio](Entity entity) { entity.AddComponent<CameraComponent>().aspectRatio = aspectRatio; };
          }},
         {"Create Light", "Create Light", "Light",
@@ -182,7 +185,7 @@ const std::vector<SceneHierarchyWidget::EntityTemplate>& SceneHierarchyWidget::E
 void SceneHierarchyWidget::CreateFromTemplate(const EntityTemplate& entityTemplate, std::optional<UUID> parentId)
 {
     m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(
-        m_Context, entityTemplate.commandDescription, entityTemplate.entityName, parentId, entityTemplate.makePopulate(*this)));
+        m_SceneManager, entityTemplate.commandDescription, entityTemplate.entityName, parentId, entityTemplate.makePopulate(*this)));
 }
 
 ShaderHandle SceneHierarchyWidget::EnsureStandardMeshShader()
@@ -193,9 +196,9 @@ ShaderHandle SceneHierarchyWidget::EnsureStandardMeshShader()
     // Shader compilation issues GL calls, only guaranteed to have the viewport's context current
     // inside the render loop - so make it current explicitly here, since this runs from a menu
     // action instead. Cached, so this only compiles once per editor session.
-    m_Context.GetWindow().MakeContextCurrent();
+    m_Window.MakeContextCurrent();
 
-    m_StandardMeshShader = m_Context.GetResourceManager().CreateShader(
+    m_StandardMeshShader = m_ResourceManager.CreateShader(
         "StandardMesh", {"Assets/Shaders/StandardMesh.vert", "Assets/Shaders/StandardMesh.frag"});
 
     return m_StandardMeshShader;
@@ -206,7 +209,7 @@ std::optional<UUID> SceneHierarchyWidget::ParentIdFor(QTreeWidgetItem* item) con
     if (!item)
         return std::nullopt;
 
-    Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Context.GetScene());
+    Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_SceneManager.GetScene());
     if (!entity.IsValid() || !entity.HasComponent<TagComponent>())
         return std::nullopt;
 
@@ -261,7 +264,7 @@ void SceneHierarchyWidget::ShowContextMenu(const QPoint& pos)
 
     if (chosen == createAction)
     {
-        m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(m_Context, "Create Entity", "Entity", parentId));
+        m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(m_SceneManager, "Create Entity", "Entity", parentId));
         return;
     }
 
@@ -300,7 +303,7 @@ void SceneHierarchyWidget::DeleteSelectedEntities()
 
     QString description = subtreeRoots.size() > 1 ? QString("Delete %1 Entities").arg(subtreeRoots.size()) : QString("Delete Entity");
     m_CommandManager.ExecuteCommand(
-        std::make_unique<DeleteEntitiesCommand>(m_Context, description.toStdString(), subtreeRoots));
+        std::make_unique<DeleteEntitiesCommand>(m_SceneManager, m_ResourceManager, description.toStdString(), subtreeRoots));
 }
 
 void SceneHierarchyWidget::RenameCurrentSelection()
@@ -320,12 +323,12 @@ void SceneHierarchyWidget::CreateEntityAtSelection()
     QList<QTreeWidgetItem*> selected = selectedItems();
     std::optional<UUID> parentId = ParentIdFor(selected.isEmpty() ? nullptr : selected.front());
 
-    m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(m_Context, "Create Entity", "Entity", parentId));
+    m_CommandManager.ExecuteCommand(std::make_unique<CreateEntityCommand>(m_SceneManager, "Create Entity", "Entity", parentId));
 }
 
 std::vector<Entity> SceneHierarchyWidget::CollectSelectedSubtreeRoots() const
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
 
     QList<QTreeWidgetItem*> selected = selectedItems();
     std::vector<entt::entity> handles;
@@ -374,7 +377,7 @@ void SceneHierarchyWidget::CopySelectedEntities()
     for (Entity root : roots)
         CollectSubtree(root, entities);
 
-    m_Clipboard = SceneSerializer::SerializeEntities(entities, m_Context.GetResourceManager());
+    m_Clipboard = SceneSerializer::SerializeEntities(entities, m_ResourceManager);
 }
 
 void SceneHierarchyWidget::PasteEntitiesAtSelection()
@@ -382,7 +385,7 @@ void SceneHierarchyWidget::PasteEntitiesAtSelection()
     QList<QTreeWidgetItem*> selected = selectedItems();
     std::optional<UUID> parentId = ParentIdFor(selected.isEmpty() ? nullptr : selected.front());
 
-    auto command = std::make_unique<PasteEntitiesCommand>(m_Context, "Paste Entities", m_Clipboard, parentId);
+    auto command = std::make_unique<PasteEntitiesCommand>(m_SceneManager, m_ResourceManager, "Paste Entities", m_Clipboard, parentId);
     if (command->IsEmpty())
         return;
 
@@ -407,7 +410,7 @@ void SceneHierarchyWidget::dropEvent(QDropEvent* event)
     QTreeWidgetItem* targetItem = itemAt(event->position().toPoint());
     std::optional<UUID> newParentId = ParentIdFor(targetItem);
 
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
     Entity newParent = newParentId ? scene.FindEntityByUUID(*newParentId) : Entity();
 
     // Selected rows are exactly the rows being dragged - selection doesn't change over the course
@@ -444,7 +447,7 @@ void SceneHierarchyWidget::dropEvent(QDropEvent* event)
 
     QString description = reparents.size() > 1 ? QString("Reparent %1 Entities").arg(reparents.size()) : QString("Reparent Entity");
     m_CommandManager.ExecuteCommand(
-        std::make_unique<ReparentEntitiesCommand>(m_Context, description.toStdString(), std::move(reparents), newParentId));
+        std::make_unique<ReparentEntitiesCommand>(m_SceneManager, description.toStdString(), std::move(reparents), newParentId));
 
     // Not acceptProposedAction(): for QAbstractItemView::InternalMove, the proposed action is
     // Qt::MoveAction, and accepting a drop with MoveAction makes QAbstractItemView::startDrag()
@@ -514,7 +517,7 @@ void SceneHierarchyWidget::RenameItem(QTreeWidgetItem* item, int column)
     if (column != 0)
         return;
 
-    Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_Context.GetScene());
+    Entity entity(VariantToHandle(item->data(0, Qt::UserRole)), &m_SceneManager.GetScene());
     if (!entity.IsValid() || !entity.HasComponent<TagComponent>())
         return;
 
@@ -524,7 +527,7 @@ void SceneHierarchyWidget::RenameItem(QTreeWidgetItem* item, int column)
         return;
 
     std::vector<RenameEntitiesCommand::Rename> renames{{entity.GetComponent<TagComponent>().id, oldName, newName}};
-    m_CommandManager.ExecuteCommand(std::make_unique<RenameEntitiesCommand>(m_Context, "Rename Entity", std::move(renames)));
+    m_CommandManager.ExecuteCommand(std::make_unique<RenameEntitiesCommand>(m_SceneManager, "Rename Entity", std::move(renames)));
 }
 
 // editItem() only ever drives one native inline editor at a time, and per-row inline editors
@@ -537,7 +540,7 @@ void SceneHierarchyWidget::RenameSelected(const QList<QTreeWidgetItem*>& items)
     if (!ok || name.isEmpty())
         return;
 
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
     std::vector<RenameEntitiesCommand::Rename> renames;
     renames.reserve(items.size());
 
@@ -558,6 +561,6 @@ void SceneHierarchyWidget::RenameSelected(const QList<QTreeWidgetItem*>& items)
     }
 
     if (!renames.empty())
-        m_CommandManager.ExecuteCommand(std::make_unique<RenameEntitiesCommand>(m_Context, "Rename Entities", std::move(renames)));
+        m_CommandManager.ExecuteCommand(std::make_unique<RenameEntitiesCommand>(m_SceneManager, "Rename Entities", std::move(renames)));
 }
 }  // namespace MatchaEditor

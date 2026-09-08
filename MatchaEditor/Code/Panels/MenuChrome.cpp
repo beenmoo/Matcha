@@ -19,20 +19,19 @@ namespace
 // hands it to SceneManager::SaveSceneAs() if the user didn't cancel. Returns false if the user
 // cancelled the dialog (nothing saved), true otherwise - ConfirmDiscardUnsavedChanges uses that
 // to know whether "Save" from its own prompt actually went through.
-bool PromptSaveSceneAs(QWidget* parent, Matcha::EngineContext& context)
+bool PromptSaveSceneAs(QWidget* parent, Matcha::SceneManager& sceneManager)
 {
     QString path = QFileDialog::getSaveFileName(parent, "Save Scene As", QString(), "Matcha Scene (*.matcha)");
     if (path.isEmpty())
         return false;
 
-    context.GetSceneManager().SaveSceneAs(path.toStdString());
+    sceneManager.SaveSceneAs(path.toStdString());
     return true;
 }
 }  // namespace
 
-bool ConfirmDiscardUnsavedChanges(QWidget* parent, Matcha::EngineContext& context)
+bool ConfirmDiscardUnsavedChanges(QWidget* parent, Matcha::SceneManager& sceneManager)
 {
-    Matcha::SceneManager& sceneManager = context.GetSceneManager();
     if (!sceneManager.IsDirty())
         return true;
 
@@ -44,7 +43,7 @@ bool ConfirmDiscardUnsavedChanges(QWidget* parent, Matcha::EngineContext& contex
     {
     case QMessageBox::Save:
         if (sceneManager.GetFilePath().empty())
-            return PromptSaveSceneAs(parent, context);
+            return PromptSaveSceneAs(parent, sceneManager);
 
         sceneManager.SaveScene();
         return true;
@@ -57,22 +56,23 @@ bool ConfirmDiscardUnsavedChanges(QWidget* parent, Matcha::EngineContext& contex
     }
 }
 
-MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context, CommandManager& commandManager)
+MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::SceneManager& sceneManager, Matcha::Window& window,
+                      CommandManager& commandManager)
 {
     m_MenuBar = new QMenuBar(mainWindow);
 
     m_FileMenu = m_MenuBar->addMenu("File");
     QAction* newSceneAction = m_FileMenu->addAction("New Scene");
     newSceneAction->setShortcut(QKeySequence::New);
-    QObject::connect(newSceneAction, &QAction::triggered, mainWindow, [&context, mainWindow] {
-        if (ConfirmDiscardUnsavedChanges(mainWindow, context))
-            context.GetSceneManager().NewScene();
+    QObject::connect(newSceneAction, &QAction::triggered, mainWindow, [&sceneManager, mainWindow] {
+        if (ConfirmDiscardUnsavedChanges(mainWindow, sceneManager))
+            sceneManager.NewScene();
     });
 
     QAction* openSceneAction = m_FileMenu->addAction("Open Scene...");
     openSceneAction->setShortcut(QKeySequence::Open);
-    QObject::connect(openSceneAction, &QAction::triggered, mainWindow, [&context, mainWindow] {
-        if (!ConfirmDiscardUnsavedChanges(mainWindow, context))
+    QObject::connect(openSceneAction, &QAction::triggered, mainWindow, [&sceneManager, &window, mainWindow] {
+        if (!ConfirmDiscardUnsavedChanges(mainWindow, sceneManager))
             return;
 
         QString path = QFileDialog::getOpenFileName(mainWindow, "Open Scene", QString(), "Matcha Scene (*.matcha)");
@@ -87,20 +87,18 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context, 
         // black viewport, with no error to point at it. Same reasoning (and same fix) as
         // SceneHierarchyWidget::EnsureStandardMeshShader, which is the other place editor UI
         // creates GL resources outside the render loop.
-        context.GetWindow().MakeContextCurrent();
-        context.GetSceneManager().OpenScene(path.toStdString());
+        window.MakeContextCurrent();
+        sceneManager.OpenScene(path.toStdString());
     });
 
     QAction* saveSceneAction = m_FileMenu->addAction("Save Scene");
     saveSceneAction->setShortcut(QKeySequence::Save);
-    QObject::connect(saveSceneAction, &QAction::triggered, mainWindow, [&context, mainWindow] {
-        Matcha::SceneManager& sceneManager = context.GetSceneManager();
-
+    QObject::connect(saveSceneAction, &QAction::triggered, mainWindow, [&sceneManager, mainWindow] {
         // First save of a scene that's never had a path set behaves like Save As - prompts for
         // one - rather than SceneManager::SaveScene()'s own no-op-with-a-log-warning behavior,
         // which has no visible feedback for someone clicking a menu item.
         if (sceneManager.GetFilePath().empty())
-            PromptSaveSceneAs(mainWindow, context);
+            PromptSaveSceneAs(mainWindow, sceneManager);
         else
             sceneManager.SaveScene();
     });
@@ -108,7 +106,7 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::EngineContext& context, 
     QAction* saveSceneAsAction = m_FileMenu->addAction("Save Scene As...");
     saveSceneAsAction->setShortcut(QKeySequence::SaveAs);
     QObject::connect(saveSceneAsAction, &QAction::triggered, mainWindow,
-                     [&context, mainWindow] { PromptSaveSceneAs(mainWindow, context); });
+                     [&sceneManager, mainWindow] { PromptSaveSceneAs(mainWindow, sceneManager); });
 
     m_FileMenu->addSeparator();
     QAction* exitAction = m_FileMenu->addAction("Exit");

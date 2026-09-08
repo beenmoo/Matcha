@@ -11,7 +11,7 @@ class EditorCamera
 public:
     EditorCamera() = default;
 
-    void Update(EngineContext& context);
+    void Update(Input& input, Time& time);
 
     // Recomputed from the viewport's own size, not CameraComponent::aspectRatio on some scene
     // entity - this camera isn't in any Scene, so nothing would ever set that for it.

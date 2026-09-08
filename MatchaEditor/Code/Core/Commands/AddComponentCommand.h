@@ -25,9 +25,10 @@ template <typename Component>
 class AddComponentCommand : public Command
 {
 public:
-    AddComponentCommand(EngineContext& context, std::string description, std::string componentKey,
-                        std::vector<UUID> entityIds)
-        : m_Context(context),
+    AddComponentCommand(SceneManager& sceneManager, ResourceManager& resourceManager, std::string description,
+                        std::string componentKey, std::vector<UUID> entityIds)
+        : m_SceneManager(sceneManager),
+          m_ResourceManager(resourceManager),
           m_Description(std::move(description)),
           m_ComponentKey(std::move(componentKey)),
           m_EntityIds(std::move(entityIds)),
@@ -40,14 +41,13 @@ public:
 
     void Execute() override
     {
-        Scene& scene = m_Context.GetScene();
-        ResourceManager& resourceManager = m_Context.GetResourceManager();
+        Scene& scene = m_SceneManager.GetScene();
 
         for (size_t i = 0; i < m_EntityIds.size(); ++i)
         {
             Entity entity = scene.FindEntityByUUID(m_EntityIds[i]);
             if (entity.IsValid() && !entity.HasComponent<Component>())
-                RestoreComponent<Component>(entity, m_Snapshots[i], m_ComponentKey, resourceManager);
+                RestoreComponent<Component>(entity, m_Snapshots[i], m_ComponentKey, m_ResourceManager);
         }
 
         scene.NotifyChanged();
@@ -55,8 +55,7 @@ public:
 
     void Undo() override
     {
-        Scene& scene = m_Context.GetScene();
-        ResourceManager& resourceManager = m_Context.GetResourceManager();
+        Scene& scene = m_SceneManager.GetScene();
 
         for (size_t i = 0; i < m_EntityIds.size(); ++i)
         {
@@ -64,7 +63,7 @@ public:
             if (!entity.IsValid() || !entity.HasComponent<Component>())
                 continue;
 
-            m_Snapshots[i] = CaptureComponent(entity, m_ComponentKey, resourceManager);
+            m_Snapshots[i] = CaptureComponent(entity, m_ComponentKey, m_ResourceManager);
             entity.RemoveComponent<Component>();
         }
 
@@ -77,7 +76,8 @@ public:
     }
 
 private:
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
+    ResourceManager& m_ResourceManager;
     std::string m_Description;
     std::string m_ComponentKey;
 

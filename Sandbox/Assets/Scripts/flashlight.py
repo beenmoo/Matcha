@@ -8,11 +8,11 @@ import matcha_engine
 class Flashlight:
     # See RotationComponent's own copy of this comment for why these are bare annotations.
     entity: matcha_engine.Entity
-    context: matcha_engine.EngineContext
+    scene: matcha_engine.Scene
     light: matcha_engine.Entity
 
     def on_create(self):
-        scene = self.context.get_scene()
+        scene = self.scene
         self.light = scene.create_entity()
 
         light = self.light.add_light_component()

@@ -4,10 +4,8 @@
 
 namespace MatchaEditor
 {
-void CameraController::Update(EngineContext& context, Transform& cameraTransform)
+void CameraController::Update(Input& input, Time& time, Transform& cameraTransform)
 {
-    Input& input = context.GetInput();
-
     // Look: only while holding the right mouse button. Lock/hide the cursor for the duration so
     // it can't run out of window to move in - SetCursorLockState hides it and, on Qt, warps it
     // back to center each move (SDL's relative mouse mode does the equivalent natively).
@@ -52,6 +50,6 @@ void CameraController::Update(EngineContext& context, Transform& cameraTransform
         movement -= Vector3(0.0f, 1.0f, 0.0f);
 
     if (movement != Vector3(0.0f))
-        cameraTransform.Translate(Normalize(movement) * moveSpeed * context.GetTime().GetDeltaTime());
+        cameraTransform.Translate(Normalize(movement) * moveSpeed * time.GetDeltaTime());
 }
 }  // namespace MatchaEditor

@@ -19,6 +19,11 @@ namespace ads
 class CDockManager;
 }  // namespace ads
 
+namespace Matcha
+{
+class PythonRuntime;
+}  // namespace Matcha
+
 namespace MatchaEditor
 {
 class ComponentBoxWidget;
@@ -28,8 +33,8 @@ class InspectorPanel : public ads::CDockWidget
 {
     Q_OBJECT
 public:
-    explicit InspectorPanel(ads::CDockManager* dockManager, EngineContext& context, CommandManager& commandManager,
-                            QWidget* parent = nullptr);
+    explicit InspectorPanel(ads::CDockManager* dockManager, SceneManager& sceneManager, ResourceManager& resourceManager,
+                            PythonRuntime& pythonRuntime, CommandManager& commandManager, QWidget* parent = nullptr);
 
     void SetSelectedEntities(std::vector<Entity> entities);
 
@@ -146,7 +151,9 @@ private:
         std::function<void()> removeFromSelection;
     };
 
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
+    ResourceManager& m_ResourceManager;
+    PythonRuntime& m_PythonRuntime;
     CommandManager& m_CommandManager;
     std::vector<Entity> m_SelectedEntities;
     std::vector<ComponentInspectorEntry> m_ComponentInspectors;

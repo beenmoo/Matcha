@@ -7,9 +7,11 @@
 
 namespace MatchaEditor
 {
-PasteEntitiesCommand::PasteEntitiesCommand(EngineContext& context, std::string description, const nlohmann::json& clipboard,
+PasteEntitiesCommand::PasteEntitiesCommand(SceneManager& sceneManager, ResourceManager& resourceManager,
+                                           std::string description, const nlohmann::json& clipboard,
                                            std::optional<UUID> parentId)
-    : m_Context(context),
+    : m_SceneManager(sceneManager),
+      m_ResourceManager(resourceManager),
       m_Description(std::move(description))
 {
     if (!clipboard.is_array() || clipboard.empty())
@@ -47,14 +49,14 @@ void PasteEntitiesCommand::Execute()
     if (m_Nodes.empty())
         return;
 
-    Scene::ChangeBatch batch(m_Context.GetScene());
+    Scene::ChangeBatch batch(m_SceneManager.GetScene());
 
-    SceneSerializer::DeserializeEntities(m_Nodes, &m_Context.GetScene(), m_Context.GetResourceManager());
+    SceneSerializer::DeserializeEntities(m_Nodes, &m_SceneManager.GetScene(), m_ResourceManager);
 }
 
 void PasteEntitiesCommand::Undo()
 {
-    Scene& scene = m_Context.GetScene();
+    Scene& scene = m_SceneManager.GetScene();
     Scene::ChangeBatch batch(scene);
 
     for (UUID id : m_RootIds)

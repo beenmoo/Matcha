@@ -28,9 +28,9 @@ public:
         ValueType before;
     };
 
-    PropertyEditCommand(EngineContext& context, std::string description, std::vector<Edit> edits, ValueType after,
+    PropertyEditCommand(SceneManager& sceneManager, std::string description, std::vector<Edit> edits, ValueType after,
                         std::function<void(Entity, const ValueType&)> setter)
-        : m_Context(context),
+        : m_SceneManager(sceneManager),
           m_Description(std::move(description)),
           m_Edits(std::move(edits)),
           m_After(std::move(after)),
@@ -40,7 +40,7 @@ public:
 
     void Execute() override
     {
-        Scene& scene = m_Context.GetScene();
+        Scene& scene = m_SceneManager.GetScene();
 
         for (const Edit& edit : m_Edits)
         {
@@ -54,7 +54,7 @@ public:
 
     void Undo() override
     {
-        Scene& scene = m_Context.GetScene();
+        Scene& scene = m_SceneManager.GetScene();
 
         for (const Edit& edit : m_Edits)
         {
@@ -69,7 +69,7 @@ public:
     [[nodiscard]] std::string GetDescription() const override { return m_Description; }
 
 private:
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
     std::string m_Description;
     std::vector<Edit> m_Edits;
     ValueType m_After;

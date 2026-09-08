@@ -112,10 +112,12 @@ QLabel* CreateSectionLabel(const QString& text, QWidget* parent)
 }
 }  // namespace
 
-InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, EngineContext& context, CommandManager& commandManager,
-                               QWidget* parent)
+InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, SceneManager& sceneManager, ResourceManager& resourceManager,
+                               PythonRuntime& pythonRuntime, CommandManager& commandManager, QWidget* parent)
     : ads::CDockWidget(dockManager, "Inspector Panel", parent),
-      m_Context(context),
+      m_SceneManager(sceneManager),
+      m_ResourceManager(resourceManager),
+      m_PythonRuntime(pythonRuntime),
       m_CommandManager(commandManager)
 {
     setObjectName("InspectorPanel");
@@ -134,7 +136,7 @@ InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, EngineContext& co
 
     RegisterComponentInspectors();
 
-    m_Context.GetSceneManager().AddOnSceneReplaced([this] { OnSceneReplaced(); });
+    m_SceneManager.AddOnSceneReplaced([this] { OnSceneReplaced(); });
     BindScene();
 
     // Matches the editor's own render-tick cadence (see Editor::m_TickTimer) - frequent enough
@@ -147,7 +149,7 @@ InspectorPanel::InspectorPanel(ads::CDockManager* dockManager, EngineContext& co
 
 void InspectorPanel::BindScene()
 {
-    m_Context.GetScene().AddOnSceneChanged([this] { OnSceneChanged(); });
+    m_SceneManager.GetScene().AddOnSceneChanged([this] { OnSceneChanged(); });
 }
 
 void InspectorPanel::OnSceneReplaced()
@@ -385,14 +387,14 @@ void InspectorPanel::RegisterComponentInspectors()
             StringFieldWidget* moduleField = new StringFieldWidget("Module", QString::fromStdString(binding.moduleName), box);
             connect(moduleField, &StringFieldWidget::ValueChanged, this, [this, entity, i](const QString& value) mutable {
                 entity.GetComponent<PythonScriptComponent>().bindings[i].moduleName = value.toStdString();
-                m_Context.GetScene().NotifyChanged();
+                m_SceneManager.GetScene().NotifyChanged();
             });
             box->SetContent(moduleField);
 
             StringFieldWidget* classField = new StringFieldWidget("Class", QString::fromStdString(binding.className), box);
             connect(classField, &StringFieldWidget::ValueChanged, this, [this, entity, i](const QString& value) mutable {
                 entity.GetComponent<PythonScriptComponent>().bindings[i].className = value.toStdString();
-                m_Context.GetScene().NotifyChanged();
+                m_SceneManager.GetScene().NotifyChanged();
             });
             box->SetContent(classField);
 
@@ -418,15 +420,15 @@ void InspectorPanel::BrowseForScript(Entity entity)
 
     // The picked file can be anywhere, not necessarily under a directory already registered -
     // register its own directory so LoadScriptModule's import-by-name can actually resolve it.
-    m_Context.GetPythonRuntime().RegisterScriptDirectory(fileInfo.absolutePath().toStdString());
+    m_PythonRuntime.RegisterScriptDirectory(fileInfo.absolutePath().toStdString());
 
     entity.GetComponent<PythonScriptComponent>().Bind(fileInfo.baseName().toStdString(), GuessClassNameFromFileStem(fileInfo.baseName()).toStdString());
     // Adds a Binding to an already-existing PythonScriptComponent, so entry.addToSelection's own
     // NotifyChanged() (which only fires for a component this entity didn't have yet) doesn't
     // cover this call - moduleName/className are real, serialized scene data either way. That
     // notification is also what rebuilds the box to show the new binding, since the layout
-    // signature OnSceneChanged compares includes each binding's module/class.
-    m_Context.GetScene().NotifyChanged();
+    // signature OnSceneChanged compares includes each binding's count.
+    m_SceneManager.GetScene().NotifyChanged();
 }
 
 void InspectorPanel::AddPythonScriptFields(ComponentBoxWidget* box, Entity entity, size_t bindingIndex)
@@ -571,7 +573,7 @@ void InspectorPanel::RegisterComponentInspector(const std::string& name, const s
         if (!entityIds.empty())
         {
             m_CommandManager.ExecuteCommand(std::make_unique<AddComponentCommand<Component>>(
-                m_Context, "Add " + name + " Component", componentKey, std::move(entityIds)));
+                m_SceneManager, m_ResourceManager, "Add " + name + " Component", componentKey, std::move(entityIds)));
         }
         // No explicit Refresh() here (or in removeFromSelection below): the command's own
         // Scene::NotifyChanged() reaches OnSceneChanged, which now rebuilds whenever the set of
@@ -586,7 +588,7 @@ void InspectorPanel::RegisterComponentInspector(const std::string& name, const s
         if (!entities.empty())
         {
             m_CommandManager.ExecuteCommand(std::make_unique<RemoveComponentCommand<Component>>(
-                m_Context, "Remove " + name + " Component", componentKey, entities));
+                m_SceneManager, m_ResourceManager, "Remove " + name + " Component", componentKey, entities));
         }
     };
     m_ComponentInspectors.push_back(std::move(entry));
@@ -636,7 +638,7 @@ std::function<void()> InspectorPanel::MakeCommitHandler(const QString& descripti
             return;  // nothing was actually live-applied since this field was built/last committed
 
         m_CommandManager.ExecuteCommand(std::make_unique<PropertyEditCommand<ValueType>>(
-            m_Context, description.toStdString(), edits, current, setter));
+            m_SceneManager, description.toStdString(), edits, current, setter));
 
         for (auto& edit : edits)
             edit.before = current;

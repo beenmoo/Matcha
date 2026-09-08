@@ -23,8 +23,8 @@ public:
     // first paste, instead of a third set of ids that Undo()'s recorded roots wouldn't match.
     // Pasting the same clipboard twice means two commands, each with its own remap, which is
     // exactly the intent (two independent copies).
-    PasteEntitiesCommand(EngineContext& context, std::string description, const nlohmann::json& clipboard,
-                         std::optional<UUID> parentId);
+    PasteEntitiesCommand(SceneManager& sceneManager, ResourceManager& resourceManager, std::string description,
+                         const nlohmann::json& clipboard, std::optional<UUID> parentId);
 
     void Execute() override;
     void Undo() override;
@@ -35,7 +35,8 @@ public:
     [[nodiscard]] bool IsEmpty() const { return m_Nodes.empty(); }
 
 private:
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
+    ResourceManager& m_ResourceManager;
     std::string m_Description;
     nlohmann::json m_Nodes;
     std::vector<UUID> m_RootIds;

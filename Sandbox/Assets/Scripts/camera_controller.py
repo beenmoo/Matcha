@@ -10,7 +10,8 @@ MOVE_SPEED = 2.0
 class CameraController:
     # See RotationComponent's own copy of this comment for why these are bare annotations.
     entity: matcha_engine.Entity
-    context: matcha_engine.EngineContext
+    input: matcha_engine.Input
+    time: matcha_engine.Time
 
     def __init__(self):
         # Accumulated separately (degrees) and rebuilt into the camera's rotation from scratch
@@ -22,7 +23,7 @@ class CameraController:
 
     def on_update(self):
         transform = self.entity.get_transform()
-        input = self.context.get_input()
+        input = self.input
 
         # Look: only while holding the right mouse button. Lock/hide the cursor for the duration.
         if input.get_mouse_button_down(matcha_engine.MouseButton.RIGHT):
@@ -60,5 +61,5 @@ class CameraController:
             movement = movement - matcha_engine.Vector3(0.0, 1.0, 0.0)
 
         if movement != matcha_engine.Vector3(0.0):
-            delta_time = self.context.get_time().get_delta_time()
+            delta_time = self.time.get_delta_time()
             transform.translate(matcha_engine.normalize(movement) * MOVE_SPEED * delta_time)

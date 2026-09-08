@@ -13,11 +13,11 @@ namespace MatchaEditor
 Editor::Editor(const Application::ApplicationSpecification& spec)
     : Application(spec)
 {
-    auto* qtWindow = dynamic_cast<QtWindow*>(&GetContext().GetWindow());
+    auto* qtWindow = dynamic_cast<QtWindow*>(&GetWindow());
 
     MT_ASSERT(qtWindow, "Editor requires ApplicationSpecification::m_WindowBackend == WindowBackend::Qt");
 
-    m_EditorCamera.SetAspectRatio(GetContext().GetWindow().GetAspectRatio());
+    m_EditorCamera.SetAspectRatio(GetWindow().GetAspectRatio());
 
     // Same relative-path convention (and reasoning) as Sandbox's own call: the working directory
     // is the executable's output directory, which is where MatchaEditor's Assets/ - Scripts
@@ -28,9 +28,10 @@ Editor::Editor(const Application::ApplicationSpecification& spec)
     // binding as a (module, class) name pair for Python's import system to resolve, so opening
     // one in a fresh session fails with ModuleNotFoundError unless something has already put the
     // directory holding that module on the interpreter's path.
-    GetContext().GetPythonRuntime().RegisterScriptDirectory("Assets/Scripts");
+    GetPythonRuntime().RegisterScriptDirectory("Assets/Scripts");
 
-    m_MainWindow = std::make_unique<EditorMainWindow>(GetContext(), qtWindow->GetViewportWidget());
+    m_MainWindow = std::make_unique<EditorMainWindow>(*this, GetSceneManager(), GetResourceManager(), GetPythonRuntime(),
+                                                      GetWindow(), qtWindow->GetViewportWidget());
 
     m_TickTimer = std::make_unique<QTimer>();
     QObject::connect(m_TickTimer.get(), &QTimer::timeout, [qtWindow] { qtWindow->GetViewportWidget()->update(); });
@@ -46,7 +47,7 @@ void Editor::Show()
 
 void Editor::OnUpdate()
 {
-    m_EditorCamera.Update(GetContext());
+    m_EditorCamera.Update(GetInput(), GetTime());
 }
 
 void Editor::OnEvent(const Event& event)
@@ -58,11 +59,11 @@ void Editor::OnEvent(const Event& event)
 
 void Editor::RenderCamera()
 {
-    Renderer& renderer = GetContext().GetRenderer();
+    Renderer& renderer = GetRenderer();
 
     renderer.SetViewProjection(m_EditorCamera.GetViewProjection());
     renderer.SetCameraPosition(m_EditorCamera.GetPosition());
 
-    RenderSystem::Draw(GetContext().GetScene(), renderer);
+    RenderSystem::Draw(GetScene(), renderer);
 }
 }  // namespace MatchaEditor

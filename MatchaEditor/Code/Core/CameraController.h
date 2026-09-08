@@ -10,7 +10,7 @@ namespace MatchaEditor
 class CameraController
 {
 public:
-    void Update(EngineContext& context, Transform& cameraTransform);
+    void Update(Input& input, Time& time, Transform& cameraTransform);
 
 private:
     // Accumulated separately (degrees) and rebuilt into the camera's rotation from scratch each

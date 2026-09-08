@@ -4,13 +4,15 @@
 
 namespace Matcha
 {
-class EngineContext;
+class Input;
+class PythonRuntime;
+class Time;
 
 class PythonScriptSystem
 {
 public:
     PythonScriptSystem() = delete;
 
-    static void Update(Scene& scene, EngineContext& context);
+    static void Update(Scene& scene, Input& input, Time& time, PythonRuntime& pythonRuntime);
 };
 }  // namespace Matcha

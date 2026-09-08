@@ -14,15 +14,15 @@ class ResourceManager;
 // Owns the single currently-active Scene, by pointer rather than by value - "load a different
 // scene" is a NewScene()/OpenScene() call that constructs a fresh Scene and swaps the pointer,
 // not an in-place edit of a permanently-fixed object. Nothing should hold onto the Scene&
-// GetScene() returns across more than one call: fetch it fresh each time (EngineContext::
-// GetScene() delegates here for exactly this reason), and use AddOnSceneReplaced() to know when
-// a previously fetched reference/subscription is no longer valid.
+// GetScene() returns across more than one call: fetch it fresh each time (Application::GetScene()
+// delegates here for exactly this reason), and use AddOnSceneReplaced() to know when a previously
+// fetched reference/subscription is no longer valid.
 class SceneManager
 {
 public:
     // resourceManager is only needed for Open/Save (SceneSerializer resolves resource handles
-    // through it) - held by reference, not owned, same lifetime relationship EngineContext
-    // already has with it (Application owns both, SceneManager included).
+    // through it) - held by reference, not owned, same lifetime relationship every reference
+    // Application hands out has with it (Application owns both, SceneManager included).
     explicit SceneManager(ResourceManager& resourceManager);
 
     [[nodiscard]] Scene& GetScene()

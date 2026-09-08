@@ -24,7 +24,7 @@ public:
     };
 
     // newParentId nullopt = the drop target was the scene root (detach).
-    ReparentEntitiesCommand(EngineContext& context, std::string description, std::vector<Reparent> reparents,
+    ReparentEntitiesCommand(SceneManager& sceneManager, std::string description, std::vector<Reparent> reparents,
                             std::optional<UUID> newParentId);
 
     void Execute() override;
@@ -32,7 +32,7 @@ public:
     [[nodiscard]] std::string GetDescription() const override { return m_Description; }
 
 private:
-    EngineContext& m_Context;
+    SceneManager& m_SceneManager;
     std::string m_Description;
     std::vector<Reparent> m_Reparents;
     std::optional<UUID> m_NewParentId;

@@ -109,9 +109,11 @@ QString DockChromeStyleSheetOverrides()
 }
 }  // namespace
 
-EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtViewportWidget* viewport, QWidget* parent)
+EditorMainWindow::EditorMainWindow(Matcha::Application& application, Matcha::SceneManager& sceneManager,
+                                   Matcha::ResourceManager& resourceManager, Matcha::PythonRuntime& pythonRuntime,
+                                   Matcha::Window& window, Matcha::QtViewportWidget* viewport, QWidget* parent)
     : QMainWindow(parent),
-      m_Context(context)
+      m_SceneManager(sceneManager)
 {
     setWindowIcon(MakePlaceholderIcon());
 
@@ -122,24 +124,25 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     m_DockManager->setStyleSheet(m_DockManager->styleSheet() + DockChromeStyleSheetOverrides());
     setCentralWidget(m_DockManager);
 
-    m_MenuChrome.emplace(this, context, m_CommandManager);
+    m_MenuChrome.emplace(this, sceneManager, window, m_CommandManager);
 
     // Unlike Scene::AddOnSceneChanged (which InspectorPanel/SceneHierarchyWidget have to
     // re-subscribe to on every scene swap, since it dies with the Scene it's attached to), these
     // two are SceneManager's own callbacks - SceneManager itself outlives any one Scene, so a
     // single subscription here covers every scene for the rest of the editor's lifetime.
     UpdateWindowTitle();
-    context.GetSceneManager().AddOnDirtyChanged([this] { UpdateWindowTitle(); });
-    context.GetSceneManager().AddOnSceneReplaced([this] { UpdateWindowTitle(); });
+    sceneManager.AddOnDirtyChanged([this] { UpdateWindowTitle(); });
+    sceneManager.AddOnSceneReplaced([this] { UpdateWindowTitle(); });
 
     // A Command resolves its target(s) fresh out of the live Scene at every Execute()/Undo() (see
     // CommandManager.h) - once New/Open destroys that Scene, every command on both stacks is
     // meaningless, so drop them rather than leave them to fail silently (or resolve into whatever
     // entity happens to reuse the same UUID by coincidence, which can't happen, but is exactly
     // the kind of thing this guards against on principle).
-    context.GetSceneManager().AddOnSceneReplaced([this] { m_CommandManager.Clear(); });
+    sceneManager.AddOnSceneReplaced([this] { m_CommandManager.Clear(); });
 
-    SceneHierarchyPanel* sceneHierarchyPanel = new SceneHierarchyPanel(m_DockManager, context, m_CommandManager, this);
+    SceneHierarchyPanel* sceneHierarchyPanel =
+        new SceneHierarchyPanel(m_DockManager, sceneManager, resourceManager, window, m_CommandManager, this);
     ads::CDockAreaWidget* sceneHierarchyArea = m_DockManager->addDockWidget(ads::LeftDockWidgetArea, sceneHierarchyPanel);
     m_MenuChrome->AddPanel(sceneHierarchyPanel);
 
@@ -147,7 +150,8 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     ads::CDockAreaWidget* viewportArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, viewportPanel, sceneHierarchyArea);
     m_MenuChrome->AddPanel(viewportPanel);
 
-    InspectorPanel* inspectorPanel = new InspectorPanel(m_DockManager, context, m_CommandManager, this);
+    InspectorPanel* inspectorPanel =
+        new InspectorPanel(m_DockManager, sceneManager, resourceManager, pythonRuntime, m_CommandManager, this);
     ads::CDockAreaWidget* inspectorArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, inspectorPanel, viewportArea);
     m_MenuChrome->AddPanel(inspectorPanel);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);
@@ -162,7 +166,7 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
     // otherwise modeled on (Unity, Unreal): both are "browse project state" panels that only need
     // to be visible one at a time, unlike Scene Hierarchy/Viewport/Inspector, which all want to
     // stay on screen together.
-    AssetBrowserPanel* assetBrowserPanel = new AssetBrowserPanel(m_DockManager, context, this);
+    AssetBrowserPanel* assetBrowserPanel = new AssetBrowserPanel(m_DockManager, application, this);
     m_DockManager->addDockWidget(ads::CenterDockWidgetArea, assetBrowserPanel, consoleArea);
     m_MenuChrome->AddPanel(assetBrowserPanel);
 
@@ -173,8 +177,8 @@ EditorMainWindow::EditorMainWindow(Matcha::EngineContext& context, Matcha::QtVie
                 // way to discard unsaved work than the menu action for the exact same operation.
                 if (QFileInfo(assetPath).suffix().compare("matcha", Qt::CaseInsensitive) == 0)
                 {
-                    if (ConfirmDiscardUnsavedChanges(this, m_Context))
-                        m_Context.GetSceneManager().OpenScene(assetPath.toStdString());
+                    if (ConfirmDiscardUnsavedChanges(this, m_SceneManager))
+                        m_SceneManager.OpenScene(assetPath.toStdString());
 
                     return;
                 }
@@ -208,7 +212,7 @@ EditorMainWindow::~EditorMainWindow()
 
 void EditorMainWindow::closeEvent(QCloseEvent* event)
 {
-    if (ConfirmDiscardUnsavedChanges(this, m_Context))
+    if (ConfirmDiscardUnsavedChanges(this, m_SceneManager))
         event->accept();
     else
         event->ignore();
@@ -216,7 +220,7 @@ void EditorMainWindow::closeEvent(QCloseEvent* event)
 
 void EditorMainWindow::UpdateWindowTitle()
 {
-    Matcha::SceneManager& sceneManager = m_Context.GetSceneManager();
+    Matcha::SceneManager& sceneManager = m_SceneManager;
 
     QString sceneName = sceneManager.GetFilePath().empty()
                             ? "Untitled"

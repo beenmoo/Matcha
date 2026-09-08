@@ -37,8 +37,7 @@ Application::Application(const ApplicationSpecification& spec)
       m_ResourceManager(*m_RendererAPI),
       m_Renderer(*m_RendererAPI, m_ResourceManager),
       m_PythonRuntime(std::make_unique<PythonRuntime>()),
-      m_SceneManager(m_ResourceManager),
-      m_Context(*this, *m_Input, m_Time, *m_Window, m_Renderer, m_ResourceManager, m_SceneManager, *m_PythonRuntime)
+      m_SceneManager(m_ResourceManager)
 {
     // SDL's GL context is current immediately, so this fires synchronously here. Qt's isn't
     // ready until QOpenGLWidget::initializeGL() runs later, so InitGraphics() is deferred until
@@ -146,7 +145,8 @@ void Application::RegisterSystems()
     // Each lambda re-fetches m_SceneManager.GetScene() on every call (they run once per frame
     // regardless), rather than capturing a Scene& up front - so a scene swapped out mid-session
     // (SceneManager::NewScene()/OpenScene()) takes effect on the very next frame automatically.
-    m_UpdateSystems.push_back([this] { PythonScriptSystem::Update(m_SceneManager.GetScene(), m_Context); });
+    m_UpdateSystems.push_back(
+        [this] { PythonScriptSystem::Update(m_SceneManager.GetScene(), *m_Input, m_Time, *m_PythonRuntime); });
 
     // Run in this order: Transform before Camera/Light/Render (which read world-space transforms
     // the cascade just computed), Render last (needs the camera/light state the others set up).
