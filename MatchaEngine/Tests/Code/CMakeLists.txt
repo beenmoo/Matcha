@@ -10,6 +10,7 @@ target_sources(${TARGET_NAME} PRIVATE
     pch.h
     PythonRuntimeTests.cpp
     QuaternionTests.cpp
+    RayTests.cpp
     RendererTests.cpp
     RenderSystemTests.cpp
     SandboxScriptsTests.cpp

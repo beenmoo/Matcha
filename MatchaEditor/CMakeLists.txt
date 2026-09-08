@@ -40,7 +40,7 @@ add_subdirectory(Code/Utility)
 # target's own compilation, not just MatchaEngine's.
 find_package(pybind11 CONFIG REQUIRED)
 
-target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets Qt6::Svg spdlog::spdlog ads::qtadvanceddocking-qt6 pybind11::embed)
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets Qt6::Svg spdlog::spdlog ads::qtadvanceddocking-qt6 pybind11::embed imgui::imgui imguizmo::imguizmo)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
 

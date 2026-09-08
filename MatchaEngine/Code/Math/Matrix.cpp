@@ -64,6 +64,22 @@ Vector3 GetTranslation(const Matrix4& m)
     return FromGLM(glm::vec3(ToGLM(m)[3]));
 }
 
+Vector3 TransformPoint(const Matrix4& m, const Vector3& point)
+{
+    glm::vec4 result = ToGLM(m) * glm::vec4(point.x, point.y, point.z, 1.0f);
+    return FromGLM(glm::vec3(result));
+}
+
+Vector2 Project(const Vector3& worldPoint, const Matrix4& viewProjection, const Vector2& viewportSize)
+{
+    glm::vec4 viewport(0.0f, 0.0f, viewportSize.x, viewportSize.y);
+    glm::vec3 screen = glm::project(ToGLM(worldPoint), glm::mat4(1.0f), ToGLM(viewProjection), viewport);
+
+    // glm::project's viewport convention (like OpenGL's own) has y=0 at the bottom; Qt's y grows
+    // downward from the top, so flip back - the exact inverse of ScreenPointToRay's own flip.
+    return Vector2(screen.x, viewportSize.y - screen.y);
+}
+
 bool Decompose(const Matrix4& m, Vector3& scale, Quaternion& rotation, Vector3& translation, Vector3& skew, Vector4& perspective)
 {
     glm::vec3 glmScale;

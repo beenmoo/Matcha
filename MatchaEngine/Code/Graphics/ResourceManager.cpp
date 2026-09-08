@@ -6,11 +6,60 @@
 #include "VertexArray.h"
 #include "VertexBuffer.h"
 
+#include <algorithm>
 #include <filesystem>
+#include <limits>
+#include <optional>
 #include <unordered_set>
 
 namespace Matcha
 {
+namespace
+{
+// Every mesh source in this codebase (CubePrimitive/TrianglePrimitive, ModelLoader's
+// CreateMeshFromAiMesh) puts position first in its layout as a Float3 - this finds that
+// attribute's byte offset (in `layout`, computed by BufferLayout itself) so bounds can be
+// computed generically from whatever layout a caller passes, rather than assuming element 0.
+std::optional<size_t> FindPositionByteOffset(const BufferLayout& layout)
+{
+    for (const BufferLayout::BufferElement& element : layout.GetElements())
+        if (element.type == ShaderDataType::Float3)
+            return element.offset;
+
+    return std::nullopt;
+}
+
+// Scans `vertices` (raw floats, `stride` bytes apart) at `positionByteOffset` for the min/max of
+// each of the position attribute's 3 components.
+void ComputeLocalBounds(std::span<const float> vertices, const BufferLayout& layout, Vector3& outMin, Vector3& outMax)
+{
+    std::optional<size_t> positionByteOffset = FindPositionByteOffset(layout);
+    if (!positionByteOffset || layout.GetStride() == 0)
+        return;
+
+    size_t positionOffset = *positionByteOffset / sizeof(float);
+    size_t stride = layout.GetStride() / sizeof(float);
+
+    Vector3 min(std::numeric_limits<float>::max());
+    Vector3 max(std::numeric_limits<float>::lowest());
+
+    for (size_t i = positionOffset; i + 2 < vertices.size(); i += stride)
+    {
+        Vector3 position(vertices[i], vertices[i + 1], vertices[i + 2]);
+
+        min.x = std::min(min.x, position.x);
+        min.y = std::min(min.y, position.y);
+        min.z = std::min(min.z, position.z);
+        max.x = std::max(max.x, position.x);
+        max.y = std::max(max.y, position.y);
+        max.z = std::max(max.z, position.z);
+    }
+
+    outMin = min;
+    outMax = max;
+}
+}  // namespace
+
 ResourceManager::ResourceManager(RendererAPI& rendererAPI)
     : m_RendererAPI(rendererAPI)
 {
@@ -92,8 +141,11 @@ MeshHandle ResourceManager::CreateMesh(std::span<const float> vertices,
 {
     auto mesh = std::make_unique<Mesh>();
 
+    auto bufferLayout = std::make_shared<BufferLayout>(layout);
+    ComputeLocalBounds(vertices, *bufferLayout, mesh->localBoundsMin, mesh->localBoundsMax);
+
     mesh->vertexBuffer = m_RendererAPI.CreateVertexBuffer(vertices.data(), static_cast<uint32_t>(vertices.size_bytes()));
-    mesh->vertexBuffer->SetLayout(std::make_shared<BufferLayout>(layout));
+    mesh->vertexBuffer->SetLayout(bufferLayout);
 
     mesh->indexBuffer = m_RendererAPI.CreateIndexBuffer(indices.data(), static_cast<uint32_t>(indices.size()));
 

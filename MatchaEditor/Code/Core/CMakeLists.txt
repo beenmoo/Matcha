@@ -30,4 +30,6 @@ target_sources(${TARGET_NAME} PRIVATE
     Commands/ComponentSnapshot.h
     Commands/AddScriptBindingCommand.h
     Commands/RemoveScriptBindingCommand.h
+    ViewportInteraction.cpp
+    ViewportInteraction.h
 )

@@ -87,6 +87,47 @@ TEST(Matrix4Tests, DecomposeRecoversTranslationAndScale)
     ExpectQuaternionNear(rotation, Quaternion());
 }
 
+TEST(Matrix4Tests, TransformPointAppliesScaleAndTranslation)
+{
+    Matrix4 model = Translate(Matrix4(1.0f), Vector3(5.0f, 0.0f, 0.0f));
+    model = Scale(model, Vector3(2.0f, 2.0f, 2.0f));
+
+    Vector3 result = TransformPoint(model, Vector3(1.0f, 1.0f, 1.0f));
+
+    ExpectVectorNear(result, Vector3(7.0f, 2.0f, 2.0f));
+}
+
+TEST(Matrix4Tests, TransformPointOfOriginIsTranslation)
+{
+    Matrix4 model = Translate(Matrix4(1.0f), Vector3(3.0f, 4.0f, 5.0f));
+
+    ExpectVectorNear(TransformPoint(model, Vector3(0.0f)), Vector3(3.0f, 4.0f, 5.0f));
+}
+
+TEST(Matrix4Tests, ProjectIsInverseOfScreenPointToRayAtCenter)
+{
+    Matrix4 projection = Orthographic(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
+    Vector2 viewportSize(800.0f, 600.0f);
+
+    // A point straight down the ray from the viewport's center should project back to that same
+    // center pixel.
+    Vector2 screen = Project(Vector3(0.0f, 0.0f, -5.0f), projection, viewportSize);
+
+    EXPECT_NEAR(screen.x, 400.0f, 1e-3f);
+    EXPECT_NEAR(screen.y, 300.0f, 1e-3f);
+}
+
+TEST(Matrix4Tests, ProjectMatchesScreenPointToRayAtTopLeft)
+{
+    Matrix4 projection = Orthographic(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
+    Vector2 viewportSize(800.0f, 600.0f);
+
+    Vector2 screen = Project(Vector3(-1.0f, 1.0f, -5.0f), projection, viewportSize);
+
+    EXPECT_NEAR(screen.x, 0.0f, 1e-3f);
+    EXPECT_NEAR(screen.y, 0.0f, 1e-3f);
+}
+
 TEST(Matrix4Tests, PerspectiveWithNinetyDegreeFovAndUnitAspect)
 {
     // tan(45 deg) == 1, so both axis scale terms collapse to 1 and the math is easy to check by hand.

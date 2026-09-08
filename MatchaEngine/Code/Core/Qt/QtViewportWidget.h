@@ -32,6 +32,20 @@ public:
     // computed from mouseMoveEvent() deltas.
     void PollCursorLock();
 
+    // Absolute viewport-local position, updated on every press/move - unlike the delta-based
+    // mouse-look plumbing above (Event/EventDispatch, cross-platform), this is Qt/editor-only:
+    // ImGui's IO needs an absolute cursor position every frame (ViewportInteraction::
+    // BeginGizmoFrame), which nothing else in this codebase tracks.
+    [[nodiscard]] QPoint GetMousePosition() const { return m_AbsoluteMousePosition; }
+
+signals:
+    // Editor-only concern (viewport entity picking/gizmo interaction) - deliberately a plain Qt
+    // signal rather than routed through Event/EventDispatch, which SDLInput/gameplay code also
+    // consume and shouldn't need to know about. Left-click only, and only when RMB (camera
+    // fly-look, see CameraController) isn't already held - see the .cpp for the guard.
+    void Clicked(QPoint localPos, Qt::MouseButton button);
+    void Released(Qt::MouseButton button);
+
 protected:
     void initializeGL() override;
     void resizeGL(int width, int height) override;
@@ -54,5 +68,7 @@ private:
     QPoint m_LastMousePosition;
     bool m_HasLastMousePosition = false;
     bool m_CursorLocked = false;
+
+    QPoint m_AbsoluteMousePosition;
 };
 }  // namespace Matcha

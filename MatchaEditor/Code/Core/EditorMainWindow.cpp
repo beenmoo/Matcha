@@ -1,5 +1,7 @@
 #include "EditorMainWindow.h"
 #include "ConsoleSink.h"
+#include "EditorCamera.h"
+#include "ViewportInteraction.h"
 #include "Panels/AssetBrowserPanel.h"
 #include "Panels/ConsolePanel.h"
 #include "Panels/SceneHierarchyPanel.h"
@@ -114,7 +116,8 @@ QString DockChromeStyleSheetOverrides()
 
 EditorMainWindow::EditorMainWindow(Matcha::Application& application, Matcha::SceneManager& sceneManager,
                                    Matcha::ResourceManager& resourceManager, Matcha::PythonRuntime& pythonRuntime,
-                                   Matcha::Window& window, Matcha::QtViewportWidget* viewport, QWidget* parent)
+                                   Matcha::Window& window, Matcha::QtViewportWidget* viewport, EditorCamera& editorCamera,
+                                   QWidget* parent)
     : QMainWindow(parent),
       m_SceneManager(sceneManager)
 {
@@ -153,11 +156,22 @@ EditorMainWindow::EditorMainWindow(Matcha::Application& application, Matcha::Sce
     ads::CDockAreaWidget* viewportArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, viewportPanel, sceneHierarchyArea);
     m_MenuChrome->AddPanel(viewportPanel);
 
+    // Turns a viewport click into a scene-entity selection, fed into the exact same
+    // SceneHierarchyPanel::SelectEntities -> SelectionChanged -> InspectorPanel::SetSelectedEntities
+    // path an outliner click already goes through - the outliner's tree selection stays the single
+    // source of truth, the viewport just becomes a second way to drive it.
+    m_ViewportInteraction =
+        std::make_unique<ViewportInteraction>(sceneManager, resourceManager, editorCamera, *viewport, m_CommandManager, this);
+    connect(viewport, &QtViewportWidget::Clicked, m_ViewportInteraction.get(), &ViewportInteraction::OnViewportClicked);
+    connect(viewport, &QtViewportWidget::Released, m_ViewportInteraction.get(), &ViewportInteraction::OnViewportReleased);
+    connect(m_ViewportInteraction.get(), &ViewportInteraction::EntityPicked, sceneHierarchyPanel, &SceneHierarchyPanel::SelectEntities);
+
     InspectorPanel* inspectorPanel =
         new InspectorPanel(m_DockManager, sceneManager, resourceManager, pythonRuntime, m_CommandManager, this);
     ads::CDockAreaWidget* inspectorArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, inspectorPanel, viewportArea);
     m_MenuChrome->AddPanel(inspectorPanel);
     connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, inspectorPanel, &InspectorPanel::SetSelectedEntities);
+    connect(sceneHierarchyPanel, &SceneHierarchyPanel::SelectionChanged, m_ViewportInteraction.get(), &ViewportInteraction::SetSelectedEntities);
 
     ConsolePanel* consolePanel = new ConsolePanel(m_DockManager, this);
     ads::CDockAreaWidget* consoleArea = m_DockManager->addDockWidget(ads::BottomDockWidgetArea, consolePanel);

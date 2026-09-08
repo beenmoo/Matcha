@@ -28,6 +28,8 @@ class CDockManager;
 namespace MatchaEditor
 {
 class ConsoleSink;
+class EditorCamera;
+class ViewportInteraction;
 
 class EditorMainWindow : public QMainWindow
 {
@@ -36,8 +38,11 @@ class EditorMainWindow : public QMainWindow
 public:
     explicit EditorMainWindow(Matcha::Application& application, Matcha::SceneManager& sceneManager,
                               Matcha::ResourceManager& resourceManager, Matcha::PythonRuntime& pythonRuntime,
-                              Matcha::Window& window, Matcha::QtViewportWidget* viewport, QWidget* parent = nullptr);
+                              Matcha::Window& window, Matcha::QtViewportWidget* viewport, EditorCamera& editorCamera,
+                              QWidget* parent = nullptr);
     ~EditorMainWindow() override;
+
+    [[nodiscard]] ViewportInteraction& GetViewportInteraction() { return *m_ViewportInteraction; }
 
 protected:
     // Catches the window's own close (X button) the same way MenuChrome's Exit action does
@@ -67,5 +72,7 @@ private:
     std::optional<MenuChrome> m_MenuChrome;
 
     std::shared_ptr<ConsoleSink> m_ConsoleSink;
+
+    std::unique_ptr<ViewportInteraction> m_ViewportInteraction;
 };
 }  // namespace Matcha

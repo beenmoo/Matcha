@@ -27,6 +27,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(imguizmo CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(efsw CONFIG REQUIRED)
@@ -65,6 +66,19 @@ if (BUILD_TESTS)
         GIT_TAG release-1.12.1)
     FetchContent_MakeAvailable(googletest)
     set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "ThirdParty")
+
+    # GoogleTest 1.12.1's own build script (googletest/cmake/internal_utils.cmake) unconditionally
+    # applies /W4 /WX to its own sources for any MSVC-family compiler, clang-cl included. Under
+    # real cl.exe that's harmless - MSVC has no equivalent of clang's -Wcharacter-conversion - but
+    # clang-cl does implement it, and gtest-printers.h's char32_t PrintTo() trips it under
+    # -std=c++23 (this project's CMAKE_CXX_STANDARD). Suppressing just this one diagnostic here
+    # (rather than disabling /WX entirely) keeps the rest of gtest's own warnings-as-errors policy
+    # intact; this is gtest's own code, not this project's, so there's nothing to actually fix in it.
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        foreach (google_test_target IN ITEMS gtest gtest_main gmock gmock_main)
+            target_compile_options(${google_test_target} PRIVATE -Wno-character-conversion)
+        endforeach()
+    endif()
 
     include(GoogleTest)
     enable_testing()

@@ -1,5 +1,6 @@
 #include "Editor.h"
 #include "EditorMainWindow.h"
+#include "ViewportInteraction.h"
 #include "Core/Qt/QtViewportWidget.h"
 #include "Core/Qt/QtWindow.h"
 #include "Scene/System/RenderSystem.h"
@@ -31,7 +32,7 @@ Editor::Editor(const Application::ApplicationSpecification& spec)
     GetPythonRuntime().RegisterScriptDirectory("Assets/Scripts");
 
     m_MainWindow = std::make_unique<EditorMainWindow>(*this, GetSceneManager(), GetResourceManager(), GetPythonRuntime(),
-                                                      GetWindow(), qtWindow->GetViewportWidget());
+                                                      GetWindow(), qtWindow->GetViewportWidget(), m_EditorCamera);
 
     m_TickTimer = std::make_unique<QTimer>();
     QObject::connect(m_TickTimer.get(), &QTimer::timeout, [qtWindow] { qtWindow->GetViewportWidget()->update(); });
@@ -48,6 +49,21 @@ void Editor::Show()
 void Editor::OnUpdate()
 {
     m_EditorCamera.Update(GetInput(), GetTime());
+
+    // W/E/R gizmo-mode shortcuts (Unity/Unreal/Blender convention) - gated on RMB not being held
+    // so they don't collide with WASD flying the camera (see CameraController, which now gates
+    // its own WASD movement the same way).
+    if (!GetInput().GetMouseButton(Input::MouseButton::Right))
+    {
+        ViewportInteraction& viewportInteraction = m_MainWindow->GetViewportInteraction();
+
+        if (GetInput().GetKeyDown(KeyCode::W))
+            viewportInteraction.SetTranslateMode();
+        else if (GetInput().GetKeyDown(KeyCode::E))
+            viewportInteraction.SetRotateMode();
+        else if (GetInput().GetKeyDown(KeyCode::R))
+            viewportInteraction.SetScaleMode();
+    }
 }
 
 void Editor::OnEvent(const Event& event)
@@ -61,9 +77,18 @@ void Editor::RenderCamera()
 {
     Renderer& renderer = GetRenderer();
 
+    m_MainWindow->GetViewportInteraction().BeginGizmoFrame(GetInput().GetMouseButton(Input::MouseButton::Left), GetTime().GetDeltaTime());
+
     renderer.SetViewProjection(m_EditorCamera.GetViewProjection());
     renderer.SetCameraPosition(m_EditorCamera.GetPosition());
 
     RenderSystem::Draw(GetScene(), renderer);
+
+    m_MainWindow->GetViewportInteraction().DrawAndManipulateGizmo(m_EditorCamera.GetView(), m_EditorCamera.GetProjection());
+}
+
+void Editor::OnPostRender()
+{
+    m_MainWindow->GetViewportInteraction().EndGizmoFrame();
 }
 }  // namespace MatchaEditor

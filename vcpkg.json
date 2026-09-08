@@ -18,7 +18,13 @@
         "nlohmann-json",
         "spdlog",
         "glm",
-        "imgui",
+        {
+            "name": "imgui",
+            "features": [
+                "opengl3-binding"
+            ]
+        },
+        "imguizmo",
         "stb",
         "assimp",
         "efsw",

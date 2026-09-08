@@ -31,25 +31,31 @@ void CameraController::Update(Input& input, Time& time, Transform& cameraTransfo
         cameraTransform.SetRotation(AngleAxis(Radians(m_Yaw), Vector3(0.0f, 1.0f, 0.0f)) * AngleAxis(Radians(m_Pitch), Vector3(1.0f, 0.0f, 0.0f)));
     }
 
-    // Move: WASD + Space/Ctrl, relative to the camera's own orientation.
-    constexpr float moveSpeed = 2.0f;
+    // Move: WASD + Space/Ctrl, relative to the camera's own orientation. Gated to the same
+    // right-mouse-held "flying" state as look, rather than always-on - matches the Unity/Unreal/
+    // Blender convention, and frees WASD/QWERTY-row keys (see ViewportInteraction's W/E/R gizmo
+    // mode shortcuts) to mean something else whenever the camera isn't actively being flown.
+    if (input.GetMouseButton(Input::MouseButton::Right))
+    {
+        constexpr float moveSpeed = 2.0f;
 
-    Vector3 movement(0.0f);
+        Vector3 movement(0.0f);
 
-    if (input.GetKey(KeyCode::W))
-        movement += cameraTransform.GetForward();
-    if (input.GetKey(KeyCode::S))
-        movement -= cameraTransform.GetForward();
-    if (input.GetKey(KeyCode::D))
-        movement += cameraTransform.GetRight();
-    if (input.GetKey(KeyCode::A))
-        movement -= cameraTransform.GetRight();
-    if (input.GetKey(KeyCode::SPACE))
-        movement += Vector3(0.0f, 1.0f, 0.0f);
-    if (input.GetKey(KeyCode::LCTRL))
-        movement -= Vector3(0.0f, 1.0f, 0.0f);
+        if (input.GetKey(KeyCode::W))
+            movement += cameraTransform.GetForward();
+        if (input.GetKey(KeyCode::S))
+            movement -= cameraTransform.GetForward();
+        if (input.GetKey(KeyCode::D))
+            movement += cameraTransform.GetRight();
+        if (input.GetKey(KeyCode::A))
+            movement -= cameraTransform.GetRight();
+        if (input.GetKey(KeyCode::SPACE))
+            movement += Vector3(0.0f, 1.0f, 0.0f);
+        if (input.GetKey(KeyCode::LCTRL))
+            movement -= Vector3(0.0f, 1.0f, 0.0f);
 
-    if (movement != Vector3(0.0f))
-        cameraTransform.Translate(Normalize(movement) * moveSpeed * time.GetDeltaTime());
+        if (movement != Vector3(0.0f))
+            cameraTransform.Translate(Normalize(movement) * moveSpeed * time.GetDeltaTime());
+    }
 }
 }  // namespace MatchaEditor

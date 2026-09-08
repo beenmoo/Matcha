@@ -88,6 +88,26 @@ std::vector<Entity> SceneHierarchyWidget::GetSelectedEntities() const
     return entities;
 }
 
+void SceneHierarchyWidget::SelectEntities(const std::vector<Entity>& entities)
+{
+    {
+        // Mirrors Refresh()'s own reselection - set under a blocker so this doesn't bounce back
+        // through itemSelectionChanged's own SelectionChanged echo.
+        const QSignalBlocker blocker(this);
+
+        clearSelection();
+
+        for (const Entity& entity : entities)
+        {
+            quint32 handle = HandleToVariant(entity.GetHandle());
+            if (m_ItemsByHandle.contains(handle))
+                m_ItemsByHandle[handle]->setSelected(true);
+        }
+    }
+
+    emit SelectionChanged(entities);
+}
+
 void SceneHierarchyWidget::Refresh()
 {
     QList<quint32> previouslySelected;

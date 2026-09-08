@@ -168,9 +168,17 @@ void QtViewportWidget::keyReleaseEvent(QKeyEvent* event)
 
 void QtViewportWidget::mousePressEvent(QMouseEvent* event)
 {
+    m_AbsoluteMousePosition = event->pos();
+
     if (m_Input)
         if (std::optional<Input::MouseButton> button = ToMouseButton(event->button()))
             m_Input->PushMouseButtonDown(*button);
+
+    // Left-click only, and only when RMB isn't already held: RMB-drag is camera fly-look
+    // (CameraController), a higher-priority interaction this shouldn't also fire a pick/gizmo
+    // click underneath.
+    if (event->button() == Qt::LeftButton && (!m_Input || !m_Input->GetMouseButton(Input::MouseButton::Right)))
+        emit Clicked(event->pos(), event->button());
 
     setFocus();
 
@@ -183,11 +191,16 @@ void QtViewportWidget::mouseReleaseEvent(QMouseEvent* event)
         if (std::optional<Input::MouseButton> button = ToMouseButton(event->button()))
             m_Input->PushMouseButtonUp(*button);
 
+    if (event->button() == Qt::LeftButton)
+        emit Released(event->button());
+
     QOpenGLWidget::mouseReleaseEvent(event);
 }
 
 void QtViewportWidget::mouseMoveEvent(QMouseEvent* event)
 {
+    m_AbsoluteMousePosition = event->pos();
+
     // While locked, the delta is computed once per frame in paintGL() instead (see there for
     // why) - this only tracks/dispatches the unlocked case here.
     if (!m_CursorLocked)

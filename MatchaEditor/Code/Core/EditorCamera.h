@@ -18,6 +18,12 @@ public:
     void SetAspectRatio(float aspectRatio);
 
     [[nodiscard]] Matrix4 GetViewProjection() const;
+
+    // Split out from GetViewProjection() for ImGuizmo::Manipulate(), which takes view and
+    // projection as separate matrices rather than their product.
+    [[nodiscard]] Matrix4 GetView() const;
+    [[nodiscard]] Matrix4 GetProjection() const;
+
     [[nodiscard]] const Vector3& GetPosition() const;
 
 private:

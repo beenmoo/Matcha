@@ -141,6 +141,19 @@ TEST(Vector3Tests, NormalizeOfZeroVectorReturnsZero)
     EXPECT_EQ(Normalize(Vector3(0.0f)), Vector3(0.0f));
 }
 
+TEST(Vector3Tests, DotProduct)
+{
+    EXPECT_FLOAT_EQ(Dot(Vector3(1.0f, 2.0f, 3.0f), Vector3(4.0f, 5.0f, 6.0f)), 32.0f);
+    EXPECT_FLOAT_EQ(Dot(Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)), 0.0f);
+}
+
+TEST(Vector3Tests, CrossProduct)
+{
+    Vector3 result = Cross(Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
+
+    EXPECT_EQ(result, Vector3(0.0f, 0.0f, 1.0f));
+}
+
 TEST(Vector4Tests, ComponentConstructorAndAddition)
 {
     Vector4 a(1.0f, 2.0f, 3.0f, 4.0f);

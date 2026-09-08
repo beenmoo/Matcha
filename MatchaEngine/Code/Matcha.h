@@ -28,6 +28,7 @@
 
 #include "Math/Matrix.h"
 #include "Math/Quaternion.h"
+#include "Math/Ray.h"
 #include "Math/Transform.h"
 #include "Math/Vector.h"
 

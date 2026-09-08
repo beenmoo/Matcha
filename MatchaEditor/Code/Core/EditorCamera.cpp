@@ -14,10 +14,18 @@ void EditorCamera::SetAspectRatio(float aspectRatio)
 
 Matrix4 EditorCamera::GetViewProjection() const
 {
-    Matrix4 projection = Perspective(m_CameraComponent.perspectiveFOV, m_CameraComponent.aspectRatio,
-                                      m_CameraComponent.perspectiveNear, m_CameraComponent.perspectiveFar);
+    return GetProjection() * GetView();
+}
 
-    return projection * Inverse(m_Transform.GetLocalMatrix());
+Matrix4 EditorCamera::GetView() const
+{
+    return Inverse(m_Transform.GetLocalMatrix());
+}
+
+Matrix4 EditorCamera::GetProjection() const
+{
+    return Perspective(m_CameraComponent.perspectiveFOV, m_CameraComponent.aspectRatio, m_CameraComponent.perspectiveNear,
+                       m_CameraComponent.perspectiveFar);
 }
 
 const Vector3& EditorCamera::GetPosition() const

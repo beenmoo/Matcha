@@ -33,6 +33,12 @@ public:
 
     [[nodiscard]] std::vector<Entity> GetSelectedEntities() const;
 
+    // Programmatically selects exactly these entities (e.g. a viewport click) and emits
+    // SelectionChanged once so InspectorPanel still hears about it - unlike Refresh()'s own
+    // reselection of an already-current set, this is a genuinely new selection, so it's the one
+    // programmatic path that's supposed to notify.
+    void SelectEntities(const std::vector<Entity>& entities);
+
 signals:
     void SelectionChanged(std::vector<Entity> entities);
 

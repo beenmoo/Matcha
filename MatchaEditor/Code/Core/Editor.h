@@ -24,6 +24,7 @@ protected:
     void OnUpdate() override;
     void OnEvent(const Event& event) override;
     void RenderCamera() override;
+    void OnPostRender() override;
 
 private:
     std::unique_ptr<EditorMainWindow> m_MainWindow;

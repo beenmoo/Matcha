@@ -16,4 +16,9 @@ SceneHierarchyPanel::SceneHierarchyPanel(ads::CDockManager* dockManager, SceneMa
 
     setWidget(m_TreeWidget);
 }
+
+void SceneHierarchyPanel::SelectEntities(const std::vector<Entity>& entities)
+{
+    m_TreeWidget->SelectEntities(entities);
+}
 }  // namespace MatchaEditor

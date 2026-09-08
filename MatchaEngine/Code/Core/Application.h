@@ -122,6 +122,14 @@ protected:
     // called from Render(), well after construction, where virtual dispatch works normally.
     virtual void RenderCamera();
 
+    // Called once per frame from Render(), after Renderer::Flush() has issued the scene's actual
+    // GL draw calls but before the buffer swap - unlike RenderCamera()/OnRender() (both called
+    // before Flush(), while the frame's geometry is only queued, not yet rasterized), this is the
+    // one hook that runs once everything opaque is actually on screen. Needed for an overlay that
+    // must draw on top of the rendered scene (MatchaEditor's ImGuizmo viewport gizmo) rather than
+    // underneath it.
+    virtual void OnPostRender();
+
 private:
     void Update();
     void Render();

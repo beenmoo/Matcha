@@ -106,6 +106,10 @@ void Application::OnRender()
 {
 }
 
+void Application::OnPostRender()
+{
+}
+
 void Application::OnEvent(const Event& event)
 {
 }
@@ -137,6 +141,7 @@ void Application::Render()
 
     OnRender();
     m_Renderer.Flush();
+    OnPostRender();
     m_Window->SwapBuffers();
 }
 
