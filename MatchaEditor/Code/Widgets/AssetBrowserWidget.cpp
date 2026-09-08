@@ -26,11 +26,12 @@ AssetBrowserWidget::AssetBrowserWidget(const QString& projectAssetsPath, QWidget
     QHBoxLayout* navLayout = new QHBoxLayout();
     navLayout->addWidget(m_BackButton);
     navLayout->addWidget(m_ForwardButton);
+    navLayout->addStretch();  // Push buttons to the left
 
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_ListView);
     layout->addLayout(navLayout);
+    layout->addWidget(m_ListView);
 
     // Wire up the double-click event internally
     connect(m_ListView, &QListView::doubleClicked, this, &AssetBrowserWidget::OnDirectoryNavigated);
