@@ -20,12 +20,25 @@ AssetBrowserWidget::AssetBrowserWidget(const QString& projectAssetsPath, QWidget
     m_ListView->setGridSize(QSize(80, 100));
     m_ListView->setResizeMode(QListView::Adjust);
 
+    m_BackButton = new QPushButton("<", this);
+    m_ForwardButton = new QPushButton(">", this);
+
+    QHBoxLayout* navLayout = new QHBoxLayout();
+    navLayout->addWidget(m_BackButton);
+    navLayout->addWidget(m_ForwardButton);
+
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_ListView);
+    layout->addLayout(navLayout);
 
     // Wire up the double-click event internally
     connect(m_ListView, &QListView::doubleClicked, this, &AssetBrowserWidget::OnDirectoryNavigated);
+    connect(m_BackButton, &QPushButton::clicked, this, &AssetBrowserWidget::OnBackButtonClicked);
+    connect(m_ForwardButton, &QPushButton::clicked, this, &AssetBrowserWidget::OnForwardButtonClicked);
+
+    // Initialize history
+    NavigateToDirectory(projectAssetsPath);
 }
 
 void AssetBrowserWidget::OnDirectoryNavigated(const QModelIndex& index)
@@ -34,12 +47,55 @@ void AssetBrowserWidget::OnDirectoryNavigated(const QModelIndex& index)
     if (m_FileSystemModel->isDir(index))
     {
         // If it's a directory, navigate into it
-        m_ListView->setRootIndex(index);
+        NavigateToDirectory(assetPath);
     }
     else
     {
         // If it's a file, emit the double-clicked signal
         emit AssetDoubleClicked(assetPath);
     }
+}
+
+void AssetBrowserWidget::OnBackButtonClicked()
+{
+    if (m_HistoryIndex > 0)
+    {
+        --m_HistoryIndex;
+        NavigateToDirectory(m_History[m_HistoryIndex], false);
+    }
+}
+
+void AssetBrowserWidget::OnForwardButtonClicked()
+{
+    if (m_HistoryIndex < m_History.size() - 1)
+    {
+        ++m_HistoryIndex;
+        NavigateToDirectory(m_History[m_HistoryIndex], false);
+    }
+}
+
+void AssetBrowserWidget::NavigateToDirectory(const QString& directoryPath, bool addToHistory)
+{
+    m_ListView->setRootIndex(m_FileSystemModel->index(directoryPath));
+
+    if (addToHistory)
+    {
+        // If we're not at the end of the history, truncate it
+        if (m_HistoryIndex < m_History.size() - 1)
+        {
+            m_History = m_History.mid(0, m_HistoryIndex + 1);
+        }
+
+        m_History.append(directoryPath);
+        ++m_HistoryIndex;
+    }
+
+    UpdateNavigationButtons();
+}
+
+void AssetBrowserWidget::UpdateNavigationButtons()
+{
+    m_BackButton->setEnabled(m_HistoryIndex > 0);
+    m_ForwardButton->setEnabled(m_HistoryIndex < m_History.size() - 1);
 }
 }  // namespace MatchaEditor
