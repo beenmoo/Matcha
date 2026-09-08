@@ -33,6 +33,15 @@ find_package(efsw CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 
+# vcpkg's python3 port lays out a real Python install (python.exe next to a Lib/ stdlib folder)
+# under its own tools/ directory, entirely separate from wherever an embedding executable
+# (MatchaEditor, Sandbox, either Tests target) ends up. Without pointing the embedded interpreter
+# at this directory as PYTHONHOME, CPython's own path autodetection - which assumes the running
+# executable lives inside a normal Python install - fails to find the stdlib and prints
+# "Could not find platform independent libraries <prefix>" at startup (see PythonRuntime.cpp).
+set(MATCHA_PYTHON_HOME "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/python3" CACHE INTERNAL
+    "Path to vcpkg's Python install, used as PYTHONHOME for the embedded interpreter")
+
 if (BUILD_QT_BACKEND)
     # Must precede add_subdirectory(MatchaEngine): qt_standard_project_setup() sets
     # CMAKE_AUTOMOC/CMAKE_AUTOUIC for this scope and below, and does not apply retroactively

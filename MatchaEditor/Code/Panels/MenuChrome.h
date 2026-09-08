@@ -40,11 +40,26 @@ public:
     explicit MenuChrome(QMainWindow* mainWindow, Matcha::SceneManager& sceneManager, Matcha::Window& window,
                         CommandManager& commandManager);
 
-    QMenuBar* GetMenuBar() const { return m_MenuBar; }
-    QMenu* GetFileMenu() const { return m_FileMenu; }
-    QMenu* GetEditMenu() const { return m_EditMenu; }
-    QMenu* GetViewMenu() const { return m_ViewMenu; }
-    QMenu* GetPanelsMenu() const { return m_PanelsMenu; }
+    QMenuBar* GetMenuBar() const
+    {
+        return m_MenuBar;
+    }
+    QMenu* GetFileMenu() const
+    {
+        return m_FileMenu;
+    }
+    QMenu* GetEditMenu() const
+    {
+        return m_EditMenu;
+    }
+    QMenu* GetViewMenu() const
+    {
+        return m_ViewMenu;
+    }
+    QMenu* GetPanelsMenu() const
+    {
+        return m_PanelsMenu;
+    }
 
     // Adds the panel's own built-in toggle-view action (checkable, stays in sync with whether
     // it's open or closed, labeled with the panel's title) to View > Panels - this is the only
@@ -61,5 +76,6 @@ private:
 
     QAction* m_UndoAction;
     QAction* m_RedoAction;
+    QAction* m_PreferencesAction;
 };
 }  // namespace MatchaEditor

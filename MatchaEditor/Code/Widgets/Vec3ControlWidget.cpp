@@ -38,6 +38,7 @@ Vec3ControlWidget::Vec3ControlWidget(const QString& label, const Vector3& initia
 
         outSpinBox = new QDoubleSpinBox(this);
         outSpinBox->setRange(-999999.0, 999999.0);
+        outSpinBox->setSingleStep(0.1);
         outSpinBox->setValue(val);
         outSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);  // Hides default ugly arrows!
         ApplySquishPolicy(outSpinBox);

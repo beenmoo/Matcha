@@ -72,6 +72,30 @@ QString GuessClassNameFromFileStem(const QString& stem)
     return result;
 }
 
+// A Python script field's name is a Python identifier (snake_case), not something meant for
+// display - "degrees_per_second" reads as "Degrees Per Second" in the Inspector the same way
+// every built-in component's own hand-written labels ("Position", "Base Color") do.
+QString FormatFieldLabel(const QString& fieldName)
+{
+    QString result;
+    bool capitalizeNext = true;
+
+    for (QChar c : fieldName)
+    {
+        if (c == '_')
+        {
+            result += ' ';
+            capitalizeNext = true;
+            continue;
+        }
+
+        result += capitalizeNext ? c.toUpper() : c;
+        capitalizeNext = false;
+    }
+
+    return result;
+}
+
 // A script's live Python instance is untrusted input the same way a scene file is - reading or
 // writing one of its attributes can throw (a custom __setattr__, an attribute deleted since the
 // field widget was built) at a point this file has no other exception boundary around (a Qt
@@ -483,7 +507,7 @@ void InspectorPanel::AddPythonScriptFields(ComponentBoxWidget* box, Entity entit
 
         anyField = true;
         py::handle value = item.second;
-        QString label = QString::fromStdString(key);
+        QString label = FormatFieldLabel(QString::fromStdString(key));
 
         // bool before int: in Python, bool is a subclass of int, so an isinstance<int_> check
         // alone would misclassify every bool field as an integer one.

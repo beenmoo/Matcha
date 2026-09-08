@@ -19,4 +19,6 @@ target_sources(${TARGET_NAME} PRIVATE
 	Vec4ControlWidget.cpp
 	Vec4ControlWidget.h
 	AssetBrowserWidget.cpp
-	AssetBrowserWidget.h)
+	AssetBrowserWidget.h
+	PreferencesDialog.cpp
+	PreferencesDialog.h)

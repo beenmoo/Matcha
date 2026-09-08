@@ -1,5 +1,6 @@
 #include "MenuChrome.h"
 #include "Core/CommandManager.h"
+#include "Widgets/PreferencesDialog.h"
 
 #include <Matcha.h>
 
@@ -57,9 +58,10 @@ bool ConfirmDiscardUnsavedChanges(QWidget* parent, Matcha::SceneManager& sceneMa
 }
 
 MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::SceneManager& sceneManager, Matcha::Window& window,
-                      CommandManager& commandManager)
+                       CommandManager& commandManager)
 {
     m_MenuBar = new QMenuBar(mainWindow);
+    mainWindow->setMenuBar(m_MenuBar);
 
     m_FileMenu = m_MenuBar->addMenu("File");
     QAction* newSceneAction = m_FileMenu->addAction("New Scene");
@@ -145,10 +147,14 @@ MenuChrome::MenuChrome(QMainWindow* mainWindow, Matcha::SceneManager& sceneManag
     commandManager.SetOnStackChanged(updateEditMenu);
     updateEditMenu();
 
+    m_PreferencesAction = m_EditMenu->addAction("Preferences...");
+    QObject::connect(m_PreferencesAction, &QAction::triggered, mainWindow, [mainWindow] {
+        PreferencesDialog dialog(mainWindow);
+        dialog.exec();
+    });
+
     m_ViewMenu = m_MenuBar->addMenu("View");
     m_PanelsMenu = m_ViewMenu->addMenu("Panels");
-
-    mainWindow->setMenuBar(m_MenuBar);
 }
 
 void MenuChrome::AddPanel(ads::CDockWidget* panel)

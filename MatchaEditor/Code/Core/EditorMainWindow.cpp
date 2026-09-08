@@ -24,6 +24,9 @@
 #include <QPixmap>
 #include <QString>
 #include <QUrl>
+#include <QSettings>
+#include <QProcess>
+#include <QProcessEnvironment>
 
 #include <algorithm>
 
@@ -175,12 +178,42 @@ EditorMainWindow::EditorMainWindow(Matcha::Application& application, Matcha::Sce
                 // A scene switches SceneManager to it, through the same unsaved-changes guard
                 // File > Open Scene already uses - a double-click shouldn't be a lower-friction
                 // way to discard unsaved work than the menu action for the exact same operation.
-                if (QFileInfo(assetPath).suffix().compare("matcha", Qt::CaseInsensitive) == 0)
+                QString fileSuffix = QFileInfo(assetPath).suffix();
+
+                if (fileSuffix.compare("matcha", Qt::CaseInsensitive) == 0)
                 {
                     if (ConfirmDiscardUnsavedChanges(this, m_SceneManager))
                         m_SceneManager.OpenScene(assetPath.toStdString());
 
                     return;
+                }
+
+                // A script double-clicked from the Project window is a request to edit it,
+                // not to run it - so don't pass it to PythonRuntime, which would execute it
+                // immediately. Instead, open it in whatever external editor the user has
+                // configured for that file type, or fall back to the OS default if none is
+                // configured.
+                QSettings settings("MatchaEditor");
+                QString externalEditorPath = settings.value("ExternalEditor/Path", "").toString();
+
+                if (!externalEditorPath.isEmpty() && QFileInfo::exists(externalEditorPath))
+                {
+                    // Launch the configured executable and pass the script path. Goes through
+                    // a QProcess instance (rather than the static QProcess::startDetached
+                    // overload) so the environment can be sanitized first - if this editor
+                    // itself was launched from a VS Code integrated terminal (VS Code's
+                    // extension host is Electron), ELECTRON_RUN_AS_NODE leaks in and gets
+                    // inherited by a detached child. Any Electron app (VS Code included)
+                    // reads that var to mean "run as a plain Node CLI instead of the GUI",
+                    // so without stripping it here, launching VS Code as the external editor
+                    // silently runs `node <script>` instead of opening a window.
+                    QProcess process;
+                    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+                    environment.remove("ELECTRON_RUN_AS_NODE");
+                    process.setProcessEnvironment(environment);
+                    process.setProgram(externalEditorPath);
+                    process.setArguments(QStringList() << assetPath);
+                    process.startDetached();
                 }
 
                 // Everything else (scripts, shaders, models, textures) has no in-editor viewer/
