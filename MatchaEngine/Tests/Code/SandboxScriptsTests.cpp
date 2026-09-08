@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Core/KeyCodes.h"
 #include "Math/Quaternion.h"
+#include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Component/LightComponent.h"
 #include "Scene/Component/TransformComponent.h"
 #include "Scene/Scene.h"
@@ -139,7 +140,7 @@ TEST_F(SandboxScriptsTest, RotationComponentRotatesAroundYByDegreesPerSecondTime
     EXPECT_NEAR(actual.w, expected.w, 0.001f);
 }
 
-TEST_F(SandboxScriptsTest, FlashlightCreatesASpotLightAndFollowsItsHost)
+TEST_F(SandboxScriptsTest, FlashlightCreatesASpotLightAndParentsItUnderItsHost)
 {
     Scene scene;
     Entity host = scene.CreateEntity("Camera");
@@ -163,12 +164,18 @@ TEST_F(SandboxScriptsTest, FlashlightCreatesASpotLightAndFollowsItsHost)
     EXPECT_EQ(lightComponent.type, LightType::Spot);
     EXPECT_FLOAT_EQ(lightComponent.intensity, 5.0f);
 
-    instance.attr("on_update")();
-
+    // on_create() sets the light's own position to its host's (read before parenting - SetParent
+    // only relinks the hierarchy, it doesn't touch TransformComponent) and parents it under the
+    // host, rather than re-pinning every on_update() the way this script used to - the host moving
+    // afterward is TransformSystem's job now (already covered by TransformSystemTests), not
+    // something this script does itself, so there's no on_update() left to call here.
     const Vector3& lightPosition = light.GetComponent<TransformComponent>().transform.GetPosition();
     EXPECT_FLOAT_EQ(lightPosition.x, 1.0f);
     EXPECT_FLOAT_EQ(lightPosition.y, 2.0f);
     EXPECT_FLOAT_EQ(lightPosition.z, 3.0f);
+
+    ASSERT_TRUE(light.HasComponent<HierarchyComponent>());
+    EXPECT_TRUE(light.GetComponent<HierarchyComponent>().GetParent() == host.GetHandle());
 }
 
 TEST_F(SandboxScriptsTest, CameraControllerMovesForwardWhenWIsHeld)

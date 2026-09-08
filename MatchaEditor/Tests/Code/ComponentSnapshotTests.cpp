@@ -225,11 +225,12 @@ TEST(ComponentSnapshotTests, RestoredBindingsAreStillRunnableForATwoScriptEntity
     py::object time = fakes.attr("FakeTime")();
     py::object sceneObj = py::cast(&scene);
 
-    // Get both scripts actually running - Flashlight's on_create() spawns its own light entity.
+    // Get both scripts actually running - Flashlight's on_create() spawns its own light entity and
+    // parents it under the camera (see flashlight.py), so it's not a second root.
     for (PythonScriptComponent::Binding& binding : camera.GetComponent<PythonScriptComponent>().bindings)
         TickBinding(binding, runtime, camera, input, time, sceneObj);
 
-    ASSERT_EQ(scene.GetRootEntities().size(), 2u);  // Camera + Flashlight's spawned light
+    ASSERT_EQ(scene.GetRootEntities().size(), 1u);  // Camera only - the light is its child
 
     // RemoveComponentCommand's constructor, then Execute() - resolved fresh by UUID, matching how
     // the real command always re-resolves rather than holding a raw Entity handle.
@@ -253,7 +254,8 @@ TEST(ComponentSnapshotTests, RestoredBindingsAreStillRunnableForATwoScriptEntity
     ASSERT_EQ(restoredCamera.GetComponent<PythonScriptComponent>().bindings.size(), 2u);
 
     // The next two frames after the undo: both bindings re-instantiate from scratch (a restored
-    // Binding::instance is empty) and run on_create() again, then settle into on_update only.
+    // Binding::instance is empty) and run on_create() again - Flashlight has no on_update() at all
+    // (TickBinding's hasattr guard skips it), CameraController settles into on_update only.
     for (int frame = 0; frame < 2; ++frame)
         for (PythonScriptComponent::Binding& binding : restoredCamera.GetComponent<PythonScriptComponent>().bindings)
             TickBinding(binding, runtime, restoredCamera, input, time, sceneObj);

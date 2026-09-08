@@ -22,17 +22,6 @@ class Flashlight:
         light.range = 6.0
         light.inner_cone_angle = 12.5
         light.outer_cone_angle = 20.0
-
-    def on_update(self):
-        # The light lives on its own entity, so it can be deleted independently of its host - from
-        # the editor's Scene Hierarchy, say. Stop pinning it rather than reaching into a handle
-        # that no longer resolves (which raises), or recreating it every frame (which would make
-        # the light impossible to delete at all).
-        if not self.light.is_valid():
-            return
-
-        host_transform = self.entity.get_transform()
-        light_transform = self.light.get_transform()
-
-        light_transform.set_position(host_transform.get_position())
-        light_transform.set_rotation(host_transform.get_rotation())
+        
+        self.light.get_transform().set_position(self.entity.get_transform().get_position())
+        self.light.set_parent(self.entity)

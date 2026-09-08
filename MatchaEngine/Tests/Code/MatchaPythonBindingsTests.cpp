@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Component/TransformComponent.h"
 #include "Scene/Scene.h"
 #include "Scripting/PythonRuntime.h"
@@ -146,4 +147,96 @@ TEST(MatchaPythonBindingsTests, InstanceDictExposesPublicFieldsWithCorrectTypes)
     py::object nameValue = fields["name"];
     EXPECT_TRUE(py::isinstance<py::str>(nameValue));
     EXPECT_EQ(nameValue.cast<std::string>(), "hello");
+}
+
+// Proves Entity.set_parent(parent) actually reparents through the real HierarchyComponent linked
+// list, not just that the binding compiles - a script can currently read/write a Transform and
+// add a LightComponent, but had no way to move an entity in the hierarchy at all.
+TEST(MatchaPythonBindingsTests, ScriptCanReparentAnEntity)
+{
+    Scene scene;
+    Entity child = scene.CreateEntity("Child");
+    Entity parent = scene.CreateEntity("Parent");
+
+    PythonRuntime runtime;
+
+    TempDirectory dir;
+    WriteFile(dir.GetPath() / "reparent.py",
+              "import matcha_engine\n"
+              "\n"
+              "def reparent(child, parent):\n"
+              "    child.set_parent(parent)\n");
+    runtime.RegisterScriptDirectory(dir.GetPath().string());
+
+    py::module_ module = runtime.LoadScriptModule("reparent");
+    ASSERT_TRUE(static_cast<bool>(module));
+
+    module.attr("reparent")(py::cast(child), py::cast(parent));
+
+    ASSERT_TRUE(child.HasComponent<HierarchyComponent>());
+    EXPECT_TRUE(child.GetComponent<HierarchyComponent>().GetParent() == parent.GetHandle());
+}
+
+// parent=None is how a script spells "detach to the scene root" - Entity has no exposed
+// constructor, so a script can't build the default-constructed (invalid) Entity the C++ side uses
+// for the same purpose (see SetParent's own comment in HierarchyComponent.h).
+TEST(MatchaPythonBindingsTests, SetParentWithNoneDetachesToRoot)
+{
+    Scene scene;
+    Entity child = scene.CreateEntity("Child");
+    Entity parent = scene.CreateEntity("Parent");
+
+    PythonRuntime runtime;
+
+    TempDirectory dir;
+    WriteFile(dir.GetPath() / "reparent.py",
+              "import matcha_engine\n"
+              "\n"
+              "def reparent(child, parent):\n"
+              "    child.set_parent(parent)\n"
+              "\n"
+              "def detach(child):\n"
+              "    child.set_parent(None)\n");
+    runtime.RegisterScriptDirectory(dir.GetPath().string());
+
+    py::module_ module = runtime.LoadScriptModule("reparent");
+    ASSERT_TRUE(static_cast<bool>(module));
+
+    module.attr("reparent")(py::cast(child), py::cast(parent));
+    ASSERT_TRUE(child.GetComponent<HierarchyComponent>().GetParent() == parent.GetHandle());
+
+    module.attr("detach")(py::cast(child));
+    EXPECT_TRUE(child.GetComponent<HierarchyComponent>().GetParent() == entt::null);
+}
+
+// Neither self nor the target parent should be reachable into once deleted - same
+// RequireValidEntity guard every other Entity accessor already has (see MatchaPythonBindings.cpp),
+// applied to both arguments here since set_parent is the first binding to take a second Entity.
+TEST(MatchaPythonBindingsTests, SetParentRaisesForADeletedSelfOrParent)
+{
+    Scene scene;
+    Entity child = scene.CreateEntity("Child");
+    Entity parent = scene.CreateEntity("Parent");
+
+    PythonRuntime runtime;
+
+    TempDirectory dir;
+    WriteFile(dir.GetPath() / "reparent.py",
+              "import matcha_engine\n"
+              "\n"
+              "def reparent(child, parent):\n"
+              "    child.set_parent(parent)\n");
+    runtime.RegisterScriptDirectory(dir.GetPath().string());
+
+    py::module_ module = runtime.LoadScriptModule("reparent");
+    ASSERT_TRUE(static_cast<bool>(module));
+
+    py::object cachedChild = py::cast(child);
+    py::object cachedParent = py::cast(parent);
+
+    scene.DestroyEntity(parent);
+    EXPECT_THROW(module.attr("reparent")(cachedChild, cachedParent), py::error_already_set);
+
+    scene.DestroyEntity(child);
+    EXPECT_THROW(module.attr("reparent")(cachedChild, cachedParent), py::error_already_set);
 }

@@ -28,4 +28,6 @@ target_sources(${TARGET_NAME} PRIVATE
     Commands/AddComponentCommand.h
     Commands/RemoveComponentCommand.h
     Commands/ComponentSnapshot.h
+    Commands/AddScriptBindingCommand.h
+    Commands/RemoveScriptBindingCommand.h
 )

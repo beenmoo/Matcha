@@ -1,6 +1,7 @@
 target_sources(${TARGET_NAME} PRIVATE
     CommandManagerTests.cpp
     ComponentSnapshotTests.cpp
+    ScriptBindingCommandTests.cpp
     pch.cpp
     pch.h
     )

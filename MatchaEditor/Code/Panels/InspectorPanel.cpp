@@ -9,8 +9,10 @@
 #include "Utility/EntityUtils.h"
 #include "Core/CommandManager.h"
 #include "Core/Commands/AddComponentCommand.h"
+#include "Core/Commands/AddScriptBindingCommand.h"
 #include "Core/Commands/PropertyEditCommand.h"
 #include "Core/Commands/RemoveComponentCommand.h"
+#include "Core/Commands/RemoveScriptBindingCommand.h"
 #include "Scene/Component/PythonScriptComponent.h"
 #include "Scene/Component/TagComponent.h"
 
@@ -400,6 +402,10 @@ void InspectorPanel::RegisterComponentInspectors()
 
             AddPythonScriptFields(box, entity, i);
 
+            QPushButton* removeButton = CreateAddButton("Remove Script", box);
+            connect(removeButton, &QPushButton::clicked, this, [this, entity, i]() mutable { RemoveScriptBinding(entity, i); });
+            box->SetContent(removeButton);
+
             if (i + 1 < script.bindings.size())
                 box->SetContent(CreateSeparator(box));
         }
@@ -420,15 +426,23 @@ void InspectorPanel::BrowseForScript(Entity entity)
 
     // The picked file can be anywhere, not necessarily under a directory already registered -
     // register its own directory so LoadScriptModule's import-by-name can actually resolve it.
+    // Not itself undoable (there's no meaningful "undo" for a filesystem-wide interpreter
+    // registration, and nothing else in this session depends on it going away).
     m_PythonRuntime.RegisterScriptDirectory(fileInfo.absolutePath().toStdString());
 
-    entity.GetComponent<PythonScriptComponent>().Bind(fileInfo.baseName().toStdString(), GuessClassNameFromFileStem(fileInfo.baseName()).toStdString());
-    // Adds a Binding to an already-existing PythonScriptComponent, so entry.addToSelection's own
-    // NotifyChanged() (which only fires for a component this entity didn't have yet) doesn't
-    // cover this call - moduleName/className are real, serialized scene data either way. That
-    // notification is also what rebuilds the box to show the new binding, since the layout
-    // signature OnSceneChanged compares includes each binding's count.
-    m_SceneManager.GetScene().NotifyChanged();
+    UUID entityId = entity.GetComponent<TagComponent>().id;
+    m_CommandManager.ExecuteCommand(std::make_unique<AddScriptBindingCommand>(
+        m_SceneManager, "Add Python Script", entityId, fileInfo.baseName().toStdString(),
+        GuessClassNameFromFileStem(fileInfo.baseName()).toStdString()));
+    // The command's own NotifyChanged() is what rebuilds the box to show the new binding, since
+    // the layout signature OnSceneChanged compares includes each binding's count.
+}
+
+void InspectorPanel::RemoveScriptBinding(Entity entity, size_t bindingIndex)
+{
+    UUID entityId = entity.GetComponent<TagComponent>().id;
+    m_CommandManager.ExecuteCommand(
+        std::make_unique<RemoveScriptBindingCommand>(m_SceneManager, "Remove Python Script", entityId, bindingIndex));
 }
 
 void InspectorPanel::AddPythonScriptFields(ComponentBoxWidget* box, Entity entity, size_t bindingIndex)

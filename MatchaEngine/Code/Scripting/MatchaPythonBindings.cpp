@@ -23,6 +23,7 @@
 #include "Math/Quaternion.h"
 #include "Math/Transform.h"
 #include "Math/Vector.h"
+#include "Scene/Component/HierarchyComponent.h"
 #include "Scene/Component/LightComponent.h"
 #include "Scene/Component/TransformComponent.h"
 #include "Scene/Entity.h"
@@ -155,7 +156,27 @@ PYBIND11_EMBEDDED_MODULE(matcha_engine, m)
 
                 return self.AddComponent<LightComponent>();
             },
-            py::return_value_policy::reference);
+            py::return_value_policy::reference)
+        .def(
+            "set_parent",
+            [](Entity& self, py::object parent) {
+                RequireValidEntity(self, "set_parent");
+
+                // None means "detach to the scene root" - the same convention every C++ caller of
+                // SetParent already uses via a default-constructed (invalid) Entity, just spelled
+                // the more Pythonic way here since scripts have no way to construct a blank Entity
+                // themselves (Entity has no exposed constructor).
+                if (parent.is_none())
+                {
+                    SetParent(self, Entity());
+                    return;
+                }
+
+                Entity newParent = parent.cast<Entity>();
+                RequireValidEntity(newParent, "set_parent");
+                SetParent(self, newParent);
+            },
+            py::arg("parent"));
 
     py::class_<Scene>(m, "Scene")
         .def("create_entity", [](Scene& self) { return self.CreateEntity(); });

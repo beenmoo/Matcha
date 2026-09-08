@@ -82,8 +82,11 @@ private:
 
     // The Python Script box's "Browse..." button adds a binding to the front-most selected entity
     // (see its RegisterComponentInspector call for why only the front entity, unlike every other
-    // field in this file) from a .py file picked via a file dialog.
+    // field in this file) from a .py file picked via a file dialog. Both undoable via
+    // Add/RemoveScriptBindingCommand, scoped to one Binding rather than the whole component (that's
+    // Add/RemoveComponentCommand's job).
     void BrowseForScript(Entity entity);
+    void RemoveScriptBinding(Entity entity, size_t bindingIndex);
 
     // Auto-generates one editable field per "public" attribute on bindings[bindingIndex]'s live
     // Python instance - i.e. Unity's Inspector auto-drawing a MonoBehaviour's public fields, but
