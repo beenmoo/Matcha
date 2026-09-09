@@ -13,7 +13,7 @@ private:
     {
         float m_MousePositionX = 0, m_MousePositionY = 0;
         Vector2Int m_MouseAxis = Vector2Int(0);
-        Vector2Int m_MouseScrollDelta = Vector2Int(0);
+        Vector2 m_MouseScrollDelta = Vector2(0.0f);
     };
 
 public:
@@ -32,7 +32,7 @@ public:
     [[nodiscard]] bool GetMouseButtonUp(MouseButton button) const override;
 
     [[nodiscard]] Vector2Int GetAxis(AxisType type) const override;
-    [[nodiscard]] const Vector2Int& GetMouseScrollDelta() const override;
+    [[nodiscard]] const Vector2& GetMouseScrollDelta() const override;
     void SetCursorLockState(CursorLockState state) override;
     [[nodiscard]] CursorLockState GetCursorLockState() const override;
 

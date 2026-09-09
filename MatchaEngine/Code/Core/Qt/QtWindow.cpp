@@ -43,16 +43,18 @@ void QtWindow::SetEventDispatch(std::function<void(const Event&)> dispatch)
 
 void QtWindow::PumpEvents()
 {
-    // Resize/mouse-move/scroll events are otherwise dispatched directly from Qt's own
-    // resizeGL()/mouseMoveEvent()/wheelEvent() callbacks, whenever Qt delivers them. The two
-    // calls below are for the things that specifically need to happen at this point in
-    // Application::Tick() - right after Input::Update() shifts current into prev, before
-    // Update()/OnUpdate() read GetKeyDown()/GetMouseButtonDown()/the mouse-look delta - see
-    // QtInput::ApplyPendingInput() and QtViewportWidget::PollCursorLock() for why.
+    // Resize/mouse-move events are otherwise dispatched directly from Qt's own resizeGL()/
+    // mouseMoveEvent() callbacks, whenever Qt delivers them. The calls below are for the things
+    // that specifically need to happen at this point in Application::Tick() - right after
+    // Input::Update() shifts current into prev (and resets per-frame deltas to zero), before
+    // Update()/OnUpdate() read GetKeyDown()/GetMouseButtonDown()/the mouse-look delta/the scroll
+    // delta - see QtInput::ApplyPendingInput() and QtViewportWidget::PollCursorLock()/
+    // PollScrollDelta() for why.
     if (m_Input)
         m_Input->ApplyPendingInput();
 
     m_ViewportWidget->PollCursorLock();
+    m_ViewportWidget->PollScrollDelta();
 }
 
 void QtWindow::SetContextReadyCallback(std::function<void()> callback)

@@ -16,7 +16,7 @@ void QtInput::Update()
     m_PrevMouseButtonState = m_MouseButtonState;
 
     m_MouseAxis = Vector2Int(0);
-    m_MouseScrollDelta = Vector2Int(0);
+    m_MouseScrollDelta = Vector2(0.0f);
 }
 
 bool QtInput::GetKey(KeyCode code) const
@@ -63,7 +63,7 @@ Vector2Int QtInput::GetAxis(AxisType type) const
     return SelectAxis(type, m_MouseAxis, m_JoystickAxis);
 }
 
-const Vector2Int& QtInput::GetMouseScrollDelta() const
+const Vector2& QtInput::GetMouseScrollDelta() const
 {
     return m_MouseScrollDelta;
 }

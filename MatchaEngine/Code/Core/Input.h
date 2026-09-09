@@ -49,7 +49,12 @@ public:
     [[nodiscard]] virtual bool GetMouseButtonUp(MouseButton button) const = 0;
 
     [[nodiscard]] virtual Vector2Int GetAxis(AxisType type) const = 0;
-    [[nodiscard]] virtual const Vector2Int& GetMouseScrollDelta() const = 0;
+
+    // Vector2, not Vector2Int like GetAxis() above: a wheel event's delta (Qt's angleDelta/120,
+    // SDL's wheel.x/y) is genuinely fractional on many mice/trackpads (high-resolution/smooth-
+    // scroll wheels report sub-notch deltas) - accumulating that into an int truncates every
+    // single sub-1.0 event straight to zero, silently swallowing all scroll input on such devices.
+    [[nodiscard]] virtual const Vector2& GetMouseScrollDelta() const = 0;
     virtual void SetCursorLockState(CursorLockState state) = 0;
     [[nodiscard]] virtual CursorLockState GetCursorLockState() const = 0;
 
@@ -58,7 +63,7 @@ public:
 protected:
     // Every backend translates Event's mouse/joystick/scroll payload into these three the same
     // way - shared here rather than duplicated per backend's ProcessEvents().
-    static void ApplyAxisEvent(const Event& evt, Vector2Int& mouseAxis, Vector2Int& joystickAxis, Vector2Int& mouseScrollDelta);
+    static void ApplyAxisEvent(const Event& evt, Vector2Int& mouseAxis, Vector2Int& joystickAxis, Vector2& mouseScrollDelta);
 
     // Same prev/current edge-detection formula backs GetKeyDown/GetKeyUp and
     // GetMouseButtonDown/GetMouseButtonUp in every backend.

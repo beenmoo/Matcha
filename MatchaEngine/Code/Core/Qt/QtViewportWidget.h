@@ -32,6 +32,13 @@ public:
     // computed from mouseMoveEvent() deltas.
     void PollCursorLock();
 
+    // Called by QtWindow::PumpEvents() alongside PollCursorLock(), same reasoning: dispatches
+    // whatever wheelEvent() has accumulated since the last call, at the one point in Tick() that's
+    // guaranteed to land after Input::Update()'s reset and before OnUpdate()'s read. wheelEvent()
+    // itself only ever accumulates now, never dispatches directly - see the .cpp for why a direct
+    // dispatch is lost almost every time for an event this infrequent.
+    void PollScrollDelta();
+
     // Absolute viewport-local position, updated on every press/move - unlike the delta-based
     // mouse-look plumbing above (Event/EventDispatch, cross-platform), this is Qt/editor-only:
     // ImGui's IO needs an absolute cursor position every frame (ViewportInteraction::
@@ -70,5 +77,9 @@ private:
     bool m_CursorLocked = false;
 
     QPoint m_AbsoluteMousePosition;
+
+    // Accumulated by wheelEvent(), drained and dispatched by PollScrollDelta().
+    float m_AccumulatedScrollDeltaX = 0.0f;
+    float m_AccumulatedScrollDeltaY = 0.0f;
 };
 }  // namespace Matcha

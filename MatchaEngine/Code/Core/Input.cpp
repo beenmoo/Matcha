@@ -8,7 +8,7 @@
 
 namespace Matcha
 {
-void Input::ApplyAxisEvent(const Event& evt, Vector2Int& mouseAxis, Vector2Int& joystickAxis, Vector2Int& mouseScrollDelta)
+void Input::ApplyAxisEvent(const Event& evt, Vector2Int& mouseAxis, Vector2Int& joystickAxis, Vector2& mouseScrollDelta)
 {
     switch (evt.type)
     {

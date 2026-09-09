@@ -40,7 +40,7 @@ void SDLInput::Update()
     memcpy(m_PrevKeyboardState, m_KeyboardState, m_NumKeys);
 
     m_MouseData.m_MouseAxis = Vector2Int(0);
-    m_MouseData.m_MouseScrollDelta = Vector2Int(0);
+    m_MouseData.m_MouseScrollDelta = Vector2(0.0f);
     m_PrevMouseState = m_MouseState;
     m_MouseState = SDL_GetMouseState(&m_MouseData.m_MousePositionX, &m_MouseData.m_MousePositionY);
 }
@@ -105,7 +105,7 @@ Vector2Int SDLInput::GetAxis(AxisType type) const
     return SelectAxis(type, m_MouseData.m_MouseAxis, m_JoystickAxis);
 }
 
-const Vector2Int& SDLInput::GetMouseScrollDelta() const
+const Vector2& SDLInput::GetMouseScrollDelta() const
 {
     return m_MouseData.m_MouseScrollDelta;
 }

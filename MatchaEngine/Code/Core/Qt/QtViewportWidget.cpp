@@ -237,16 +237,32 @@ void QtViewportWidget::focusOutEvent(QFocusEvent* event)
 
 void QtViewportWidget::wheelEvent(QWheelEvent* event)
 {
-    if (m_EventDispatch)
-    {
-        // Qt reports wheel motion in eighths of a degree; 120 per notch is the standard step.
-        QPoint angleDelta = event->angleDelta();
+    // Accumulate only - do not dispatch here. Qt delivers wheelEvent() whenever the OS hands it
+    // the message, with no relationship to Application::Tick()'s own cadence - almost always that
+    // means chronologically *before* the next Tick(), whose first action (Input::Update()) resets
+    // the scroll delta to zero before OnUpdate() ever reads it, silently discarding the event. A
+    // held-down drag (mouse-look) survives this because it keeps generating new events every
+    // frame; a single wheel notch does not get a second chance. PollScrollDelta() (called from
+    // QtWindow::PumpEvents(), same fix as PollCursorLock() already applies to locked mouse-look)
+    // dispatches this accumulator at the one point in Tick() guaranteed to land after the reset
+    // and before the read.
+    QPoint angleDelta = event->angleDelta();
 
-        m_EventDispatch(Event{.type = EventType::MouseScrolled,
-                               .x = static_cast<float>(angleDelta.x()) / 120.0f,
-                               .y = static_cast<float>(angleDelta.y()) / 120.0f});
-    }
+    // Qt reports wheel motion in eighths of a degree; 120 per notch is the standard step.
+    m_AccumulatedScrollDeltaX += static_cast<float>(angleDelta.x()) / 120.0f;
+    m_AccumulatedScrollDeltaY += static_cast<float>(angleDelta.y()) / 120.0f;
 
     QOpenGLWidget::wheelEvent(event);
+}
+
+void QtViewportWidget::PollScrollDelta()
+{
+    if (!m_EventDispatch || (m_AccumulatedScrollDeltaX == 0.0f && m_AccumulatedScrollDeltaY == 0.0f))
+        return;
+
+    m_EventDispatch(Event{.type = EventType::MouseScrolled, .x = m_AccumulatedScrollDeltaX, .y = m_AccumulatedScrollDeltaY});
+
+    m_AccumulatedScrollDeltaX = 0.0f;
+    m_AccumulatedScrollDeltaY = 0.0f;
 }
 }  // namespace Matcha

@@ -57,5 +57,16 @@ void CameraController::Update(Input& input, Time& time, Transform& cameraTransfo
         if (movement != Vector3(0.0f))
             cameraTransform.Translate(Normalize(movement) * moveSpeed * time.GetDeltaTime());
     }
+
+    // Zoom: dolly along the camera's own forward direction. GetMouseScrollDelta() is already a
+    // discrete "how many notches arrived this frame" quantity (not a held-key rate like WASD
+    // above), so it's applied directly rather than scaled by deltaTime - doing that would shrink
+    // a single notch to a barely-visible fraction of a unit.
+    if (input.GetMouseScrollDelta().y != 0.0f)
+    {
+        constexpr float zoomSpeed = 2.0f;
+
+        cameraTransform.Translate(cameraTransform.GetForward() * input.GetMouseScrollDelta().y * zoomSpeed);
+    }
 }
 }  // namespace MatchaEditor

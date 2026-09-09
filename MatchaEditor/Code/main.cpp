@@ -12,6 +12,8 @@
 // / Window::SetTickCallback for how the editor drives the engine loop instead.
 int main(int argc, char** argv)
 {
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
     // Must be set before QApplication is constructed. Avoids fractional-DPI rendering artifacts
     // in Qt6's automatic high-DPI scaling.
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
