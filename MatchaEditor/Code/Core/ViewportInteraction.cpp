@@ -2,7 +2,7 @@
 #include "CommandManager.h"
 #include "EditorCamera.h"
 #include "Commands/PropertyEditCommand.h"
-#include "Core/Qt/QtViewportWidget.h"
+#include "EngineViewportWidget.h"
 
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
@@ -15,7 +15,7 @@
 namespace MatchaEditor
 {
 ViewportInteraction::ViewportInteraction(SceneManager& sceneManager, ResourceManager& resourceManager,
-                                         EditorCamera& editorCamera, Matcha::QtViewportWidget& viewport,
+                                         EditorCamera& editorCamera, EngineViewportWidget& viewport,
                                          CommandManager& commandManager, QObject* parent)
     : QObject(parent),
       m_SceneManager(sceneManager),
@@ -81,7 +81,7 @@ void ViewportInteraction::BeginGizmoFrame(bool leftMouseDown, float deltaTime)
     // ImGui_ImplOpenGL3_RenderDrawData sets a GL viewport sized to the logical DisplaySize, which
     // on any scaled display is smaller than the real framebuffer - rendering the whole gizmo
     // shrunk into a sub-rect anchored at GL's bottom-left origin instead of filling the viewport.
-    float devicePixelRatio = static_cast<float>(m_Viewport.devicePixelRatioF());
+    float devicePixelRatio = static_cast<float>(m_Viewport.devicePixelRatio());
     io.DisplayFramebufferScale = ImVec2(devicePixelRatio, devicePixelRatio);
 
     ImGui_ImplOpenGL3_NewFrame();

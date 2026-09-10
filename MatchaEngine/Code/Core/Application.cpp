@@ -12,10 +12,6 @@
 
 #include <filesystem>
 
-#ifdef MT_ENABLE_QT_BACKEND
-#include <QtGlobal>
-#endif
-
 namespace Matcha
 {
 RendererAPI::API ApplicationSpecification::GetDefaultRendererAPI() const
@@ -32,24 +28,19 @@ Application::Application(const ApplicationSpecification& spec)
     : m_AppSpec(spec),
       m_AssetsPath(spec.assetsPath.empty() ? std::filesystem::current_path() / "Assets" : std::filesystem::absolute(spec.assetsPath)),
       m_Input(Input::Create(spec.windowBackend)),
-      m_Window(Window::Create(spec.windowBackend, WindowSpecification{.m_Title = spec.title}, m_Input.get())),
+      m_Window(Window::Create(spec.windowBackend, WindowSpecification{.m_Title = spec.title, .m_Headless = spec.headless}, m_Input.get())),
       m_RendererAPI(RendererAPI::Create(spec.rendererAPI)),
       m_ResourceManager(*m_RendererAPI),
       m_Renderer(*m_RendererAPI, m_ResourceManager),
       m_PythonRuntime(std::make_unique<PythonRuntime>()),
       m_SceneManager(m_ResourceManager)
 {
-    // SDL's GL context is current immediately, so this fires synchronously here. Qt's isn't
-    // ready until QOpenGLWidget::initializeGL() runs later, so InitGraphics() is deferred until
-    // then instead - see Window::SetContextReadyCallback.
+    // SDL's GL context is current immediately, so this fires synchronously here.
     m_Window->SetContextReadyCallback([this] { InitGraphics(); });
 
-    // Only exercised under Qt: Run()'s while-loop drives Tick() directly for SDL, but Qt owns
-    // its own event loop, so paintGL() (see QtViewportWidget) calls this instead, once per repaint.
-    m_Window->SetTickCallback([this] { Tick(); });
-
-    // Registered once, persistently: SDL uses it inside each PumpEvents() call, Qt invokes it
-    // from the viewport widget's own event callbacks, which can fire at any time.
+    // Registered once, persistently: SDL uses it inside each PumpEvents() call; MatchaEditor's
+    // EngineViewportWidget also invokes it directly (via SDLWindow::DispatchExternalEvent) from
+    // its own Qt event callbacks, which can fire at any time.
     m_Window->SetEventDispatch([this](const Event& evt) {
         if (evt.type == EventType::Quit)
             Quit();
@@ -87,6 +78,14 @@ void Application::Quit()
 
 void Application::Tick()
 {
+    // Re-asserts this Application's own GL context as current before touching any GL state -
+    // necessary now that MatchaEditor's EngineViewportWidget makes its own, separate Qt-owned
+    // context current on this same thread between ticks (to blit the previous frame's result) -
+    // without this, every GL call below would silently execute against whichever context was last
+    // made current, not this one. A no-op-cost call for Sandbox, where nothing else ever competes
+    // for the thread's current context.
+    m_Window->MakeContextCurrent();
+
     // Must run before PollEvents(): Input::Update() resets per-frame deltas (mouse axis, scroll)
     // to zero before re-accumulating them from this frame's events. Running it after PollEvents()
     // (as part of Update(), where it used to live) would wipe out the deltas PollEvents() just
@@ -209,10 +208,5 @@ void Application::LogContext()
     int sdlVersion = SDL_GetVersion();
 
     MT_CORE_INFO("SDL v{}.{}.{}", SDL_VERSIONNUM_MAJOR(sdlVersion), SDL_VERSIONNUM_MINOR(sdlVersion), SDL_VERSIONNUM_MICRO(sdlVersion));
-
-#ifdef MT_ENABLE_QT_BACKEND
-    if (m_AppSpec.windowBackend == WindowBackend::Qt)
-        MT_CORE_INFO("Qt v{0} (compiled with v{1})", qVersion(), QT_VERSION_STR);
-#endif
 }
 }  // namespace Matcha

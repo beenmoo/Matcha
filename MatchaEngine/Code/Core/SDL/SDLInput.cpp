@@ -1,48 +1,49 @@
 #include "SDLInput.h"
 
 #include <SDL3/SDL.h>
-#include <cstring>
 #include <utility>
 
 namespace Matcha
 {
-SDLInput::SDLInput()
-{
-    m_KeyboardState = SDL_GetKeyboardState(&m_NumKeys);
-    m_PrevKeyboardState = new bool[m_NumKeys];
-    memcpy(m_PrevKeyboardState, m_KeyboardState, m_NumKeys);
-
-    m_MouseState = SDL_GetMouseState(&m_MouseData.m_MousePositionX, &m_MouseData.m_MousePositionY);
-}
-
-SDLInput::~SDLInput()
-{
-    delete[] m_PrevKeyboardState;
-}
-
 void SDLInput::ProcessEvents(const Event& evt)
 {
-    ApplyAxisEvent(evt, m_MouseData.m_MouseAxis, m_JoystickAxis, m_MouseData.m_MouseScrollDelta);
+    ApplyAxisEvent(evt, m_MouseAxis, m_JoystickAxis, m_MouseScrollDelta);
 
-    // Once this window loses focus, the OS stops delivering key-up events to it - if a key was
-    // held down (e.g. W while moving the camera) and gets released while focus is elsewhere (alt-
-    // tab, clicking another window), SDL_GetKeyboardState()'s array - which m_KeyboardState
-    // aliases directly, not a snapshot we control - never sees that release and keeps reporting
-    // the key as down indefinitely, even after this window regains focus. SDL_ResetKeyboard()
-    // forces every key back to up and synthesizes the matching key-up events, which is exactly
-    // the fix SDL itself documents for this case.
-    if (evt.type == EventType::WindowFocusLost)
-        SDL_ResetKeyboard();
+    switch (evt.type)
+    {
+    case EventType::KeyDown:
+        m_PendingKeyboardState[std::to_underlying(evt.key)] = true;
+        break;
+    case EventType::KeyUp:
+        m_PendingKeyboardState[std::to_underlying(evt.key)] = false;
+        break;
+    case EventType::MouseButtonDown:
+        m_PendingMouseButtonState[ToIndex(evt.mouseButton)] = true;
+        break;
+    case EventType::MouseButtonUp:
+        m_PendingMouseButtonState[ToIndex(evt.mouseButton)] = false;
+        break;
+    case EventType::WindowFocusLost:
+        // Once a window loses focus, the OS stops delivering key-up events to it - a key held
+        // down (e.g. W while moving the camera) that gets released while focus is elsewhere
+        // (alt-tab, clicking another window) would otherwise keep reporting as down indefinitely,
+        // even after focus returns. Clearing the pending buffer (not m_KeyboardState directly)
+        // takes effect through the same ApplyPendingInput() path as every other key event, one
+        // frame later - consistent with how every other push lands.
+        m_PendingKeyboardState.fill(false);
+        break;
+    default:
+        break;
+    }
 }
 
 void SDLInput::Update()
 {
-    memcpy(m_PrevKeyboardState, m_KeyboardState, m_NumKeys);
+    m_PrevKeyboardState = m_KeyboardState;
+    m_PrevMouseButtonState = m_MouseButtonState;
 
-    m_MouseData.m_MouseAxis = Vector2Int(0);
-    m_MouseData.m_MouseScrollDelta = Vector2(0.0f);
-    m_PrevMouseState = m_MouseState;
-    m_MouseState = SDL_GetMouseState(&m_MouseData.m_MousePositionX, &m_MouseData.m_MousePositionY);
+    m_MouseAxis = Vector2Int(0);
+    m_MouseScrollDelta = Vector2(0.0f);
 }
 
 bool SDLInput::GetKey(KeyCode code) const
@@ -60,61 +61,47 @@ bool SDLInput::GetKeyUp(KeyCode code) const
     return WentUp(m_PrevKeyboardState[std::to_underlying(code)], m_KeyboardState[std::to_underlying(code)]);
 }
 
-uint32_t SDLInput::ToMouseButtonMask(MouseButton button)
+size_t SDLInput::ToIndex(MouseButton button)
 {
-    switch (button)
-    {
-    case MouseButton::Left:
-        return SDL_BUTTON_LMASK;
-    case MouseButton::Middle:
-        return SDL_BUTTON_MMASK;
-    case MouseButton::Right:
-        return SDL_BUTTON_RMASK;
-    case MouseButton::Back:
-        return SDL_BUTTON_X1MASK;
-    case MouseButton::Forward:
-        return SDL_BUTTON_X2MASK;
-    default:
-        std::unreachable();
-    }
+    return static_cast<size_t>(button);
 }
 
 bool SDLInput::GetMouseButton(MouseButton button) const
 {
-    uint32_t mask = ToMouseButtonMask(button);
-
-    return m_MouseState & mask;
+    return m_MouseButtonState[ToIndex(button)];
 }
 
 bool SDLInput::GetMouseButtonDown(MouseButton button) const
 {
-    uint32_t mask = ToMouseButtonMask(button);
+    size_t index = ToIndex(button);
 
-    return WentDown(m_PrevMouseState & mask, m_MouseState & mask);
+    return WentDown(m_PrevMouseButtonState[index], m_MouseButtonState[index]);
 }
 
 bool SDLInput::GetMouseButtonUp(MouseButton button) const
 {
-    uint32_t mask = ToMouseButtonMask(button);
+    size_t index = ToIndex(button);
 
-    return WentUp(m_PrevMouseState & mask, m_MouseState & mask);
+    return WentUp(m_PrevMouseButtonState[index], m_MouseButtonState[index]);
 }
 
 Vector2Int SDLInput::GetAxis(AxisType type) const
 {
-    return SelectAxis(type, m_MouseData.m_MouseAxis, m_JoystickAxis);
+    return SelectAxis(type, m_MouseAxis, m_JoystickAxis);
 }
 
 const Vector2& SDLInput::GetMouseScrollDelta() const
 {
-    return m_MouseData.m_MouseScrollDelta;
+    return m_MouseScrollDelta;
 }
 
 void SDLInput::SetCursorLockState(CursorLockState state)
 {
     m_CursorLockState = state;
 
-    if (m_NativeWindow)
+    if (m_ExternalCursorLockCallback)
+        m_ExternalCursorLockCallback(state == CursorLockState::Locked);
+    else if (m_NativeWindow)
         SDL_SetWindowRelativeMouseMode(m_NativeWindow, state == CursorLockState::Locked);
 }
 
@@ -126,5 +113,16 @@ Input::CursorLockState SDLInput::GetCursorLockState() const
 void SDLInput::SetNativeWindow(SDL_Window* window)
 {
     m_NativeWindow = window;
+}
+
+void SDLInput::SetExternalCursorLockCallback(std::function<void(bool)> callback)
+{
+    m_ExternalCursorLockCallback = std::move(callback);
+}
+
+void SDLInput::ApplyPendingInput()
+{
+    m_KeyboardState = m_PendingKeyboardState;
+    m_MouseButtonState = m_PendingMouseButtonState;
 }
 }  // namespace Matcha

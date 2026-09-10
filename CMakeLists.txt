@@ -19,7 +19,6 @@ endif()
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(BUILD_TESTS "Build the tests" ON)
 option(BUILD_EDITOR "Build the Matcha Editor" ON)
-option(BUILD_QT_BACKEND "Build the Qt Window/Input backend into MatchaEngine" ${BUILD_EDITOR})
 option(BUILD_PROFILING "Enable MT_PROFILE_SCOPE/MT_PROFILE_FUNCTION instrumentation" ON)
 
 find_package(SDL3 CONFIG REQUIRED)
@@ -43,13 +42,13 @@ find_package(pybind11 CONFIG REQUIRED)
 set(MATCHA_PYTHON_HOME "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/python3" CACHE INTERNAL
     "Path to vcpkg's Python install, used as PYTHONHOME for the embedded interpreter")
 
-if (BUILD_QT_BACKEND)
-    # Must precede add_subdirectory(MatchaEngine): qt_standard_project_setup() sets
-    # CMAKE_AUTOMOC/CMAKE_AUTOUIC for this scope and below, and does not apply retroactively
-    # to targets already defined.
-    # Svg is only actually linked by MatchaEditor (Qt6::Svg, for Qt-Advanced-Docking-System's
-    # icon-engine plugin - see MatchaEditor/CMakeLists.txt), not MatchaEngine's own Qt backend,
-    # but every Qt component is found together here since this is the one place Qt6 is resolved.
+if (BUILD_EDITOR)
+    # Must precede add_subdirectory(MatchaEditor) (and MatchaEngine, since it's added first below):
+    # qt_standard_project_setup() sets CMAKE_AUTOMOC/CMAKE_AUTOUIC for this scope and below, and
+    # does not apply retroactively to targets already defined. MatchaEngine itself no longer uses
+    # Qt at all (see EngineViewportWidget in MatchaEditor for why) - this exists purely for
+    # MatchaEditor, but is resolved here since AUTOMOC/AUTOUIC must be set before either
+    # add_subdirectory() call.
     find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets Svg)
     qt_standard_project_setup()
 endif()

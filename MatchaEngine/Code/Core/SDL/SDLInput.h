@@ -2,23 +2,19 @@
 
 #include "Core/Input.h"
 
+#include <array>
+#include <cstddef>
+#include <functional>
+
 struct SDL_Window;
 
 namespace Matcha
 {
 class SDLInput final : public Input
 {
-private:
-    struct MouseData
-    {
-        float m_MousePositionX = 0, m_MousePositionY = 0;
-        Vector2Int m_MouseAxis = Vector2Int(0);
-        Vector2 m_MouseScrollDelta = Vector2(0.0f);
-    };
-
 public:
-    SDLInput();
-    ~SDLInput() override;
+    SDLInput() = default;
+    ~SDLInput() override = default;
 
     void ProcessEvents(const Event& evt) override;
     void Update() override;
@@ -40,21 +36,44 @@ public:
     // the native window to actually call SDL_SetWindowRelativeMouseMode on.
     void SetNativeWindow(SDL_Window* window);
 
-private:
-    [[nodiscard]] static uint32_t ToMouseButtonMask(MouseButton button);
+    // MatchaEditor-only: SDL's own relative-mouse-mode is meaningless on the hidden, unfocused
+    // window a headless Application creates (see WindowSpecification::m_Headless) - real RMB
+    // fly-look input arrives via Qt's EngineViewportWidget instead, which has no built-in relative
+    // mouse mode of its own (see its warp-to-center PollCursorLock(), ported from the old
+    // QtViewportWidget/QtInput pairing). Registering this redirects SetCursorLockState() to that
+    // widget instead of SDL_SetWindowRelativeMouseMode.
+    void SetExternalCursorLockCallback(std::function<void(bool locked)> callback);
+
+    // Called by SDLWindow::PumpEvents(), right after draining SDL_PollEvent (real hardware events)
+    // and after any external host (MatchaEditor's EngineViewportWidget, via
+    // SDLWindow::DispatchExternalEvent) has pushed its own translated Qt events for this frame -
+    // copies m_Pending*State (live - ProcessEvents() writes land here the instant an event is
+    // seen, whenever that is) into m_KeyboardState/m_MouseButtonState (settled - only ever changes
+    // here, once per frame). See QtInput::ApplyPendingInput()'s own comment (the pattern this
+    // generalizes): landing pushes in a pending buffer first, rather than writing straight into
+    // current state, is what makes a down/up edge observable at all when events can arrive at
+    // arbitrary times relative to Application::Tick()'s Input::Update() reset.
+    void ApplyPendingInput();
 
 private:
-    const bool* m_KeyboardState;
-    bool* m_PrevKeyboardState;
-    int m_NumKeys;
+    [[nodiscard]] static size_t ToIndex(MouseButton button);
 
-    uint32_t m_MouseState;
-    uint32_t m_PrevMouseState = 0;
-    MouseData m_MouseData;
+private:
+    std::array<bool, static_cast<size_t>(KeyCode::NUM_SCANCODES)> m_PendingKeyboardState{};
+    std::array<bool, static_cast<size_t>(KeyCode::NUM_SCANCODES)> m_KeyboardState{};
+    std::array<bool, static_cast<size_t>(KeyCode::NUM_SCANCODES)> m_PrevKeyboardState{};
 
+    static constexpr size_t kMouseButtonCount = 5;
+    std::array<bool, kMouseButtonCount> m_PendingMouseButtonState{};
+    std::array<bool, kMouseButtonCount> m_MouseButtonState{};
+    std::array<bool, kMouseButtonCount> m_PrevMouseButtonState{};
+
+    Vector2Int m_MouseAxis = Vector2Int(0);
+    Vector2 m_MouseScrollDelta = Vector2(0.0f);
     Vector2Int m_JoystickAxis = Vector2Int(0);
 
     CursorLockState m_CursorLockState = CursorLockState::None;
     SDL_Window* m_NativeWindow = nullptr;
+    std::function<void(bool)> m_ExternalCursorLockCallback;
 };
 }  // namespace Matcha

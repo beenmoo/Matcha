@@ -10,7 +10,7 @@
 #include "Panels/MenuChrome.h"
 #include "Widgets/AssetBrowserWidget.h"
 #include "Core/Logger.h"
-#include "Core/Qt/QtViewportWidget.h"
+#include "EngineViewportWidget.h"
 
 #include <Matcha.h>
 
@@ -29,6 +29,7 @@
 #include <QSettings>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QTimer>
 
 #include <algorithm>
 
@@ -116,8 +117,8 @@ QString DockChromeStyleSheetOverrides()
 
 EditorMainWindow::EditorMainWindow(Matcha::Application& application, Matcha::SceneManager& sceneManager,
                                    Matcha::ResourceManager& resourceManager, Matcha::PythonRuntime& pythonRuntime,
-                                   Matcha::Window& window, Matcha::QtViewportWidget* viewport, EditorCamera& editorCamera,
-                                   QWidget* parent)
+                                   Matcha::Window& window, EngineViewportWidget* viewport, QWidget* viewportContainer,
+                                   EditorCamera& editorCamera, QWidget* parent)
     : QMainWindow(parent),
       m_SceneManager(sceneManager)
 {
@@ -152,7 +153,7 @@ EditorMainWindow::EditorMainWindow(Matcha::Application& application, Matcha::Sce
     ads::CDockAreaWidget* sceneHierarchyArea = m_DockManager->addDockWidget(ads::LeftDockWidgetArea, sceneHierarchyPanel);
     m_MenuChrome->AddPanel(sceneHierarchyPanel);
 
-    ViewportPanel* viewportPanel = new ViewportPanel(m_DockManager, viewport, this);
+    ViewportPanel* viewportPanel = new ViewportPanel(m_DockManager, viewportContainer, this);
     ads::CDockAreaWidget* viewportArea = m_DockManager->addDockWidget(ads::RightDockWidgetArea, viewportPanel, sceneHierarchyArea);
     m_MenuChrome->AddPanel(viewportPanel);
 
@@ -162,8 +163,8 @@ EditorMainWindow::EditorMainWindow(Matcha::Application& application, Matcha::Sce
     // source of truth, the viewport just becomes a second way to drive it.
     m_ViewportInteraction =
         std::make_unique<ViewportInteraction>(sceneManager, resourceManager, editorCamera, *viewport, m_CommandManager, this);
-    connect(viewport, &QtViewportWidget::Clicked, m_ViewportInteraction.get(), &ViewportInteraction::OnViewportClicked);
-    connect(viewport, &QtViewportWidget::Released, m_ViewportInteraction.get(), &ViewportInteraction::OnViewportReleased);
+    connect(viewport, &EngineViewportWidget::Clicked, m_ViewportInteraction.get(), &ViewportInteraction::OnViewportClicked);
+    connect(viewport, &EngineViewportWidget::Released, m_ViewportInteraction.get(), &ViewportInteraction::OnViewportReleased);
     connect(m_ViewportInteraction.get(), &ViewportInteraction::EntityPicked, sceneHierarchyPanel, &SceneHierarchyPanel::SelectEntities);
 
     InspectorPanel* inspectorPanel =
@@ -237,8 +238,16 @@ EditorMainWindow::EditorMainWindow(Matcha::Application& application, Matcha::Sce
                 QDesktopServices::openUrl(QUrl::fromLocalFile(assetPath));
             });
 
-    m_DockManager->setSplitterSizes(sceneHierarchyArea, {250, 1000, 350});
-    m_DockManager->setSplitterSizes(consoleArea, {700, 200});
+    // Deferred to the first event-loop iteration rather than applied here. At this point the window
+    // has not been shown, so its dock areas have no real geometry yet, and the requested sizes
+    // collapse everything past the first pane to zero - which is why the Inspector, Console and
+    // Asset Browser were being constructed and wired up correctly but never appeared on screen.
+    // By the time a zero-delay singleShot fires, showMaximized() has run and the splitters have
+    // actual space to divide.
+    QTimer::singleShot(0, this, [this, sceneHierarchyArea, consoleArea] {
+        m_DockManager->setSplitterSizes(sceneHierarchyArea, {250, 1000, 350});
+        m_DockManager->setSplitterSizes(consoleArea, {700, 200});
+    });
 
     // Not parented to the console widget - it's owned by this shared_ptr and by whichever
     // logger sinks() vectors hold a copy, so ownership can't be split with Qt's parent/child

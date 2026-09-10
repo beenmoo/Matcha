@@ -52,6 +52,11 @@ struct ApplicationSpecification
     WindowBackend windowBackend = WindowBackend::SDL;
     RendererAPI::API rendererAPI = GetDefaultRendererAPI();
 
+    // See WindowSpecification::m_Headless - MatchaEditor sets this so its SDL-backed Application
+    // never creates a visible native window, and instead renders into its own FrameBuffer (see
+    // Editor) for a Qt widget to display.
+    bool headless = false;
+
     [[nodiscard]] RendererAPI::API GetDefaultRendererAPI() const;
 };
 
@@ -65,9 +70,9 @@ public:
     explicit Application(const ApplicationSpecification& spec = ApplicationSpecification());
     virtual ~Application();
 
-    // Blocking loop: while (m_IsRunning) Tick(); - what SDL-backed apps (Sandbox, an SDL-mode
-    // Editor) call. Never called under the Qt backend: Qt owns its own event loop, so a
-    // Qt-backed Editor calls Tick() directly from the viewport widget's paintGL() instead.
+    // Blocking loop: while (m_IsRunning) Tick(); - what Sandbox calls. Never called by MatchaEditor:
+    // Qt owns its own event loop there, so Editor calls Tick() directly from its own QTimer instead
+    // (see Editor's constructor).
     void Run();
     void Quit();
 
@@ -100,6 +105,7 @@ protected:
     [[nodiscard]] Time& GetTime() { return m_Time; }
     [[nodiscard]] Window& GetWindow() { return *m_Window; }
     [[nodiscard]] Renderer& GetRenderer() { return m_Renderer; }
+    [[nodiscard]] RendererAPI& GetRendererAPI() { return *m_RendererAPI; }
     [[nodiscard]] ResourceManager& GetResourceManager() { return m_ResourceManager; }
     [[nodiscard]] PythonRuntime& GetPythonRuntime() { return *m_PythonRuntime; }
     [[nodiscard]] SceneManager& GetSceneManager() { return m_SceneManager; }

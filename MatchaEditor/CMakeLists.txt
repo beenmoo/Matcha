@@ -40,7 +40,16 @@ add_subdirectory(Code/Utility)
 # target's own compilation, not just MatchaEngine's.
 find_package(pybind11 CONFIG REQUIRED)
 
-target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine Qt6::Widgets Qt6::OpenGLWidgets Qt6::Svg spdlog::spdlog ads::qtadvanceddocking-qt6 pybind11::embed imgui::imgui imguizmo::imguizmo)
+# EngineViewportWidget calls wglGetCurrentContext() directly (opengl32's own WGL entry point, not
+# one of glad's loaded-via-extension-loader functions) to find the engine's real native GL context
+# for its own share-context handshake - see its EnsureGLResourcesInitialized().
+find_package(OpenGL REQUIRED)
+
+# glad is needed directly here (not just via MatchaEngine, which links it PRIVATE): EngineViewportWidget.cpp
+# issues raw GL calls itself (its own separate Qt-owned context blits the engine's FrameBuffer
+# texture), rather than going through MatchaEngine's RendererAPI abstraction, which only wraps the
+# engine's own context.
+target_link_libraries(${TARGET_NAME} PRIVATE MatchaEngine glad Qt6::Widgets Qt6::OpenGLWidgets Qt6::Svg spdlog::spdlog ads::qtadvanceddocking-qt6 pybind11::embed imgui::imgui imguizmo::imguizmo OpenGL::GL)
 target_include_directories(${TARGET_NAME} PRIVATE Code)
 target_precompile_headers(${TARGET_NAME} PRIVATE Code/pch.h)
 

@@ -19,6 +19,7 @@ public:
     void Unbind() const override;
 
     void Invalidate() override;
+    void Resize(uint32_t width, uint32_t height) override;
 
     [[nodiscard]] uint32_t GetColorAttachmentID() const override;
     [[nodiscard]] uint32_t GetDepthAttachmentID() const override;

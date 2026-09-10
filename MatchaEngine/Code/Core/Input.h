@@ -25,14 +25,10 @@ public:
         Locked
     };
 
-    enum class MouseButton
-    {
-        Left,
-        Middle,
-        Right,
-        Back,
-        Forward
-    };
+    // Alias, not a redeclaration: Event.h defines this at namespace scope so Event can carry a
+    // MouseButton payload without depending on Input.h (which depends on Event.h) - every existing
+    // Input::MouseButton::Left-style call site keeps compiling unchanged.
+    using MouseButton = Matcha::MouseButton;
 
 public:
     virtual ~Input() = default;

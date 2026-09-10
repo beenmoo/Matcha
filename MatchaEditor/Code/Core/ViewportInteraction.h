@@ -10,15 +10,11 @@
 #include <optional>
 #include <vector>
 
-namespace Matcha
-{
-class QtViewportWidget;
-}  // namespace Matcha
-
 namespace MatchaEditor
 {
 class CommandManager;
 class EditorCamera;
+class EngineViewportWidget;
 
 // Turns a click in the 3D viewport into a scene-entity selection (ray-vs-mesh-bounds picking),
 // and drives an ImGuizmo translate gizmo for whatever's currently selected - the viewport's
@@ -30,7 +26,7 @@ class ViewportInteraction : public QObject
     Q_OBJECT
 public:
     ViewportInteraction(SceneManager& sceneManager, ResourceManager& resourceManager, EditorCamera& editorCamera,
-                        Matcha::QtViewportWidget& viewport, CommandManager& commandManager, QObject* parent = nullptr);
+                        EngineViewportWidget& viewport, CommandManager& commandManager, QObject* parent = nullptr);
 
     void OnViewportClicked(QPoint localPos, Qt::MouseButton button);
     void OnViewportReleased(Qt::MouseButton button);
@@ -90,7 +86,7 @@ private:
     SceneManager& m_SceneManager;
     ResourceManager& m_ResourceManager;
     EditorCamera& m_EditorCamera;
-    Matcha::QtViewportWidget& m_Viewport;
+    EngineViewportWidget& m_Viewport;
     CommandManager& m_CommandManager;
 
     std::vector<Entity> m_Selected;

@@ -32,4 +32,6 @@ target_sources(${TARGET_NAME} PRIVATE
     Commands/RemoveScriptBindingCommand.h
     ViewportInteraction.cpp
     ViewportInteraction.h
+    EngineViewportWidget.cpp
+    EngineViewportWidget.h
 )

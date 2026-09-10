@@ -14,7 +14,6 @@ namespace Matcha
 {
 class Application;
 class PythonRuntime;
-class QtViewportWidget;
 class ResourceManager;
 class SceneManager;
 class Window;
@@ -29,6 +28,7 @@ namespace MatchaEditor
 {
 class ConsoleSink;
 class EditorCamera;
+class EngineViewportWidget;
 class ViewportInteraction;
 
 class EditorMainWindow : public QMainWindow
@@ -38,8 +38,8 @@ class EditorMainWindow : public QMainWindow
 public:
     explicit EditorMainWindow(Matcha::Application& application, Matcha::SceneManager& sceneManager,
                               Matcha::ResourceManager& resourceManager, Matcha::PythonRuntime& pythonRuntime,
-                              Matcha::Window& window, Matcha::QtViewportWidget* viewport, EditorCamera& editorCamera,
-                              QWidget* parent = nullptr);
+                              Matcha::Window& window, EngineViewportWidget* viewport, QWidget* viewportContainer,
+                              EditorCamera& editorCamera, QWidget* parent = nullptr);
     ~EditorMainWindow() override;
 
     [[nodiscard]] ViewportInteraction& GetViewportInteraction() { return *m_ViewportInteraction; }
