@@ -62,11 +62,30 @@ void CameraController::Update(Input& input, Time& time, Transform& cameraTransfo
     // discrete "how many notches arrived this frame" quantity (not a held-key rate like WASD
     // above), so it's applied directly rather than scaled by deltaTime - doing that would shrink
     // a single notch to a barely-visible fraction of a unit.
-    if (input.GetMouseScrollDelta().y != 0.0f)
+    if (input.GetKey(KeyCode::LCTRL) && input.GetMouseScrollDelta().y != 0.0f)
     {
         constexpr float zoomSpeed = 2.0f;
 
         cameraTransform.Translate(cameraTransform.GetForward() * input.GetMouseScrollDelta().y * zoomSpeed);
+    }
+
+    // Pan: dolly along the camera's own right/left and up/down directions using middle-mouse drag.
+    // Locks/hides the cursor for the same reason as look above - so a fast pan can't run the
+    // cursor off the window and clip the delta.
+    if (input.GetMouseButtonDown(Input::MouseButton::Middle))
+        input.SetCursorLockState(Input::CursorLockState::Locked);
+    else if (input.GetMouseButtonUp(Input::MouseButton::Middle))
+        input.SetCursorLockState(Input::CursorLockState::None);
+
+    if (input.GetMouseButton(Input::MouseButton::Middle))
+    {
+        constexpr float panSpeed = 2.0f;
+
+        Vector2Int mouseDelta = input.GetAxis(Input::AxisType::Mouse);
+        Vector3 right = cameraTransform.GetRight();
+        Vector3 up = cameraTransform.GetUp();
+
+        cameraTransform.Translate((-right * static_cast<float>(mouseDelta.x) + up * static_cast<float>(mouseDelta.y)) * panSpeed * time.GetDeltaTime());
     }
 }
 }  // namespace MatchaEditor
