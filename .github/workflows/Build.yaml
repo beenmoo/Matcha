@@ -83,10 +83,10 @@ jobs:
       - name: Run Tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          cd ${{ matrix.build-dir }}/Tests
+          cd ${{ matrix.build-dir }}
           ctest -C Debug --output-on-failure
       - name: Run Tests (Linux)
         if: runner.os == 'Linux'
         run: |
-          cd ${{ matrix.build-dir }}/Tests
+          cd ${{ matrix.build-dir }}
           ctest --output-on-failure
