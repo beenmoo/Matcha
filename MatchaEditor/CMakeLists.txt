@@ -40,12 +40,13 @@ add_subdirectory(Code/Utility)
 # target's own compilation, not just MatchaEngine's.
 find_package(pybind11 CONFIG REQUIRED)
 
-# EngineViewportWidget calls wglGetCurrentContext() directly (opengl32's own WGL entry point, not
-# one of glad's loaded-via-extension-loader functions) to find the engine's real native GL context
-# for its own share-context handshake - see its EnsureGLResourcesInitialized().
+# GLViewportPresenter calls wglGetCurrentContext() (Windows) or eglGetCurrentContext() (Linux)
+# directly - the platform's own fixed entry point, not one of glad's loaded-via-extension-loader
+# functions - to find the engine's real native GL context for its own share-context handshake. See
+# GLViewportPresenter::EnsureGLResourcesInitialized().
 find_package(OpenGL REQUIRED)
 
-# glad is needed directly here (not just via MatchaEngine, which links it PRIVATE): EngineViewportWidget.cpp
+# glad is needed directly here (not just via MatchaEngine, which links it PRIVATE): GLViewportPresenter.cpp
 # issues raw GL calls itself (its own separate Qt-owned context blits the engine's FrameBuffer
 # texture), rather than going through MatchaEngine's RendererAPI abstraction, which only wraps the
 # engine's own context.
@@ -65,6 +66,13 @@ add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
     VERBATIM)
 
 if (UNIX AND NOT APPLE)
+    # eglGetCurrentContext()/eglGetCurrentDisplay() in GLViewportPresenter.cpp - real EGL entry
+    # points (see that file's own comment), not glad's, so they need libEGL linked directly. Only
+    # requested here, not in the unconditional find_package(OpenGL REQUIRED) above: an EGL
+    # component isn't meaningful to ask for on the WIN32 branch below.
+    find_package(OpenGL REQUIRED COMPONENTS EGL)
+    target_link_libraries(${TARGET_NAME} PRIVATE OpenGL::EGL)
+
     # vcpkg's x64-linux triplet is static (VCPKG_LIBRARY_LINKAGE static), so Qt's platform
     # plugins build as static libraries (libqxcb.a/libqwayland.a) instead of loadable .so
     # modules - there's nothing on disk for Qt's normal runtime plugin-scanning to find, unlike

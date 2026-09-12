@@ -12,6 +12,7 @@
 
 #include <SDL3/SDL.h>
 
+#ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -19,6 +20,14 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#else
+// The real Khronos header (not glad's - glad here only ever generates a core GL loader, no
+// EGL/GLX loaders) for eglGetCurrentContext()/eglGetCurrentDisplay() below - same reasoning as
+// wglGetCurrentContext() on Windows: these are fixed EGL 1.0 entry points, not something worth
+// routing through an extension loader. Provided by libegl1-mesa-dev in CI; linked via OpenGL::EGL
+// (see MatchaEditor/CMakeLists.txt).
+#include <EGL/egl.h>
+#endif
 
 namespace MatchaEditor
 {
@@ -112,6 +121,7 @@ void GLViewportPresenter::EnsureGLResourcesInitialized(QWindow* target)
     if (m_GLResourcesInitialized)
         return;
 
+#ifdef _WIN32
     // The engine's real native context must be current on this thread right now - Editor's tick
     // timer calls Application::Tick() (which re-asserts it via Window::MakeContextCurrent())
     // immediately before calling Render(), which is the only caller of this method.
@@ -126,6 +136,25 @@ void GLViewportPresenter::EnsureGLResourcesInitialized(QWindow* target)
     // takes no ownership of engineContext itself (SDLWindow still owns and destroys it).
     m_SharedContextWrapper.reset(QNativeInterface::QWGLContext::fromNative(engineContext, engineHwnd));
     MT_ASSERT(m_SharedContextWrapper, "GLViewportPresenter: QWGLContext::fromNative failed");
+#else
+    // The engine's real native context must be current on this thread right now - same
+    // precondition as the WGL branch above (Application::Tick() re-asserts it via
+    // Window::MakeContextCurrent() immediately before calling Render()). It's an EGL context and
+    // not a GLXContext only because main.cpp forces SDL onto EGL via SDL_HINT_VIDEO_FORCE_EGL
+    // before SDL_Init() - this vcpkg-built qtbase has no GLX at all (see MatchaEditor/CMakeLists.txt's
+    // qt_import_plugins() comment), so a GLX context would give Qt nothing to wrap.
+    EGLContext engineContext = eglGetCurrentContext();
+    MT_ASSERT(engineContext != EGL_NO_CONTEXT, "GLViewportPresenter: engine GL context must be current before first Render()");
+
+    EGLDisplay engineDisplay = eglGetCurrentDisplay();
+    MT_ASSERT(engineDisplay != EGL_NO_DISPLAY, "GLViewportPresenter: failed to get engine's current EGL display");
+
+    // Unlike QWGLContext::fromNative(), EGL's wrapper needs no window handle - an EGLContext isn't
+    // tied to a drawable the way a WGL context is tied to the HDC it was created against, so
+    // there's no equivalent of the HWND lookup in the _WIN32 branch above.
+    m_SharedContextWrapper.reset(QNativeInterface::QEGLContext::fromNative(engineContext, engineDisplay));
+    MT_ASSERT(m_SharedContextWrapper, "GLViewportPresenter: QEGLContext::fromNative failed");
+#endif
 
     m_Context = std::make_unique<QOpenGLContext>();
     m_Context->setFormat(QSurfaceFormat::defaultFormat());
@@ -178,10 +207,11 @@ void GLViewportPresenter::EnsureGLResourcesInitialized(QWindow* target)
     glBindVertexArray(0);
 
     // Verifies GL object sharing actually took effect, rather than assuming it. Qt's create() can
-    // succeed while silently falling back to an *unshared* context if the underlying wglShareLists()
-    // fails - and the only visible symptom would be a uniformly black viewport, which is easy to
-    // mistake for an empty scene. The engine's FrameBuffer color attachment is a texture created in
-    // the engine's context; texture objects are shared across a WGL share group, so its name is
+    // succeed while silently falling back to an *unshared* context if the underlying platform call
+    // (wglShareLists() on Windows, eglCreateContext()'s share_context on Linux) fails - and the
+    // only visible symptom would be a uniformly black viewport, which is easy to mistake for an
+    // empty scene. The engine's FrameBuffer color attachment is a texture created in the engine's
+    // context; texture objects are shared across a share group on either platform, so its name is
     // valid here if and only if sharing worked.
     if (m_ColorTextureProvider && !glIsTexture(m_ColorTextureProvider()))
         MT_CORE_ERROR("GLViewportPresenter: GL sharing failed - the engine's framebuffer texture does not exist in this "

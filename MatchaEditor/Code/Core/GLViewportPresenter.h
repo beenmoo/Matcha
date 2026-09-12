@@ -38,7 +38,8 @@ private:
     // this thread at that point - see Render()'s ordering requirement) via Qt's native-interface
     // adapter purely to establish a share group, then creates this presenter's own QOpenGLContext
     // sharing against that wrapper, and compiles the blit shader/quad. See the .cpp for the exact
-    // WGL handshake.
+    // handshake - WGL on Windows, EGL on Linux (this qtbase build has no GLX; see
+    // MatchaEditor/CMakeLists.txt's qt_import_plugins() comment).
     void EnsureGLResourcesInitialized(QWindow* target);
 
 private:

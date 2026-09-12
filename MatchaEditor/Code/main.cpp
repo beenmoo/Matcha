@@ -6,6 +6,10 @@
 #include <QStyleFactory>
 #include <QSurfaceFormat>
 
+#ifndef _WIN32
+#include <SDL3/SDL.h>
+#endif
+
 namespace
 {
 QtMessageHandler g_PreviousMessageHandler = nullptr;
@@ -36,6 +40,17 @@ int main(int argc, char** argv)
 {
     g_PreviousMessageHandler = qInstallMessageHandler(FilterAdsTransientParentWarning);
 
+#ifndef _WIN32
+    // Must be set before SDL_Init(), which happens deep inside Matcha::Application's constructor
+    // (MatchaEditor::Editor editor(spec) below) - SDL reads this hint once, at context-creation
+    // time. This vcpkg-built qtbase has no GLX at all on Linux (see MatchaEditor/CMakeLists.txt's
+    // qt_import_plugins() comment - it's EGL-over-XCB/EGL-over-Wayland only), but SDL defaults to
+    // GLX on X11. Without this, the engine's own context would be a GLXContext that Qt has no way
+    // to wrap, and GLViewportPresenter::EnsureGLResourcesInitialized()'s eglGetCurrentContext()
+    // call would read whatever unrelated EGL context (if any) happens to be current instead.
+    SDL_SetHint(SDL_HINT_VIDEO_FORCE_EGL, "1");
+#endif
+
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
     // Must be set before QApplication is constructed. Avoids fractional-DPI rendering artifacts
@@ -45,9 +60,10 @@ int main(int argc, char** argv)
     // Must be set before QApplication is constructed. Matches SDLWindow's explicit
     // SDL_GL_CONTEXT_MAJOR/MINOR_VERSION + PROFILE_MASK=CORE request - required for
     // GLViewportPresenter's own Qt-owned GL context to be compatible enough with the engine's
-    // real SDL-owned context for WGL sharing to succeed (see GLViewportPresenter::
-    // EnsureGLResourcesInitialized()), on top of the original reasoning: without this, Qt
-    // negotiates some default context that may not match what glad was loaded against.
+    // real SDL-owned context for context sharing (WGL on Windows, EGL on Linux) to succeed (see
+    // GLViewportPresenter::EnsureGLResourcesInitialized()), on top of the original reasoning:
+    // without this, Qt negotiates some default context that may not match what glad was loaded
+    // against.
     QSurfaceFormat format;
     format.setRenderableType(QSurfaceFormat::OpenGL);
     format.setProfile(QSurfaceFormat::CoreProfile);
