@@ -33,14 +33,27 @@ find_package(efsw CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 
-# vcpkg's python3 port lays out a real Python install (python.exe next to a Lib/ stdlib folder)
-# under its own tools/ directory, entirely separate from wherever an embedding executable
-# (MatchaEditor, Sandbox, either Tests target) ends up. Without pointing the embedded interpreter
-# at this directory as PYTHONHOME, CPython's own path autodetection - which assumes the running
-# executable lives inside a normal Python install - fails to find the stdlib and prints
-# "Could not find platform independent libraries <prefix>" at startup (see PythonRuntime.cpp).
-set(MATCHA_PYTHON_HOME "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/python3" CACHE INTERNAL
-    "Path to vcpkg's Python install, used as PYTHONHOME for the embedded interpreter")
+# vcpkg's python3 port lays out its Python install differently to a normal one, entirely separate
+# from wherever an embedding executable (MatchaEditor, Sandbox, either Tests target) ends up.
+# Without pointing the embedded interpreter at the right directory as PYTHONHOME, CPython's own
+# path autodetection - which assumes the running executable lives inside a normal Python install -
+# fails to find the stdlib: on Windows this prints "Could not find platform independent libraries
+# <prefix>" at startup; on Linux it fails harder, raising "failed to get the Python codec of the
+# filesystem encoding" out of Py_InitializeFromConfig() itself (see PythonRuntime.cpp).
+#
+# The right directory differs by platform because the vcpkg port's own install layout does, per
+# its portfile.cmake: on Windows, the stdlib (Lib/) is copied directly into tools/python3 alongside
+# python.exe, so that directory alone is a valid home. On Linux, the autotools build installs the
+# stdlib to lib/python3.<minor>/ under the triplet's install ROOT - a sibling of tools/, not nested
+# inside it - so home has to be the install root itself for CPython's POSIX search (home/lib/
+# python3.<minor>/os.py) to find anything.
+if (WIN32)
+    set(MATCHA_PYTHON_HOME "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/python3" CACHE INTERNAL
+        "Path to vcpkg's Python install, used as PYTHONHOME for the embedded interpreter")
+else()
+    set(MATCHA_PYTHON_HOME "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}" CACHE INTERNAL
+        "Path to vcpkg's Python install, used as PYTHONHOME for the embedded interpreter")
+endif()
 
 if (BUILD_EDITOR)
     # Must precede add_subdirectory(MatchaEditor) (and MatchaEngine, since it's added first below):
