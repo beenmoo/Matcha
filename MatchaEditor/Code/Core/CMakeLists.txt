@@ -34,4 +34,7 @@ target_sources(${TARGET_NAME} PRIVATE
     ViewportInteraction.h
     EngineViewportWidget.cpp
     EngineViewportWidget.h
+    ViewportPresenter.h
+    GLViewportPresenter.cpp
+    GLViewportPresenter.h
 )

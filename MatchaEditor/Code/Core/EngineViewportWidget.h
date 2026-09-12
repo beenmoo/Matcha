@@ -9,8 +9,6 @@
 #include <functional>
 #include <memory>
 
-class QOpenGLContext;
-
 namespace Matcha
 {
 class SDLWindow;
@@ -18,16 +16,18 @@ class SDLWindow;
 
 namespace MatchaEditor
 {
+class ViewportPresenter;
+
 // Replaces the old Qt engine backend's QtViewportWidget/QtWindow pair. The engine itself now only
 // ever knows about SDL (see SDLWindow's m_Headless mode) - it renders into its own FrameBuffer
 // (owned by Editor), never into a Qt-managed surface at all. This class is purely a *display*: a
-// QWindow with its own small, separately-owned GL context (created sharing GL objects with the
-// engine's real SDL-owned context - see EnsureGLResourcesInitialized()) that does nothing but blit
-// the engine's FrameBuffer color texture onto a fullscreen quad each frame, plus translate its own
-// Qt input events into Matcha's cross-platform Event system (SDLWindow::DispatchExternalEvent)
-// instead of a parallel Input subclass.
+// QWindow that hands the actual "put the engine's frame on screen" work to a ViewportPresenter
+// (GLViewportPresenter today, a future VulkanViewportPresenter alongside a VulkanRendererAPI) -
+// this class itself calls no graphics-API function at all, only translating its own Qt input
+// events into Matcha's cross-platform Event system (SDLWindow::DispatchExternalEvent) instead of
+// a parallel Input subclass.
 //
-// The key benefit over the old architecture: Qt can destroy and recreate THIS window's tiny GL
+// The key benefit over the old architecture: Qt can destroy and recreate the presenter's tiny GL
 // context (a blit shader + a quad VAO) as often as ADS's docking system likes when the panel is
 // dragged/floated/redocked - the real engine context and every GPU resource on it (meshes, shaders,
 // textures) live in SDL's context, which Qt never touches, so redocking can no longer break
@@ -53,15 +53,13 @@ public:
     explicit EngineViewportWidget(Matcha::SDLWindow& engineWindow, QWindow* parent = nullptr);
     ~EngineViewportWidget() override;
 
-    // Called once, from Editor's constructor: gives this widget a way to ask "what GL texture
-    // should I display right now" each Render() without needing to know about Editor/FrameBuffer
-    // directly - the texture ID can change across a FrameBuffer::Invalidate() (e.g. on resize), so
-    // this is queried fresh every frame rather than cached.
-    void SetColorTextureProvider(std::function<uint32_t()> provider) { m_ColorTextureProvider = std::move(provider); }
+    // Called once, from Editor's constructor: gives the presenter a way to ask "what should I
+    // display right now" each Render() without needing to know about Editor/FrameBuffer directly -
+    // see ViewportPresenter::SetFrameSource().
+    void SetColorTextureProvider(std::function<uint32_t()> provider);
 
-    // Called once per Editor tick, right after Application::Tick() - re-asserts this widget's own
-    // (Qt-owned) GL context as current and blits the engine's current FrameBuffer color texture
-    // onto a fullscreen quad. A no-op until the window is actually exposed.
+    // Called once per Editor tick, right after Application::Tick() - forwards to the presenter's
+    // own Render(). A no-op until the window is actually exposed.
     void Render();
 
     // Called from SDLWindow's per-Tick external-pump hook (see SDLWindow::SetExternalPumpCallback,
@@ -97,27 +95,13 @@ protected:
     void focusOutEvent(QFocusEvent* event) override;
 
 private:
-    // Lazily, on first successful Render(): wraps the engine's real native GL context (current on
-    // this thread at that point - see Render()'s ordering requirement) via Qt's native-interface
-    // adapter purely to establish a share group, then creates this widget's own QOpenGLContext
-    // sharing against that wrapper, and compiles the blit shader/quad. See the .cpp for the exact
-    // WGL handshake.
-    void EnsureGLResourcesInitialized();
-
-private:
     Matcha::SDLWindow& m_EngineWindow;
 
-    // m_SharedContextWrapper wraps the engine's foreign native context purely to give m_Context
-    // something to share against - kept alive for m_Context's whole lifetime since a
-    // QOpenGLContext's share context must remain valid for as long as the sharing context does.
-    std::unique_ptr<QOpenGLContext> m_SharedContextWrapper;
-    std::unique_ptr<QOpenGLContext> m_Context;
-    bool m_GLResourcesInitialized = false;
-
-    unsigned int m_BlitShaderProgram = 0;
-    unsigned int m_QuadVertexArray = 0;
-    unsigned int m_QuadVertexBuffer = 0;
-    std::function<uint32_t()> m_ColorTextureProvider;
+    // The one place this class decides which graphics API backs the viewport - everywhere else
+    // (Render(), SetColorTextureProvider()) just forwards through the abstract interface. See
+    // ViewportPresenter's own comment for why this seam exists ahead of there being a second
+    // implementation to select between.
+    std::unique_ptr<ViewportPresenter> m_Presenter;
 
     QPoint m_LastMousePosition;
     bool m_HasLastMousePosition = false;

@@ -44,8 +44,8 @@ int main(int argc, char** argv)
 
     // Must be set before QApplication is constructed. Matches SDLWindow's explicit
     // SDL_GL_CONTEXT_MAJOR/MINOR_VERSION + PROFILE_MASK=CORE request - required for
-    // EngineViewportWidget's own Qt-owned GL context to be compatible enough with the engine's
-    // real SDL-owned context for WGL sharing to succeed (see EngineViewportWidget::
+    // GLViewportPresenter's own Qt-owned GL context to be compatible enough with the engine's
+    // real SDL-owned context for WGL sharing to succeed (see GLViewportPresenter::
     // EnsureGLResourcesInitialized()), on top of the original reasoning: without this, Qt
     // negotiates some default context that may not match what glad was loaded against.
     QSurfaceFormat format;
